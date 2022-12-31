@@ -2,13 +2,13 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/AntHill.sol";
+import "../src/Anthill.sol";
 
-contract AntHillTest is Test {
-    AntHill public anthill;
+contract AnthillTest is Test {
+    Anthill public anthill;
 
     function setUp() public {
-        anthill = new AntHill();
+        anthill = new Anthill();
 
         // simple logic, 2 3 are roots, 
         //for x there are two childre with addresses 2x, and 2x+1 
