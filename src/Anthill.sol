@@ -3,9 +3,11 @@ pragma solidity ^0.8.13;
 
 contract Anthill {
 
+    event SimpleEventForUpdates(uint256 randint);
+
 ////////////////////////////
 //// State variables
-    uint256 public REL_ROOT_DEPTH =6;
+    uint256 public MAX_REL_ROOT_DEPTH =6;
 
     mapping(address => address) public treeVote;
 
@@ -23,8 +25,9 @@ contract Anthill {
 ////////////////////////////////////////
 /////// Variable readers 
 
-    function readRelRootDepth() public view returns(uint256){
-        return REL_ROOT_DEPTH;
+
+    function readMaxRelRootDepth() public view returns(uint256){
+        return MAX_REL_ROOT_DEPTH;
     }
 
     function readTreeVote(address voter) public view returns(address){
@@ -43,31 +46,37 @@ contract Anthill {
             return sentDagVoteDiff[voter];
     }
 
-    function readSentDagVoteCount(address voter, uint256 dagVote) public view returns(uint256){
-            return sentDagVoteCount[voter][dagVote];
+    function readSentDagVoteCount(address voter, uint256 heightDiff) public view returns(uint256){
+            return sentDagVoteCount[voter][heightDiff];
     }
 
-    function readSentDagVote(address voter, uint256 dagVote, uint256 votePos) public view returns(address){
-            return sentDagVote[voter][dagVote][votePos];
+    function readSentDagVote(address voter, uint256 heightDiff, uint256 votePos) public view returns(address){
+            return sentDagVote[voter][heightDiff][votePos];
     }
 
     function readRecDagVoteDiff(address voter) public view returns(uint256){
             return recDagVoteDiff[voter];
     }
 
-    function readRecDagVoteCount(address voter, uint256 dagVote) public view returns(uint256){
-            return recDagVoteCount[voter][dagVote];
+    function readRecDagVoteCount(address voter, uint256 heightDiff) public view returns(uint256){
+            return recDagVoteCount[voter][heightDiff];
     }
 
-    function readRecDagVote(address voter, uint256 dagVote, uint256 votePos) public view returns(address){
-            return recDagVote[voter][dagVote][votePos];
+    function readRecDagVote(address voter, uint256 heightDiff, uint256 votePos) public view returns(address){
+            return recDagVote[voter][heightDiff][votePos];
     }
 
 ////////////////////////////////////////
 //// Neighbour tree externals
+
+
     // when we first join the tree
     function joinTree(address voter, address recipient) public {
+        emit SimpleEventForUpdates(0);
+
         assert (treeVote[voter] == address(0));
+
+        assert (treeVote[recipient] != address(0));
         treeVote[voter] = recipient;
 
         recTreeVote[recipient][recTreeVoteCount[recipient]] = voter;
@@ -76,6 +85,8 @@ contract Anthill {
 
     // when we first join the tree without a parent
     function joinTreeAsRoot(address voter) public {
+        emit SimpleEventForUpdates(1);
+
         assert (treeVote[voter] == address(0));
         treeVote[voter] = address(1);
     }
@@ -115,21 +126,22 @@ contract Anthill {
 ////////////////////////////////////////////////////////////////////////
 //// Local tree finders
 
-    // to find our relative root, our ancestor at depth REL_ROOT_DEPTH
-    function findRelRoot(address voter) public view returns (address relRoot){
+    // to find our relative root, our ancestor at depth MAX_REL_ROOT_DEPTH
+    function findRelRoot(address voter) public view returns (address relRoot, uint256 relRootDiff){
         assert (treeVote[voter] != address(0));
 
         relRoot = voter;
         address parent;
+        uint256 relRootDiff;
 
-        for (uint256 i = 0; i < REL_ROOT_DEPTH; i++) {
+        for (relRootDiff = 0; relRootDiff < MAX_REL_ROOT_DEPTH; relRootDiff++) {
             parent = treeVote[relRoot];
             if (parent == address(1)) {
                 break;
             }
             relRoot = parent;
         }
-        return relRoot;
+        return (relRoot, relRootDiff);
     }
 
     // to find the depth difference between two locally close voters. Locally close means the recipient is a descendant of the voter's relative root
@@ -139,12 +151,12 @@ contract Anthill {
             return (false, 0);
         }
 
-        address relRoot = findRelRoot(voter);
+        (address relRoot, uint256 relRootDiff) = findRelRoot(voter);
         address recipientAncestor = recipient;
 
-        for (uint256 i = 0; i < REL_ROOT_DEPTH-1; i++) {
+        for (uint256 i = 0; i < relRootDiff; i++) {
             if (recipientAncestor == relRoot) {
-                return (true, REL_ROOT_DEPTH-i);
+                return (true, relRootDiff-i);
             }
             
             recipientAncestor = treeVote[recipientAncestor];
@@ -209,7 +221,7 @@ contract Anthill {
         uint256  diff = recDagVoteDiff[recipient];
 
         for (uint256 i = 0; i < recDagVoteCount[recipient][diff+depth] ; i++) {
-            if (sentDagVote[recipient][diff+depth][i] == voter) {
+            if (recDagVote[recipient][diff+depth][i] == voter) {
                 return (true, i);
             }
         }
@@ -218,7 +230,7 @@ contract Anthill {
     }
 
     // to check the existence and to find the position of a vote in the sentDagVote array (depth diff is the row position, votePos is column pos) 
-    function findDagVote(address voter, address recipient) public view returns (bool voted, uint256 depthDiff, uint256 votePos){ 
+    function findSentDagVote(address voter, address recipient) public view returns (bool voted, uint256 depthDiff, uint256 votePos){ 
         (bool votable, uint256 depthDiff) = findDepthDiff(voter, recipient);
         
         if (votable == false) {
@@ -248,7 +260,9 @@ contract Anthill {
 //// Dag externals
     // to add a vote to the sentDagVote array, and also to the corresponding recDagVote array
     function addDagVote(address voter, address recipient) public {
-        (bool voted, uint256 depthDiff, ) = findDagVote(voter, recipient);
+        emit SimpleEventForUpdates(0);
+
+        (bool voted, uint256 depthDiff, ) = findSentDagVote(voter, recipient);
         assert (voted == false);
 
         sentDagVote[voter][sentDagVoteDiff[voter]+depthDiff][sentDagVoteCount[voter][sentDagVoteDiff[voter]+depthDiff]] = recipient;
@@ -260,7 +274,8 @@ contract Anthill {
 
     // to remove a vote from the sentDagVote array, and also from the  corresponding recDagVote arrays
     function removeDagVote(address voter, address recipient) public {
-        (bool voted, uint256 depthDiff, uint256 votePos) = findDagVote(voter, recipient);
+        emit SimpleEventForUpdates(0);
+        (bool voted, uint256 depthDiff, uint256 votePos) = findSentDagVote(voter, recipient);
         assert (voted == true);
 
         sentDagVote[voter][sentDagVoteDiff[voter]+depthDiff][votePos] = sentDagVote[voter][sentDagVoteDiff[voter]+depthDiff][sentDagVoteCount[voter][sentDagVoteDiff[voter]+depthDiff]-1];
@@ -317,7 +332,7 @@ contract Anthill {
     ///////////////// for jumping
     // to remove all rows over a certain depth from the sentDagVote array, and the corresponding votes from the recDagVote arrays
     function removeSentDagVoteOverDepthInclusive(address voter, uint256 depth) internal {
-        for (uint256 i = sentDagVoteDiff[voter] + depth; i < sentDagVoteDiff[voter] + REL_ROOT_DEPTH; i++) {
+        for (uint256 i = sentDagVoteDiff[voter] + depth; i < sentDagVoteDiff[voter] + MAX_REL_ROOT_DEPTH; i++) {
             removeSentDagVoteRow(voter, i);
         }
     }
@@ -325,17 +340,17 @@ contract Anthill {
     // to remove non-local votes when jumping distance and depth under the jumper.  
     function removeSentDagVoteJumpingRecursive(address voter, uint256 distance, uint256 depth) internal {
         // we only need to remove votes if we jumped out of voter's local subtree.
-        // Our local subtree is at depth REL_ROOT_DEPTH - depth above the jumper. 
+        // Our local subtree is at depth MAX_REL_ROOT_DEPTH - depth above the jumper. 
         // We jump out of this if the distance is larger.
-        if (REL_ROOT_DEPTH - depth < distance){
+        if (MAX_REL_ROOT_DEPTH - depth < distance){
             // We jumped out of our local subtree.
             // We have to remove all votes not in subtree where the jumper is the root.
             // This means votes at the jumpers depth have to be removed (so also the jumper)
             removeSentDagVoteOverDepthInclusive(voter, depth);
         }
         
-        // there are DAG vote only under REL_ROOT_DEPTH. If we are there we can stop.
-        if (depth == REL_ROOT_DEPTH ) {
+        // there are DAG vote only under MAX_REL_ROOT_DEPTH. If we are there we can stop.
+        if (depth == MAX_REL_ROOT_DEPTH ) {
             return;
         }
 
@@ -353,13 +368,13 @@ contract Anthill {
         removeSentDagVoteRow(voter, 1);
         sentDagVoteDiff[voter] += 1;
 
-        removeRecDagVoteRow(voter, REL_ROOT_DEPTH-1);
+        removeRecDagVoteRow(voter, MAX_REL_ROOT_DEPTH-1);
         recDagVoteDiff[voter] -= 1;
     }
 
     // when rising a single depth up the tree,
     function removeDagVoteRisingRecursive(address voter, uint256 depth) internal {
-        if (REL_ROOT_DEPTH<= depth){
+        if (MAX_REL_ROOT_DEPTH<= depth){
             return;
         }
 
@@ -375,7 +390,7 @@ contract Anthill {
     // we remove the rows on the edges and change the frame of the dag arrays.
     function removeDagVoteFalling(address voter) internal {
         // we need to remove all votes that are not in the subtree of the voter
-        removeSentDagVoteRow(voter, REL_ROOT_DEPTH-1);
+        removeSentDagVoteRow(voter, MAX_REL_ROOT_DEPTH-1);
         sentDagVoteDiff[voter] -= 1;
 
         removeRecDagVoteRow(voter, 1);
@@ -384,7 +399,7 @@ contract Anthill {
 
     // when falling a single depth to one of our brothers,
     function removeDagVoteFallingRecursive(address voter, uint256 depth) internal {
-        if (REL_ROOT_DEPTH<= depth){
+        if (MAX_REL_ROOT_DEPTH<= depth){
             return;
         }
         
@@ -402,8 +417,9 @@ contract Anthill {
 
     // to change a tree vote to recipient, who is at most maxDistance away from voter.
     function changeTreeVoteSameHeight(address voter, address recipient, uint256 maxDistance) public {
-        (, uint256 diff) = findDepthDiff(voter, recipient);
-        assert (diff == 1);
+        emit SimpleEventForUpdates(0);
+        (, uint256 depthDiff) = findDepthDiff(voter, recipient);
+        assert (depthDiff == 1);
 
         (, uint256 distance) = findDistance(treeVote[voter], recipient, maxDistance);
 
@@ -418,6 +434,7 @@ contract Anthill {
 
     // equivalent to changing our tree vote to our parent's parent 
     function changeTreeVoteRise(address voter) public {
+        emit SimpleEventForUpdates(0);
         address recipient = treeVote[treeVote[voter]];
         assert (recipient != address(0));
         assert (recipient != address(1));
@@ -430,6 +447,7 @@ contract Anthill {
 
     // equivalent to changing our tree vote to our brother = parent's child
     function changeTreeVoteFall(address voter, address recipient) public {
+        emit SimpleEventForUpdates(0);
         assert (treeVote[recipient] == treeVote[voter]);
         assert (treeVote[recipient]!= address(0));
         assert (treeVote[recipient]!= address(1));

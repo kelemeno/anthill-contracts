@@ -30,20 +30,22 @@ contract AnthillTest is Test {
             for (uint256 j=0; j<2**i; j++){
 
                 // e.g. 2*2**i+2*j = 2*2**3+2*0 = 2*8+0 = 16, this has relRoot 2. We give dag votes to 4, 5, 8, 9 10 11
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+2*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
+                (address voter, ) = anthill.findRelRoot(address(uint160(2*2**i+2*j)));
+
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2*uint160(voter)));
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+2*uint160(voter)));
                 
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(voter)));
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)));
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)));
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)));
                 
                 // // in this case we add dag votes to depth one above us
                 // if (i>=4){
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(anthill.findRelRoot(address(uint160(2*2**i+2*j))))));
+                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(voter)));
+                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)));
+                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)));
+                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)));
                 // }
 
                 
@@ -58,6 +60,13 @@ contract AnthillTest is Test {
     function testParents() public {
         address a = anthill.readTreeVote( anthill.readTreeVote( anthill.readTreeVote(address(23))));
         assertEq(a, address(2));
+    }
+
+    function testAddAndRemoveDagVote(uint256 x) public {
+        anthill.addDagVote(   address(8),address(5));
+        // anthill.removeDagVote(address(8),address(5));
+
+        
     }
 
     function testJump(uint256 x) public {
