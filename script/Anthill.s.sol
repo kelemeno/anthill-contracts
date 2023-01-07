@@ -19,12 +19,12 @@ contract AnthillScript1 is Script {
         //for x there are two childre with addresses 2x, and 2x+1 
         
         // height 0
-        anthill.joinTreeAsRoot(address(2));
+        anthill.joinTreeAsRoot(address(2), string("Root2 "));
         //anthill.joinTreeAsRoot(address(3));
 
         // adding tree votes
         for (uint256 i=1 ; i<8; i++){
-            for (uint256 j=0; j<2**i; j++){
+            for (uint256 j=0; j<2**(i-1); j++){
                 anthill.joinTree(address(uint160(2*2**i+2*j)), string("Name"), address(uint160(2**i+j)) );
                 anthill.joinTree(address(uint160(2*2**i+2*j+1)),string("Name"),  address(uint160(2**i+j)));
             }
@@ -32,7 +32,7 @@ contract AnthillScript1 is Script {
 
         // adding dag votes
         for (uint256 i=3 ; i<8; i++){
-            for (uint256 j=0; j<2**i; j++){
+            for (uint256 j=0; j<2**(i-1); j++){
 
                 // e.g. 2*2**i+2*j = 2*2**3+2*0 = 2*8+0 = 16, this has relRoot 2. We give dag votes to 4, 5, 8, 9 10 11
                 (address voter, ) = anthill.findRelRoot(address(uint160(2*2**i+2*j)));
@@ -77,8 +77,8 @@ contract AnthillScript2 is Script {
         //for x there are two childre with addresses 2x, and 2x+1 
         
         // height 0
-        anthill.joinTreeAsRoot(address(2));
-        anthill.joinTreeAsRoot(address(3));
+        anthill.joinTreeAsRoot(address(2), string("Root2 "));
+        // anthill.joinTreeAsRoot(address(3), string("root 3, we will want to remove second roots "));
 
         // adding tree votes
         for (uint256 i=1 ; i<5; i++){
@@ -87,6 +87,8 @@ contract AnthillScript2 is Script {
                 anthill.joinTree(address(uint160(2*(2**i+j)+1)), string("Name"),address(uint160(2**i+j)));
             }
         }
+
+        
 
         // adding dag votes
         for (uint256 i=3 ; i<5; i++){
