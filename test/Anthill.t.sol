@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/Anthill.sol";
+import {console} from "forge-std/console.sol";
+
 
 contract AnthillTest is Test {
     Anthill public anthill;
@@ -15,13 +17,14 @@ contract AnthillTest is Test {
         
         // height 0
         anthill.joinTreeAsRoot(address(2));
-        //anthill.joinTreeAsRoot(address(3));
+        anthill.joinTreeAsRoot(address(3));
 
-        // adding tree votes
+        // adding tree votes 
         for (uint256 i=1 ; i<8; i++){
             for (uint256 j=0; j<2**i; j++){
-                anthill.joinTree(address(uint160(2*2**i+2*j)), address(uint160(2**i+j)));
-                anthill.joinTree(address(uint160(2*2**i+2*j+1)), address(uint160(2**i+j)));
+                console.log("i, j", i, j);
+                anthill.joinTree(address(uint160(2*2**i+2*j)), string("Name"),address(uint160(2**i+j)));
+                anthill.joinTree(address(uint160(2*2**i+2*j+1)), string("Name"),address(uint160(2**i+j)));
             }
         }
 
@@ -32,13 +35,13 @@ contract AnthillTest is Test {
                 // e.g. 2*2**i+2*j = 2*2**3+2*0 = 2*8+0 = 16, this has relRoot 2. We give dag votes to 4, 5, 8, 9 10 11
                 (address voter, ) = anthill.findRelRoot(address(uint160(2*2**i+2*j)));
 
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2*uint160(voter)));
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+2*uint160(voter)));
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2*uint160(voter)), 1);
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+2*uint160(voter)), 1);
                 
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(voter)));
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)));
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)));
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)));
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(voter)), 1);
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)), 1);
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)), 1);
+                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)), 1);
                 
                 // // in this case we add dag votes to depth one above us
                 // if (i>=4){
@@ -58,12 +61,12 @@ contract AnthillTest is Test {
  }
 
     function testParents() public {
-        address a = anthill.readTreeVote( anthill.readTreeVote( anthill.readTreeVote(address(23))));
+        address a = anthill.readSentTreeVote( anthill.readSentTreeVote( anthill.readSentTreeVote(address(23))));
         assertEq(a, address(2));
     }
 
     function testAddAndRemoveDagVote(uint256 x) public {
-        anthill.addDagVote(   address(8),address(5));
+        anthill.addDagVote(   address(8),address(5), 1);
         // anthill.removeDagVote(address(8),address(5));
 
         
