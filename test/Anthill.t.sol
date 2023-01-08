@@ -21,7 +21,7 @@ contract AnthillTest is Test {
         // adding tree votes 
         for (uint256 i=1 ; i<8; i++){
             for (uint256 j=0; j<2**(i-1); j++){
-                console.log("i, j", i, j);
+                // console.log("i, j", i, j);
                 anthill.joinTree(address(uint160(2*2**i+2*j)), string("Name"),address(uint160(2**i+j)));
                 anthill.joinTree(address(uint160(2*2**i+2*j+1)), string("Name"),address(uint160(2**i+j)));
             }
@@ -72,7 +72,7 @@ contract AnthillTest is Test {
     }
 
     function testFindDistAtSameDepth() public {
-        (bool isLocal, uint32 dist ) = anthill.findDistAtSameDepth(address(4),address(5), 10);
+        (bool isLocal, uint32 dist ) = anthill.findDistAtSameDepth(address(4),address(5));
         assertEq(1, dist);
     }
 
@@ -104,11 +104,11 @@ contract AnthillTest is Test {
 
     }
 
-        function testAddAndRemoveDagVote2() public {
+    function testAddAndRemoveDagVote2() public {
         // anthill.addDagVote(address(34),address(9), 1);
         (bool voted, uint32 dist, uint32 depth, , ) = anthill.findSentDagVote(address(34), address(9));
         assertEq(voted, true);
-        assertEq(dist, 2);
+        assertEq(dist, 3);
         assertEq(depth, 2);
 
         (voted,  dist,  depth, , ) = anthill.findRecDagVote(address(34), address(9));
@@ -123,6 +123,12 @@ contract AnthillTest is Test {
         ( voted,  dist,  depth, , ) = anthill.findRecDagVote(address(34), address(9));
         assertEq(voted, false);
 
+    }
+
+    function testCalculateRep() public {
+        uint256 rep = anthill.calculateReputation(address(4));
+        console.log(rep);
+        assertEq(rep, 3000000000000000000);
     }
 
     function testJump() public {
