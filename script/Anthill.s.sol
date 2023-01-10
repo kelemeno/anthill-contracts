@@ -91,6 +91,8 @@ contract AnthillScript2 is Script {
         
 
         // adding dag votes
+        // we add layers 3, 4
+        // then we add 
         for (uint256 i=3 ; i<5; i++){
             for (uint256 j=0; j<2**(i-1); j++){
 

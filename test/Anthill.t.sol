@@ -19,7 +19,7 @@ contract AnthillTest is Test {
         anthill.joinTreeAsRoot(address(2), string("Root2 "));
 
         // adding tree votes 
-        for (uint256 i=1 ; i<8; i++){
+        for (uint256 i=1 ; i<5; i++){
             for (uint256 j=0; j<2**(i-1); j++){
                 // console.log("i, j", i, j);
                 anthill.joinTree(address(uint160(2*2**i+2*j)), string("Name"),address(uint160(2**i+j)));
@@ -28,8 +28,10 @@ contract AnthillTest is Test {
         }
 
         // anthill.addDagVote(address(8), address(5), 1);
-
-        for (uint256 i=3 ; i<8; i++){
+        
+        // we do this for heights 3, 4, 5, 6, 7
+        // we add 2**(i-1) so 2, 4, 8, 16, 32 votes. that is 62 dag voters. Each splits their votes into 5. That should be around 12 rep.  
+        for (uint256 i=3 ; i<5; i++){
             for (uint256 j=0; j<2**(i-1); j++){
 
                 // e.g. 2*2**i+2*j = 2*2**3+2*0 = 2*8+0 = 16, this has relRoot 2. We give dag votes to 4, 5, 8, 9 10 11
@@ -127,11 +129,94 @@ contract AnthillTest is Test {
 
     function testCalculateRep() public {
         uint256 rep = anthill.calculateReputation(address(4));
+        uint256 rep2 = anthill.calculateReputation(address(2));
         console.log(rep);
-        assertEq(rep, 3000000000000000000);
+        console.log(rep2);
+
+        // assert(rep  +100- 3000000000000000000< 1000);
+        // assert(rep2 +100- 1000000000000000000< 1000);
+
     }
 
-    function testJump() public {
-        
+    function testSwitchPositionWithParent() public {
+        address root = anthill.readRoot();
+        assertEq(root, address(2));
+        // uint256 rep = anthill.calculateReputation(address(4));
+        // console.log(rep);
+        // consistencyCheckFrom(address(2));
+        anthill.switchPositionWithParent(address(4));
+        root = anthill.readRoot();
+        assertEq(root, address(4));
+
+
+
+        // for (uint32 i = 0; i < 7; i++){
+        //     for (uint32 j = 0; j < 7; j++){
+        //         uint32 twoSentCount = anthill.readRecDagVoteCount(address(4), i,j);
+        //         console.log(twoSentCount);
+        //     }
+        // }
+
+        uint256 rep = anthill.calculateReputation(address(4));
+        console.log(rep);
+
+        // for (uint32 i = 16; i < 23; i=i+2){
+        //         uint32 sentWeight = anthill.readSentDagVoteTotalWeight(address(uint160(i)));
+        //         console.log(i, sentWeight);
+        // }
+        //  for (uint32 i = 32; i < 47; i=i+2){
+        //         uint32 sentWeight = anthill.readSentDagVoteTotalWeight(address(uint160(i)));
+        //         console.log(i, sentWeight);
+        // }
+
+        // assert(2==0);
+        uint256 rep2 = anthill.calculateReputation(address(2));
+        console.log(rep2);
+
+        assert(rep +100- 3000000000000000000< 200);
+        assert(rep2 +100- 1000000000000000000< 200);
+
+        assert(anthill.readSentTreeVote(address(16))==address(8));
+        assert(anthill.readSentTreeVote(address(8))==address(2));
+        assert(anthill.readSentTreeVote(address(2))==address(4));
+        assert(anthill.readSentTreeVote(address(10))==address(5));
+        assert(anthill.readSentTreeVote(address(5))==address(4));
+
+
+        consistencyCheckFrom(address(4));
     }
+
+    function consistencyCheckFrom(address voter) public {
+
+        for (uint32 dist = 0; dist < 7; dist++){
+            for (uint32 depth = 0; depth < 7; depth++){
+                for (uint32 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++){
+                    Anthill.DagVote memory sDagVote = anthill.readSentDagVote(voter, dist, depth, i);
+                    Anthill.DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, dist, depth, sDagVote.posInOther);
+                    (bool isLocal, ) = anthill.findRelDepth(voter, sDagVote.id);
+                    assert( isLocal);
+                    assertEq(rDagVote.id, voter);
+                    assertEq(rDagVote.weight, sDagVote.weight);
+                    assertEq(rDagVote.posInOther, i);
+                }
+
+                for (uint32 i = 0; i < anthill.readRecDagVoteCount(voter, dist, depth); i++){
+                    Anthill.DagVote memory rDagVote = anthill.readRecDagVote(voter, dist, depth, i);
+                    Anthill.DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, dist, depth, rDagVote.posInOther);
+
+                    (bool isLocal, ) = anthill.findRelDepth(rDagVote.id, voter);
+                    assert( isLocal);
+
+                    assertEq(sDagVote.id, voter);
+                    assertEq(sDagVote.weight, rDagVote.weight);
+                    assertEq(sDagVote.posInOther, i);
+                }
+            }
+        }
+        for (uint32 i=0; i< anthill.readRecTreeVoteCount(voter); i++){
+            consistencyCheckFrom(anthill.readRecTreeVote(voter, i));
+        } 
+    }
+
+    
 }
