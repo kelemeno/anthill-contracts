@@ -26,16 +26,16 @@ contract Anthill {
 
     mapping(address => uint32) public sentDagVoteDistDiff; // voter -> dist -> depthdiff
     mapping(address => uint32) public sentDagVoteDepthDiff;
-    mapping(address => mapping(uint32 => mapping(uint32 => uint32))) public sentDagVoteCount; // voter -> distance -> height -> count
-    mapping(address => mapping(uint32 => mapping(uint32 => mapping(uint32 => DagVote)))) public sentDagVote; // voter -> distance -> heightDiff -> counter -> DagVote
+    mapping(address => mapping(uint32 => mapping(uint32 => uint32))) public sentDagVoteCount; // voter -> sdist -> depth -> count
+    mapping(address => mapping(uint32 => mapping(uint32 => mapping(uint32 => DagVote)))) public sentDagVote; // voter -> sdist -> depth -> counter -> DagVote
     
     mapping(address => uint32) public sentDagVoteTotalWeight;
     
 
     mapping(address => uint32) public recDagVoteDistDiff;
     mapping(address => uint32) public recDagVoteDepthDiff;
-    mapping(address => mapping(uint32 => mapping(uint32 => uint32))) public recDagVoteCount; // voter -> distance -> heightDiff -> count
-    mapping(address => mapping(uint32 => mapping(uint32 => mapping(uint32 => DagVote)))) public recDagVote; // voter -> distance -> heightDiff -> counter -> DagVote
+    mapping(address => mapping(uint32 => mapping(uint32 => uint32))) public recDagVoteCount; // voter -> rdist -> depth -> count
+    mapping(address => mapping(uint32 => mapping(uint32 => mapping(uint32 => DagVote)))) public recDagVote; // voter -> rdist -> depth -> counter -> DagVote
 
     mapping(address => uint256) public reputation;
    
@@ -80,16 +80,16 @@ contract Anthill {
             return sentDagVoteDistDiff[voter];
     }
 
-    function readSentDagVoteDepthDiff(address voter, uint32 dist) external view returns(uint32){
+    function readSentDagVoteDepthDiff(address voter) external view returns(uint32){
             return sentDagVoteDepthDiff[voter];
     }
 
-    function readSentDagVoteCount(address voter, uint32 dist, uint32 depth) public view returns(uint32){
-            return sentDagVoteCount[voter][sentDagVoteDistDiff[voter]+dist][sentDagVoteDepthDiff[voter]+depth];
+    function readSentDagVoteCount(address voter, uint32 sdist, uint32 depth) public view returns(uint32){
+            return sentDagVoteCount[voter][sentDagVoteDistDiff[voter]+sdist][sentDagVoteDepthDiff[voter]+depth];
     }
 
-    function readSentDagVote(address voter, uint32 dist, uint32 depth, uint32 votePos) public view returns( DagVote memory){
-            return sentDagVote[voter][sentDagVoteDistDiff[voter]+dist][sentDagVoteDepthDiff[voter]+depth][votePos];
+    function readSentDagVote(address voter, uint32 sdist, uint32 depth, uint32 votePos) public view returns( DagVote memory){
+            return sentDagVote[voter][sentDagVoteDistDiff[voter]+sdist][sentDagVoteDepthDiff[voter]+depth][votePos];
     }
 
     
@@ -102,17 +102,17 @@ contract Anthill {
             return recDagVoteDistDiff[recipient];
     }
 
-    function readRecDagVoteDepthDiff(address recipient, uint32 dist) public view returns(uint32){
+    function readRecDagVoteDepthDiff(address recipient) public view returns(uint32){
             return recDagVoteDepthDiff[recipient];
     }
 
 
-    function readRecDagVoteCount(address recipient, uint32 dist, uint32 depth) public view returns(uint32){
-            return recDagVoteCount[recipient][recDagVoteDistDiff[recipient]+dist][recDagVoteDepthDiff[recipient]+depth];
+    function readRecDagVoteCount(address recipient, uint32 rdist, uint32 depth) public view returns(uint32){
+            return recDagVoteCount[recipient][recDagVoteDistDiff[recipient]+rdist][recDagVoteDepthDiff[recipient]+depth];
     }
 
-    function readRecDagVote(address recipient, uint32 dist, uint32 depth, uint32 votePos) public view returns(DagVote memory){
-            return recDagVote[recipient][recDagVoteDistDiff[recipient]+dist][recDagVoteDepthDiff[recipient]+depth][votePos];
+    function readRecDagVote(address recipient, uint32 rdist, uint32 depth, uint32 votePos) public view returns(DagVote memory){
+            return recDagVote[recipient][recDagVoteDistDiff[recipient]+rdist][recDagVoteDepthDiff[recipient]+depth][votePos];
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,13 +191,48 @@ contract Anthill {
         recTreeVoteCount[recipient] = recTreeVoteCount[recipient] + 1;
     }
 
-     function addTreeVoteWithoutCheck(address voter, address recipient) internal {
+    function addTreeVoteWithoutCheck(address voter, address recipient) internal {
         assert (treeVote[voter] == address(1));
 
         treeVote[voter] = recipient;
 
         recTreeVote[recipient][recTreeVoteCount[recipient]] = voter;
         recTreeVoteCount[recipient] = recTreeVoteCount[recipient] + 1;
+    }
+
+    function switchTreeVoteWithParent(address voter) public {
+        address parent = treeVote[voter];
+        assert (parent != address(0));
+        
+        address gparent = treeVote[parent]; // this might be 1. 
+        removeTreeVote(voter);
+
+        if (readRoot()== parent){
+            root= voter;
+        } else {
+            removeTreeVote(parent);
+        }
+
+        addTreeVoteWithoutCheck(voter, gparent);
+        addTreeVoteWithoutCheck(parent, voter);
+
+        if (readRoot()== parent){
+            root= voter;
+        }
+
+        for (uint32 i = 0; i < recTreeVoteCount[parent]; i++) {
+            address brother = recTreeVote[parent][i];
+            if (brother != voter) {
+                removeTreeVote(brother);
+                addTreeVoteWithoutCheck(brother, voter);
+            }
+        }
+
+        for (uint32 i = 0; i < recTreeVoteCount[voter]; i++) {
+            address child = recTreeVote[voter][i];
+            removeTreeVote(child);
+            addTreeVoteWithoutCheck(child, parent);
+        }
     }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -245,7 +280,7 @@ contract Anthill {
         (address relRoot, uint32 relRootDiff) = findRelRoot(voter);
         address recipientAncestor = recipient;
 
-        for (uint32 i = 0; i < relRootDiff; i++) {
+        for (uint32 i = 0; i <= relRootDiff; i++) {
             if (recipientAncestor == relRoot) {
                 return (true, relRootDiff-i);
             }
@@ -286,12 +321,16 @@ contract Anthill {
     }
 
     // 
-    function findDistDepth(address voter, address recipient) public view returns (bool isLocal, uint32 distance, uint32 relDepth){
+    function findSDistDepth(address voter, address recipient) public view returns (bool isLocal, uint32 distance, uint32 relDepth){
         if (treeVote[voter] == address(0) || treeVote[recipient] == address(0)) {
             return (false, 0, 0);
         }
 
-        ( isLocal,  relDepth) = findRelDepth(voter, recipient);
+        (isLocal,  relDepth) = findRelDepth(voter, recipient);
+        if (isLocal == false) {
+            return (false, 0, 0);
+        }
+
         address voterAnscenstor = findNthParent(voter, relDepth);
 
         (,  distance)= findDistAtSameDepth(voterAnscenstor, recipient);
@@ -304,9 +343,9 @@ contract Anthill {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //// DAG finders
     // to check the existence and to find the position of a vote in a given row of the sentDagVote array
-    function findSentDagVotePosAtDistDepth(address voter, address recipient, uint32 dist,  uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
-        for (uint32 i = 0; i < readSentDagVoteCount(voter, dist, depth) ; i++) {
-            DagVote memory sDagVote = readSentDagVote(voter, dist, depth, i);
+    function findSentDagVotePosAtDistDepth(address voter, address recipient, uint32 sdist,  uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
+        for (uint32 i = 0; i < readSentDagVoteCount(voter, sdist, depth) ; i++) {
+            DagVote memory sDagVote = readSentDagVote(voter, sdist, depth, i);
             if (sDagVote.id == recipient) {
                 return (true, i, sDagVote);
             }
@@ -316,66 +355,69 @@ contract Anthill {
     }
 
     // to check the existence and to find the position of a vote in a given row of the recDagVote array
-    function findRecDagVotePosAtDistDepth(address voter, address recipient, uint32 dist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
-        for (uint32 i = 0; i < readRecDagVoteCount(recipient, dist, depth) ; i++) {
-            DagVote memory rDagVote = readRecDagVote(recipient, dist, depth, i);
-            if (rDagVote.id == voter) {
-                return (true, i, rDagVote);
-            }
-        }
+    // function findRecDagVotePosAtDistDepth(address voter, address recipient, uint32 rdist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
+        //     for (uint32 i = 0; i < readRecDagVoteCount(recipient, rdist, depth) ; i++) {
+        //         DagVote memory rDagVote = readRecDagVote(recipient, rdist, depth, i);
+        //         if (rDagVote.id == voter) {
+        //             return (true, i, rDagVote);
+        //         }
+        //     }
 
-        return (false, 0, DagVote(address(0), 0, 0));
-    }
+        //     return (false, 0, DagVote(address(0), 0, 0));
+    // }
 
-    function findLastSentDagVoteAtDistDepth(address voter, uint32 dist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
+    function findLastSentDagVoteAtDistDepth(address voter, uint32 sdist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
         
-        uint32 count = readSentDagVoteCount(voter, dist, depth);
+        uint32 count = readSentDagVoteCount(voter, sdist, depth);
 
         if (count == 0) {
             return (false, 0, DagVote(address(0), 0, 0));
         }
 
-        return (true, count-1, readSentDagVote(voter, dist ,depth, count-1));
+        return (true, count-1, readSentDagVote(voter, sdist ,depth, count-1));
     }
 
-    function findLastRecDagVoteAtDistDepth(address recipient, uint32 dist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
+    function findLastRecDagVoteAtDistDepth(address recipient, uint32 rdist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
        
-        uint32 count = readRecDagVoteCount(recipient, dist, depth);
+        uint32 count = readRecDagVoteCount(recipient, rdist, depth);
 
         if (count == 0) {
             return (false, 0, DagVote(address(0), 0, 0));
         }
 
-        return (true, count-1, readRecDagVote(recipient,dist,  depth, count-1));
+        return (true, count-1, readRecDagVote(recipient,rdist,  depth, count-1));
     }
 
     // to check the existence and to find the position of a vote in the sentDagVote array (depth diff is the row position, votePos is column pos) 
-    function findSentDagVote(address voter, address recipient) public view returns (bool voted, uint32 dist,  uint32 depth, uint32 votePos, DagVote memory dagVote){ 
-        bool votable;
-        (votable,  dist,  depth) = findDistDepth(voter, recipient);
+    function findSentDagVote(address voter, address recipient) public view returns (bool votable, bool voted, uint32 sdist,  uint32 depth, uint32 votePos, DagVote memory dagVote){ 
+        bool isLocal;
+        (isLocal,  sdist,  depth) = findSDistDepth(voter, recipient);
         
-        if (votable == false) {
-            return (false, 0, 0, 0,  DagVote(address(0), 0, 0));
+        if ((isLocal == false) || (depth == 0)) {
+            return (false, false, 0, 0, 0,  DagVote(address(0), 0, 0));
         }
 
-        (voted,  votePos, dagVote) = findSentDagVotePosAtDistDepth(voter, recipient, dist, depth);
+        (voted,  votePos, dagVote) = findSentDagVotePosAtDistDepth(voter, recipient, sdist, depth);
 
-        return (voted, dist, depth, votePos, dagVote);
+        return (true, voted, sdist, depth, votePos, dagVote);
     }
 
     // to check the existence and to find the position of a vote in the recDagVote array (depth diff is the row position (first index), votePos is column pos (second index))
-    function findRecDagVote(address voter, address recipient) public view returns (bool voted, uint32 dist, uint32 depth, uint32 votePos, DagVote memory dagVote){
-        bool votable;
-        ( votable, dist, depth) = findDistDepth(voter, recipient);
-        
-        if (votable == false) {
-            return (false, 0, 0, 0,  DagVote(address(0), 0, 0));
-        }
+    // function findRecDagVote(address voter, address recipient) public view returns (bool votable, bool voted, uint32 rdist, uint32 depth, uint32 votePos, DagVote memory dagVote){
+        //     bool isLocal;
+        //     uint32 sdist;
 
-        (voted, votePos, dagVote) = findRecDagVotePosAtDistDepth(voter, recipient, dist, depth);
+        //     ( isLocal, sdist, depth) = findSDistDepth(voter, recipient);
+        //     rdist= sdist - depth;
 
-        return (voted, dist,  depth, votePos, dagVote);
-    }
+        //     if ((isLocal == false) || (depth == 0)) {
+        //         return (false, false, 0, 0, 0,  DagVote(address(0), 0, 0));
+        //     }
+
+        //     (voted, votePos, dagVote) = findRecDagVotePosAtDistDepth(voter, recipient, rdist, depth);
+
+        //     return (true, voted, rdist,  depth, votePos, dagVote);
+    // }
 
 
 
@@ -392,11 +434,11 @@ contract Anthill {
             }
 
             // function increaseRecDagVoteDistDiff(address recipient, uint32 diff) internal{
-            //     recDagVoteDistDiff[recipient] += diff;
+                // recDagVoteDistDiff[recipient] += diff;
             // }
 
             // function decreaseRecDagVoteDistDiff(address recipient, uint32 diff) internal{
-            //     recDagVoteDistDiff[recipient] -= diff;
+                //     recDagVoteDistDiff[recipient] -= diff;
             // }
 
             function increaseSentDagVoteDepthDiff(address voter, uint32 diff) internal{
@@ -417,58 +459,58 @@ contract Anthill {
 
         ///////////// Counts 
 
-            function increaseSentDagVoteCount(address voter, uint32 dist, uint32 depth, uint32 diff) internal{
-                sentDagVoteCount[voter][sentDagVoteDistDiff[voter]+dist][sentDagVoteDepthDiff[voter]+depth] += diff;
+            function increaseSentDagVoteCount(address voter, uint32 sdist, uint32 depth, uint32 diff) internal{
+                sentDagVoteCount[voter][sentDagVoteDistDiff[voter]+sdist][sentDagVoteDepthDiff[voter]+depth] += diff;
             }
 
-            function decreaseSentDagVoteCount(address voter, uint32 dist, uint32 depth, uint32 diff) internal{
-                sentDagVoteCount[voter][sentDagVoteDistDiff[voter]+dist][sentDagVoteDepthDiff[voter]+depth] -= diff;
+            function decreaseSentDagVoteCount(address voter, uint32 sdist, uint32 depth, uint32 diff) internal{
+                sentDagVoteCount[voter][sentDagVoteDistDiff[voter]+sdist][sentDagVoteDepthDiff[voter]+depth] -= diff;
             }
 
-            function increaseRecDagVoteCount(address recipient, uint32 dist, uint32 depth, uint32 diff) internal{
-                recDagVoteCount[recipient][recDagVoteDistDiff[recipient]+dist][recDagVoteDepthDiff[recipient]+depth] += diff;
+            function increaseRecDagVoteCount(address recipient, uint32 rdist, uint32 depth, uint32 diff) internal{
+                recDagVoteCount[recipient][recDagVoteDistDiff[recipient]+rdist][recDagVoteDepthDiff[recipient]+depth] += diff;
             }
 
-            function decreaseRecDagVoteCount(address recipient, uint32 dist, uint32 depth, uint32 diff) internal{
-                recDagVoteCount[recipient][recDagVoteDistDiff[recipient]+dist][recDagVoteDepthDiff[recipient]+depth] -= diff;
+            function decreaseRecDagVoteCount(address recipient, uint32 rdist, uint32 depth, uint32 diff) internal{
+                recDagVoteCount[recipient][recDagVoteDistDiff[recipient]+rdist][recDagVoteDepthDiff[recipient]+depth] -= diff;
             }
 
         ///////////// Votes
 
-            function setSentDagVote(address voter, uint32 dist, uint32 depth, uint32 sPos, address recipient, uint32 weight, uint32 rPos) internal{
-                sentDagVote[voter][sentDagVoteDistDiff[voter]+dist][sentDagVoteDepthDiff[voter]+depth][sPos] = DagVote({id: recipient, weight: weight, posInOther: rPos});
+            function setSentDagVote(address voter, uint32 sdist, uint32 depth, uint32 sPos, address recipient, uint32 weight, uint32 rPos) internal{
+                sentDagVote[voter][sentDagVoteDistDiff[voter]+sdist][sentDagVoteDepthDiff[voter]+depth][sPos] = DagVote({id: recipient, weight: weight, posInOther: rPos});
             }
 
-            function setRecDagVote(address recipient, uint32 dist, uint32 depth, uint32 rPos, address voter, uint32 weight, uint32 sPos) internal{
-                recDagVote[recipient][recDagVoteDistDiff[recipient]+dist][recDagVoteDepthDiff[recipient]+depth][rPos] = DagVote({id: voter, weight: weight, posInOther: sPos});
+            function setRecDagVote(address recipient, uint32 rdist, uint32 depth, uint32 rPos, address voter, uint32 weight, uint32 sPos) internal{
+                recDagVote[recipient][recDagVoteDistDiff[recipient]+rdist][recDagVoteDepthDiff[recipient]+depth][rPos] = DagVote({id: voter, weight: weight, posInOther: sPos});
             }
 
     ///////////// Single vote changes
         //////////// appending a vote
 
-            function sentDagAppend(address voter, uint32 dist, uint32 depth, address recipient, uint32 weight, uint32 rPos ) internal{
-                setSentDagVote( voter, dist, depth, readSentDagVoteCount(voter, dist , depth), recipient, weight, rPos); 
-                increaseSentDagVoteCount(voter, dist, depth, 1);
+            function sentDagAppend(address voter, uint32 sdist, uint32 depth, address recipient, uint32 weight, uint32 rPos ) internal{
+                setSentDagVote( voter, sdist, depth, readSentDagVoteCount(voter, sdist , depth), recipient, weight, rPos); 
+                increaseSentDagVoteCount(voter, sdist, depth, 1);
             }
 
-            function recDagAppend(address recipient, uint32 dist, uint32 depth, address voter, uint32 weight, uint32 sPos ) public{
-                setRecDagVote(recipient, dist, depth, readRecDagVoteCount(recipient, dist , depth), voter, weight, sPos);
-                increaseRecDagVoteCount(recipient, dist, depth, 1);
+            function recDagAppend(address recipient, uint32 rdist, uint32 depth, address voter, uint32 weight, uint32 sPos ) public{
+                setRecDagVote(recipient, rdist, depth, readRecDagVoteCount(recipient, rdist , depth), voter, weight, sPos);
+                increaseRecDagVoteCount(recipient, rdist, depth, 1);
             }
 
-            function combinedDagAppend(address voter, address recipient,  uint32 dist, uint32 depth, uint32 weight) internal{
-                sentDagAppend(voter, dist, depth, recipient, weight, readRecDagVoteCount(recipient, dist, depth));
-                recDagAppend(recipient, dist, depth, voter, weight,  readSentDagVoteCount(voter, dist, depth)-1);
+            function combinedDagAppend(address voter, address recipient,  uint32 sdist, uint32 depth, uint32 weight) internal{
+                sentDagAppend(voter, sdist, depth, recipient, weight, readRecDagVoteCount(recipient, sdist-depth, depth));
+                recDagAppend(recipient, sdist-depth, depth, voter, weight,  readSentDagVoteCount(voter, sdist, depth)-1);
             }
 
         //////////// changing position
 
-            function changePositionSent(address voter, uint32 dist,  uint32 depth, uint32 sPos, uint32 newRPos) internal {
-                sentDagVote[voter][sentDagVoteDistDiff[voter]+ dist][sentDagVoteDepthDiff[voter]+depth][sPos].posInOther = newRPos;
+            function changePositionSent(address voter, uint32 sdist,  uint32 depth, uint32 sPos, uint32 newRPos) internal {
+                sentDagVote[voter][sentDagVoteDistDiff[voter]+ sdist][sentDagVoteDepthDiff[voter]+depth][sPos].posInOther = newRPos;
             }
 
-            function changePositionRec(address recipient, uint32 dist, uint32 depth, uint32 rPos, uint32 newSPos) internal{
-                recDagVote[recipient][recDagVoteDistDiff[recipient]+ dist][recDagVoteDepthDiff[recipient]+depth][rPos].posInOther = newSPos;
+            function changePositionRec(address recipient, uint32 rdist, uint32 depth, uint32 rPos, uint32 newSPos) internal{
+                recDagVote[recipient][recDagVoteDistDiff[recipient]+ rdist][recDagVoteDepthDiff[recipient]+depth][rPos].posInOther = newSPos;
             }   
 
         
@@ -477,144 +519,144 @@ contract Anthill {
             ///// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
             
             /// careful, does not delete the opposite! Do not call, call unsafeReplace..  or safeRemove.. instead
-            function unsafeDeleteLastSentDagVoteAtDistDepth(address voter, uint32 dist, uint32 depth) internal {
-                delete sentDagVote[voter][sentDagVoteDistDiff[voter]+ dist][sentDagVoteDepthDiff[voter]+depth][readSentDagVoteCount(voter, dist, depth)-1];
+            function unsafeDeleteLastSentDagVoteAtDistDepth(address voter, uint32 sdist, uint32 depth) internal {
+                delete sentDagVote[voter][sentDagVoteDistDiff[voter]+ sdist][sentDagVoteDepthDiff[voter]+depth][readSentDagVoteCount(voter, sdist, depth)-1];
             }
 
             /// careful, does not delete the opposite! Do not call, call unsafeReplace..  or safeRemove.. instead
-            function unsafeDeleteLastRecDagVoteAtDistDepth(address recipient, uint32 dist, uint32 depth) internal {
-                delete recDagVote[recipient][recDagVoteDistDiff[recipient]+ dist][recDagVoteDepthDiff[recipient]+depth][readRecDagVoteCount(recipient, dist, depth)-1];
+            function unsafeDeleteLastRecDagVoteAtDistDepth(address recipient, uint32 rdist, uint32 depth) internal {
+                delete recDagVote[recipient][recDagVoteDistDiff[recipient]+ rdist][recDagVoteDepthDiff[recipient]+depth][readRecDagVoteCount(recipient, rdist, depth)-1];
             }   
 
             // careful does not delete the opposite! Always call with opposite, or do something with the other vote
-            function unsafeReplaceSentDagVoteAtDistDepthPosWithLast(address voter, uint32 dist, uint32 depth, uint32 sPos) internal {
+            function unsafeReplaceSentDagVoteAtDistDepthPosWithLast(address voter, uint32 sdist, uint32 depth, uint32 sPos) internal {
                 // find the vote we delete
-                DagVote memory sDagVote = readSentDagVote(voter, dist, depth, sPos);
+                DagVote memory sDagVote = readSentDagVote(voter, sdist, depth, sPos);
                 
                 sentDagVoteTotalWeight[voter] -= sDagVote.weight;
-                if (sPos!= readSentDagVoteCount(voter, dist, depth)-1) {
+                if (sPos!= readSentDagVoteCount(voter, sdist, depth)-1) {
                     // if we delete a vote in the middle, we need to copy the last vote to the deleted position
-                    (,, DagVote memory copiedSentDagVote) = findLastSentDagVoteAtDistDepth(voter, dist, depth);
-                    setSentDagVote(voter, dist, depth, sPos, copiedSentDagVote.id, copiedSentDagVote.weight, copiedSentDagVote.posInOther);
-                    changePositionRec(copiedSentDagVote.id , dist, depth, copiedSentDagVote.posInOther, sPos);
+                    (,, DagVote memory copiedSentDagVote) = findLastSentDagVoteAtDistDepth(voter, sdist, depth);
+                    setSentDagVote(voter, sdist, depth, sPos, copiedSentDagVote.id, copiedSentDagVote.weight, copiedSentDagVote.posInOther);
+                    changePositionRec(copiedSentDagVote.id , sdist-depth, depth, copiedSentDagVote.posInOther, sPos);
                 }
                 
                 // delete the potentially copied hence duplicate last vote
-                unsafeDeleteLastSentDagVoteAtDistDepth(voter, dist, depth);
-                decreaseSentDagVoteCount(voter, dist, depth, 1);
+                unsafeDeleteLastSentDagVoteAtDistDepth(voter, sdist, depth);
+                decreaseSentDagVoteCount(voter, sdist, depth, 1);
             } 
 
             /// careful, does not delete the opposite!
-            function unsafeReplaceRecDagVoteAtDistDepthPosWithLast(address recipient, uint32 dist, uint32 depth, uint32 rPos) public {
-                if (rPos != readRecDagVoteCount(recipient, dist, depth)-1) {
-                    (,, DagVote memory copiedRecDagVote) = findLastRecDagVoteAtDistDepth(recipient, dist, depth);
-                    setRecDagVote(recipient, dist, depth, rPos, copiedRecDagVote.id, copiedRecDagVote.weight, copiedRecDagVote.posInOther);
-                    changePositionSent(copiedRecDagVote.id , dist, depth, copiedRecDagVote.posInOther, rPos); 
+            function unsafeReplaceRecDagVoteAtDistDepthPosWithLast(address recipient, uint32 rdist, uint32 depth, uint32 rPos) public {
+                if (rPos != readRecDagVoteCount(recipient, rdist, depth)-1) {
+                    (,, DagVote memory copiedRecDagVote) = findLastRecDagVoteAtDistDepth(recipient, rdist, depth);
+                    setRecDagVote(recipient, rdist, depth, rPos, copiedRecDagVote.id, copiedRecDagVote.weight, copiedRecDagVote.posInOther);
+                    changePositionSent(copiedRecDagVote.id , rdist+depth, depth, copiedRecDagVote.posInOther, rPos); 
                 }
 
                 // delete the the potentially copied hence duplicate last vote
-                unsafeDeleteLastRecDagVoteAtDistDepth(recipient, dist, depth);
-                decreaseRecDagVoteCount(recipient, dist, depth, 1);
+                unsafeDeleteLastRecDagVoteAtDistDepth(recipient, rdist, depth);
+                decreaseRecDagVoteCount(recipient, rdist, depth, 1);
             } 
 
-            function safeRemoveSentDagVoteAtDistDepthPos(address voter, uint32 dist, uint32 depth, uint32 sPos) internal {
-                DagVote memory sDagVote = readSentDagVote(voter,dist, depth, sPos);
-                unsafeReplaceSentDagVoteAtDistDepthPosWithLast(voter, dist, depth, sPos);
+            function safeRemoveSentDagVoteAtDistDepthPos(address voter, uint32 sdist, uint32 depth, uint32 sPos) internal {
+                DagVote memory sDagVote = readSentDagVote(voter,sdist, depth, sPos);
+                unsafeReplaceSentDagVoteAtDistDepthPosWithLast(voter, sdist, depth, sPos);
                 // delete the opposite
-                unsafeReplaceRecDagVoteAtDistDepthPosWithLast(sDagVote.id, dist, depth, sDagVote.posInOther);
+                unsafeReplaceRecDagVoteAtDistDepthPosWithLast(sDagVote.id, sdist-depth, depth, sDagVote.posInOther);
             }
 
-            function safeRemoveRecDagVoteAtDistDepthPos(address recipient, uint32 dist, uint32 depth, uint32 rPos) internal {
-                DagVote memory rDagVote = readRecDagVote(recipient, dist, depth, rPos);
-                unsafeReplaceRecDagVoteAtDistDepthPosWithLast(recipient, dist, depth, rPos);
+            function safeRemoveRecDagVoteAtDistDepthPos(address recipient, uint32 rdist, uint32 depth, uint32 rPos) internal {
+                DagVote memory rDagVote = readRecDagVote(recipient, rdist, depth, rPos);
+                unsafeReplaceRecDagVoteAtDistDepthPosWithLast(recipient, rdist, depth, rPos);
                 // delete the opposite
-                unsafeReplaceSentDagVoteAtDistDepthPosWithLast(rDagVote.id, dist, depth, rDagVote.posInOther);
+                unsafeReplaceSentDagVoteAtDistDepthPosWithLast(rDagVote.id, rdist+depth, depth, rDagVote.posInOther);
             }
 
         //////////// change dist and depth
-            function changeDistDepthSent(address voter, uint32 dist, uint32 depth, uint32 sPos, address recipient, uint32 rPos, uint32 weight, uint32 newDist, uint32 newDepth) public{
+            function changeDistDepthSent(address voter, uint32 sdist, uint32 depth, uint32 sPos, address recipient, uint32 rPos, uint32 weight, uint32 newSDist, uint32 newDepth) public{
                 // here it is ok to use unsafe, as the the vote is moved, not removed
-                unsafeReplaceSentDagVoteAtDistDepthPosWithLast(voter, dist, depth, sPos);                
-                sentDagAppend(voter, newDist, newDepth, recipient, weight, rPos);
+                unsafeReplaceSentDagVoteAtDistDepthPosWithLast(voter, sdist, depth, sPos);                
+                sentDagAppend(voter, newSDist, newDepth, recipient, weight, rPos);
                 sentDagVoteTotalWeight[voter] += weight;
             }
 
-            function changeDistDepthRec(address recipient, uint32 dist, uint32 depth, uint32 rPos, address voter, uint32 sPos, uint32 weight, uint32 newDist, uint32 newDepth) public{
+            function changeDistDepthRec(address recipient, uint32 rdist, uint32 depth, uint32 rPos, address voter, uint32 sPos, uint32 weight, uint32 newRDist, uint32 newDepth) public{
                 // here it is ok to use unsafe, as the the vote is moved, not removed
-                unsafeReplaceRecDagVoteAtDistDepthPosWithLast(recipient, dist, depth, rPos);                
-                recDagAppend(recipient, newDist, newDepth, voter, weight, sPos);
+                unsafeReplaceRecDagVoteAtDistDepthPosWithLast(recipient, rdist, depth, rPos);                
+                recDagAppend(recipient, newRDist, newDepth, voter, weight, sPos);
             }
 
     ///////////// Cell removal and handler functions 
         /////////// removal 
             // to remove a row of votes from the sentDagVote array, and the corresponding votes from the recDagVote arrays
-            function removeSentDagVoteCell(address voter, uint32 dist, uint32 depth) internal {
-                if (readSentDagVoteCount(voter, dist, depth) == 0) {
+            function removeSentDagVoteCell(address voter, uint32 sdist, uint32 depth) internal {
+                if (readSentDagVoteCount(voter, sdist, depth) == 0) {
                     return;
                 }
-                for (uint32 i = readSentDagVoteCount(voter, dist, depth); 1 <= i; i--) {
-                    safeRemoveSentDagVoteAtDistDepthPos(voter, dist, depth, i-1);
+                for (uint32 i = readSentDagVoteCount(voter, sdist, depth); 1 <= i; i--) {
+                    safeRemoveSentDagVoteAtDistDepthPos(voter, sdist, depth, i-1);
                 }
             }
 
             // to remove a row of votes from the recDagVote array, and the corresponding votes from the sentDagVote arrays
-            function removeRecDagVoteCell(address recipient, uint32 dist, uint32 depth) public {
-                if (readRecDagVoteCount(recipient, dist, depth) == 0) {
+            function removeRecDagVoteCell(address recipient, uint32 rdist, uint32 depth) public {
+                if (readRecDagVoteCount(recipient, rdist, depth) == 0) {
                     return;
                 }
-                for (uint32 i =  readRecDagVoteCount(recipient, dist, depth); 1 <= i; i--){
-                    safeRemoveRecDagVoteAtDistDepthPos(recipient, dist, depth, i-1);
+                for (uint32 i =  readRecDagVoteCount(recipient, rdist, depth); 1 <= i; i--){
+                    safeRemoveRecDagVoteAtDistDepthPos(recipient, rdist, depth, i-1);
                 }
             }
 
         /////////// merge split
             // merge recDagVoteCell on diagonal right
-            function mergeRecDagVoteDiagonalCell(address recipient, uint32 dist) public {
-                if (readRecDagVoteCount(recipient, dist, dist) == 0) {
-                    return;
-                }         
-                for (uint32 i = readRecDagVoteCount(recipient, dist, dist); 1 <= i; i--) {
+            function mergeRecDagVoteDiagonalCell(address recipient, uint32 rdist) public {
+            //     if (readRecDagVoteCount(recipient, rdist, rdist) == 0) {
+            //         return;
+            //     }         
+            //     for (uint32 i = readRecDagVoteCount(recipient, rdist, rdist); 1 <= i; i--) {
 
-                    DagVote memory rDagVote = readRecDagVote(recipient, dist, dist, i-1);
+            //         DagVote memory rDagVote = readRecDagVote(recipient, rdist, rdist, i-1);
 
-                    safeRemoveRecDagVoteAtDistDepthPos(recipient, dist, dist, i-1);
-                    combinedDagAppend(rDagVote.id, recipient, dist+1, dist, rDagVote.weight);
-                    sentDagVoteTotalWeight[rDagVote.id] += rDagVote.weight;
-                }
+            //         safeRemoveRecDagVoteAtDistDepthPos(recipient, rdist, rdist, i-1);
+            //         combinedDagAppend(rDagVote.id, recipient, rdist+1, rdist, rDagVote.weight);
+            //         sentDagVoteTotalWeight[rDagVote.id] += rDagVote.weight;
+            //     }
             }
 
-            function splitRecDagVoteDiagonalCell(address recipient, uint32 dist, address checkAnscestor) internal {
-                if (readRecDagVoteCount(recipient, dist, dist) == 0) {
-                    return;
-                }
+            function splitRecDagVoteDiagonalCell(address recipient, uint32 dist, address checkAnscestor) public {
+            //     if (readRecDagVoteCount(recipient, dist, dist) == 0) {
+            //         return;
+            //     }
                 
-                for (uint32 i = readRecDagVoteCount(recipient, dist, dist);  1<=i ; i--) {
-                    DagVote memory rDagVote = readRecDagVote(recipient, dist, dist, i-1);
-                    if (findNthParent(rDagVote.id, dist-1) == checkAnscestor){
-                        safeRemoveRecDagVoteAtDistDepthPos(recipient, dist, dist, i-1);
+            //     for (uint32 i = readRecDagVoteCount(recipient, dist, dist);  1<=i ; i--) {
+            //         DagVote memory rDagVote = readRecDagVote(recipient, dist, dist, i-1);
+            //         if (findNthParent(rDagVote.id, dist-1) == checkAnscestor){
+            //             safeRemoveRecDagVoteAtDistDepthPos(recipient, dist, dist, i-1);
                         
-                        // this is over the diagonal, but we will push the frame up
-                        combinedDagAppend(rDagVote.id, recipient, dist-1, dist, rDagVote.weight);
-                        sentDagVoteTotalWeight[rDagVote.id] += rDagVote.weight;
-                    }
-                }
+            //             // this is over the diagonal, but we will push the frame up
+            //             combinedDagAppend(rDagVote.id, recipient, dist-1, dist, rDagVote.weight);
+            //             sentDagVoteTotalWeight[rDagVote.id] += rDagVote.weight;
+            //         }
+            //     }
             }
 
         
         /////////// dist depth on opposite 
-            function changeDistDepthFromSentCellOnOp(address voter, uint32 dist, uint32 depth, uint32 oldDist, uint32 oldDepth) internal {
-                for (uint32 i = 0; i < readSentDagVoteCount(voter, dist, depth); i++) {
-                    DagVote memory sDagVote = readSentDagVote(voter, dist, depth, i);
-                    changeDistDepthRec(sDagVote.id, oldDist, oldDepth, sDagVote.posInOther, voter, i, sDagVote.weight, dist, depth);
-                    changePositionSent(voter, dist, depth, i, readRecDagVoteCount(sDagVote.id, dist, depth)-1);
+            function changeDistDepthFromSentCellOnOp(address voter, uint32 sdist, uint32 depth, uint32 oldSDist, uint32 oldDepth) internal {
+                for (uint32 i = 0; i < readSentDagVoteCount(voter, sdist, depth); i++) {
+                    DagVote memory sDagVote = readSentDagVote(voter, sdist, depth, i);
+                    changeDistDepthRec(sDagVote.id, oldSDist-oldDepth, oldDepth, sDagVote.posInOther, voter, i, sDagVote.weight, sdist-depth, depth);
+                    changePositionSent(voter, sdist, depth, i, readRecDagVoteCount(sDagVote.id, sdist-depth, depth)-1);
                 }
             }
 
-            function changeDistDepthFromRecCellOnOp(address recipient, uint32 dist, uint32 depth, uint32 oldDist, uint32 oldDepth) public {
-                for (uint32 i = 0; i < readRecDagVoteCount(recipient, dist, depth); i++) {
-                    DagVote memory rDagVote = readRecDagVote(recipient, dist, depth, i);
-                    changeDistDepthSent(rDagVote.id, oldDist, oldDepth, rDagVote.posInOther, recipient, i, rDagVote.weight, dist, depth);
-                    changePositionRec(recipient, dist, depth, i, readSentDagVoteCount(rDagVote.id, dist, depth)-1);
+            function changeDistDepthFromRecCellOnOp(address recipient, uint32 rdist, uint32 depth, uint32 oldRDist, uint32 oldDepth) public {
+                for (uint32 i = 0; i < readRecDagVoteCount(recipient, rdist, depth); i++) {
+                    DagVote memory rDagVote = readRecDagVote(recipient, rdist, depth, i);
+                    changeDistDepthSent(rDagVote.id, oldRDist+oldDepth, oldDepth, rDagVote.posInOther, recipient, i, rDagVote.weight, rdist-depth, depth);
+                    changePositionRec(recipient, rdist, depth, i, readSentDagVoteCount(rDagVote.id, rdist+depth, depth)-1);
 
                 }
             }
@@ -631,7 +673,7 @@ contract Anthill {
             }
 
             function removeRecDagVoteLineDepthEqualsValue(address voter, uint32 value) internal {
-                for (uint32 i = value; i <= MAX_REL_ROOT_DEPTH; i++) {
+                for (uint32 i = 1; i <= MAX_REL_ROOT_DEPTH-value; i++) {
                     removeRecDagVoteCell(voter, i, value);
                 }
             }
@@ -645,56 +687,91 @@ contract Anthill {
 
         ///////////// RecDagVotes Diagonal splitter, mergers
 
-            function mergeRecDagVoteDiagonal(address recipient) internal {
-                for (uint32 i = 1; i < MAX_REL_ROOT_DEPTH; i++) {
-                    mergeRecDagVoteDiagonalCell(recipient, i);
+            function mergeRecDagVoteDiagonal(address recipient) public {
+                // for (uint32 i = 1; i < MAX_REL_ROOT_DEPTH; i++) {
+                //     mergeRecDagVoteDiagonalCell(recipient, i);
 
-                }
-                removeRecDagVoteCell(recipient, MAX_REL_ROOT_DEPTH, MAX_REL_ROOT_DEPTH);
+                // }
+                // removeRecDagVoteCell(recipient, MAX_REL_ROOT_DEPTH, MAX_REL_ROOT_DEPTH);
             }
 
-            function splitRecDagVoteDiagonal(address recipient, address checkAnscestor) internal {
-                for (uint32 i = 2; i <= MAX_REL_ROOT_DEPTH; i++) {
-                    splitRecDagVoteDiagonalCell(recipient, i, checkAnscestor);
-                }
+            function splitRecDagVoteDiagonal(address recipient, address checkAnscestor) public {
+                // for (uint32 i = 2; i <= MAX_REL_ROOT_DEPTH; i++) {
+                //     splitRecDagVoteDiagonalCell(recipient, i, checkAnscestor);
+                // }
             }
              
 
         
     
-    ///////////// Depth and pos change across graph
-        function increaseDistDepthFromSentOnOp(address voter, uint32 distDiff, uint32 depthDiff) internal {
-            for (uint32 dist = 1; dist <= MAX_REL_ROOT_DEPTH; dist++) {
-                for (uint32 depth = 1; depth <= dist; depth++) {
-                    changeDistDepthFromSentCellOnOp(voter, dist, depth, dist-distDiff, depth-depthDiff);
+    ///////////// Area/whole triangle changers
+        ///////////// Removers
+            function removeSentDagVote(address voter) public {
+                for (uint32 i=1; i<=MAX_REL_ROOT_DEPTH; i++){
+                    for (uint32 j=1; j<=i; j++){
+                        removeSentDagVoteCell(voter, i, j);
+                    }
                 }
             }
-        }
 
-        function decreaseDistDepthFromSentOnOp(address voter, uint32 distDiff, uint32 depthDiff) internal {
-            for (uint32 dist = 1; dist <= MAX_REL_ROOT_DEPTH; dist++) {
-                for (uint32 depth = 1; depth <= dist; depth++) {
-                    changeDistDepthFromSentCellOnOp(voter, dist, depth, dist+distDiff, depth+depthDiff);
+            function removeRecDagVote(address recipient) public {
+                for (uint32 i=1; i<=MAX_REL_ROOT_DEPTH; i++){
+                    for (uint32 j=1; j<=MAX_REL_ROOT_DEPTH -i; j++){
+                        removeRecDagVoteCell(recipient, i, j);
+                    }
                 }
             }
-        }
 
-        function increaseDistDepthFromRecOnOp(address voter, uint32 distDiff, uint32 depthDiff) internal {
-            for (uint32 dist = 1; dist <= MAX_REL_ROOT_DEPTH; dist++) {
-                for (uint32 depth = 1; depth <= dist; depth++) {
-                    changeDistDepthFromRecCellOnOp(voter, dist, depth, dist-distDiff, depth-depthDiff);
-                }
-            }
-        }
 
-        function decreaseDistDepthFromRecOnOp(address voter, uint32 distDiff, uint32 depthDiff) internal {
-            for (uint32 dist = 1; dist <= MAX_REL_ROOT_DEPTH; dist++) {
-                for (uint32 depth = 1; depth <= dist; depth++) {
-                    changeDistDepthFromRecCellOnOp(voter, dist, depth, dist+distDiff, depth+depthDiff);
+        ///////////// Collapsing to, and sortging from columns
+            function collapseSentDagVoteIntoColumn(address voter, uint32 sdist) public {
+                // Todo
+            }
+
+            function sortSentDagVoteFromColumn(address voter, uint32 sdist) public {
+                // Todo
+            }
+
+            function collapseRecDagVoteIntoCulomn( address voter, uint32 rdist) public {
+                // todo 
+            }
+
+            function sortRecDagVoteFromCulomn( address voter, uint32 rdist) public {
+                // todo 
+            }
+        ///////////// Depth and pos change across graph
+            function increaseDistDepthFromSentOnOp(address voter, uint32 sdistDiff, uint32 depthDiff) internal {
+                for (uint32 dist = 1; dist <= MAX_REL_ROOT_DEPTH; dist++) {
+                    for (uint32 depth = 1; depth <= dist; depth++) {
+                        changeDistDepthFromSentCellOnOp(voter, dist, depth, dist-sdistDiff, depth-depthDiff);
+                    }
                 }
             }
-        }
-    ///////////// Combined dag vote handler for rising falling
+
+            function decreaseDistDepthFromSentOnOp(address voter, uint32 sdistDiff, uint32 depthDiff) internal {
+                for (uint32 dist = 1; dist <= MAX_REL_ROOT_DEPTH; dist++) {
+                    for (uint32 depth = 1; depth <= dist; depth++) {
+                        changeDistDepthFromSentCellOnOp(voter, dist, depth, dist+sdistDiff, depth+depthDiff);
+                    }
+                }
+            }
+
+            function increaseDistDepthFromRecOnOp(address voter, uint32 rdistDiff, uint32 depthDiff) internal {
+                for (uint32 dist = 1; dist <= MAX_REL_ROOT_DEPTH; dist++) {
+                    for (uint32 depth = 1; depth <= MAX_REL_ROOT_DEPTH- dist; depth++) {
+                        changeDistDepthFromRecCellOnOp(voter, dist, depth, dist-rdistDiff, depth-depthDiff);
+                    }
+                }
+            }
+
+            function decreaseDistDepthFromRecOnOp(address voter, uint32 rdistDiff, uint32 depthDiff) internal {
+                for (uint32 dist = 1; dist <= MAX_REL_ROOT_DEPTH; dist++) {
+                    for (uint32 depth = 1; depth <= MAX_REL_ROOT_DEPTH- dist; depth++) {
+                        changeDistDepthFromRecCellOnOp(voter, dist, depth, dist+rdistDiff, depth+depthDiff);
+                    }
+                }
+            }
+        ///////////// Combined dag vote handler for rising falling, 
         
         function handleDagVoteForFalling(address voter, address replacer) internal {
 
@@ -717,10 +794,13 @@ contract Anthill {
             // at this point the triangle is in its new position. 
             decreaseDistDepthFromSentOnOp(voter, 1, 1);          
 
+            // remove top right triangle
+            // merge diagonal parallelogram into column 
             mergeRecDagVoteDiagonal(voter);
             decreaseRecDagVoteDepthDiff(voter, 1);
             increaseDistDepthFromRecOnOp(voter, 0, 1);
         }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //// Dag externals
@@ -728,11 +808,11 @@ contract Anthill {
     function addDagVote(address voter, address recipient, uint32 weight) public {
         emit SimpleEventForUpdates("hello", 0);
 
-        (bool voted, uint32 dist, uint32 depth, , ) = findSentDagVote(voter, recipient);
-        assert (voted == false);
+        (bool votable, bool voted, uint32 sdist, uint32 depth, , ) = findSentDagVote(voter, recipient);
+        assert ((votable) && (voted == false));
 
         // add DagVotes. 
-        combinedDagAppend(voter, recipient, dist, depth, weight);
+        combinedDagAppend(voter, recipient, sdist, depth, weight);
         sentDagVoteTotalWeight[voter] += weight;
     }
 
@@ -741,16 +821,15 @@ contract Anthill {
         emit SimpleEventForUpdates("hello", 0);
         
         // find the votes we delete
-        (bool voted, uint32 dist, uint32 depth, uint32 sPos, ) = findSentDagVote(voter, recipient);
+        (, bool voted, uint32 sdist, uint32 depth, uint32 sPos, ) = findSentDagVote(voter, recipient);
         assert (voted == true);
 
-        safeRemoveSentDagVoteAtDistDepthPos(voter, dist, depth, sPos);
+        safeRemoveSentDagVoteAtDistDepthPos(voter, sdist, depth, sPos);
     }
 
-    // add jump inside local tree here, currently only keeping sentDagVotes
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-//// global internals 
+//// global readers 
 
 
     //////////////// reputation
@@ -761,7 +840,7 @@ contract Anthill {
             if (voter == address(0)) return 0;
 
             for (uint32 dist=0; dist< MAX_REL_ROOT_DEPTH; dist++){    
-                for (uint32 depth=0; depth<= MAX_REL_ROOT_DEPTH; depth++){
+                for (uint32 depth=0; depth<= MAX_REL_ROOT_DEPTH-dist; depth++){
                     for (uint32 count =0; count< readRecDagVoteCount(voter, dist, depth); count++) {
                     DagVote memory rDagVote = readRecDagVote(voter, dist, depth, count);
                         // emit SimpleEventForUpdates("hello", 9999999999999999999999999);
@@ -782,24 +861,71 @@ contract Anthill {
             reputation[voter] = voterReputation;
             return voterReputation;
         }
-    
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//// global internal
+    
+    function pullUpBranch(address pulledVoter) public {
+        // if (readRecTreeVoteCount(pulledVoter)==0) return; 
+        // emit SimpleEventForUpdates("pulling up branch for", uint160(pulledVoter));
+        address firstChild = readRecTreeVote(pulledVoter, 0);
+        address secondChild = readRecTreeVote(pulledVoter, 1);
+
+        if (firstChild!=address(0)){
+            
+            handleDagVoteForRising(firstChild);
+        
+            
+            pullUpBranch(firstChild);
+            
+
+            if (secondChild != address(0)){
+                removeTreeVote(secondChild);
+                addTreeVote(secondChild, firstChild);
+            }
+        }
+
+    }
+
+    function handleLeavingVoterBranch(address voter) public {
+        address parent = treeVote[voter];
+
+        removeTreeVote(voter);
+        treeVote[voter]=address(0);
+
+        address firstChild = readRecTreeVote(voter, 0);
+        address secondChild = readRecTreeVote(voter, 1);
+
+        if (firstChild!=address(0)){
+            
+            handleDagVoteForRising(firstChild);
+
+            removeTreeVote(firstChild);
+            addTreeVote(firstChild, parent);
+
+            pullUpBranch(firstChild);
+
+
+            if (secondChild != address(0)){
+                removeTreeVote(secondChild);
+                addTreeVote(secondChild, firstChild);
+            }
+
+        }
+    }
     
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //// global external
 
-    // function changeTreeVote(address voter, address recipient) external {
-    //     emit SimpleEventForUpdates("hello", 0);
-
-    //     assert (treeVote[voter] != address(0));
-    //     assert (treeVote[voter] != address(1));
-    //     assert (treeVote[recipient] != address(0));
-    //     assert (recTreeVoteCount[recipient] < 2);
-
-    //     // check if local
-    //     // if not
-    // }
     
+    function leaveTree(address voter) public {
+        emit SimpleEventForUpdates("hello", 0);
+        
+        removeSentDagVote(voter);
+        removeRecDagVote(voter);
+
+        handleLeavingVoterBranch(voter);
+    }
 
 
     function switchPositionWithParent(address voter) public {
@@ -812,46 +938,119 @@ contract Anthill {
         uint256 voterRep = calculateReputation(voter);
         uint256 parentRep = calculateReputation(parent);
 
-        if (voterRep > parentRep){
-            handleDagVoteForFalling(parent, voter);
-            handleDagVoteForRising(voter);
-        }
-
-        address gparent = treeVote[parent];
-        removeTreeVote(voter);
-
-        if (readRoot()== parent){
-            root= voter;
-        } else {
-            removeTreeVote(parent);
-        }
-
-        addTreeVoteWithoutCheck(voter, gparent);
-        addTreeVoteWithoutCheck(parent, voter);
-
-        if (readRoot()== parent){
-            root= voter;
-        }
-
-        for (uint32 i = 0; i < recTreeVoteCount[parent]; i++) {
-            address brother = recTreeVote[parent][i];
-            if (brother != voter) {
-                removeTreeVote(brother);
-                addTreeVoteWithoutCheck(brother, voter);
-            }
-        }
-
-        for (uint32 i = 0; i < recTreeVoteCount[voter]; i++) {
-            address child = recTreeVote[voter][i];
-            if (child != voter) {
-                removeTreeVote(child);
-                addTreeVoteWithoutCheck(child, parent);
-            }
-        }
+        assert (voterRep > parentRep);
+        
+        handleDagVoteForFalling(parent, voter);
+        handleDagVoteForRising(voter);
+        
+        switchTreeVoteWithParent(voter);
     }
 
-    function leaveTree(address voter) public {
+    function changeTreeVote(address voter, address recipient) external {
         emit SimpleEventForUpdates("hello", 0);
 
+        assert (treeVote[voter] != address(0));
+        assert (treeVote[voter] != address(1));
+
+        assert (treeVote[recipient] != address(0));
+        assert (recTreeVoteCount[recipient] < 2);
+
+        (address relRoot, ) = findRelRoot(voter);
+        (bool isLowerOrEqual, uint32 lowerDist, uint32 lowerDepth) = findSDistDepth(recipient, voter);
+        bool isAnscestor = (isLowerOrEqual &&(lowerDist == lowerDepth));
+        (bool isSimilar, uint32 simDist, uint32 simDepth) = findSDistDepth(voter, recipient);
+        (bool isHigher, uint32 higherDist, uint32 higherDepth) = findSDistDepth(recipient, relRoot);
+        uint32 higherDepthDiff = MAX_REL_ROOT_DEPTH - higherDepth;
+
+        if (isAnscestor){
+            // for (uint32 depth=lowerDepth; 0<depth; depth--){
+            //     address replacer = findNthParent(recipient, depth-1);
+            //     handleDagVoteForFalling(voter, replacer);
+            //     handleDagVoteForRising(replacer);
+            //     switchTreeVoteWithParent(replacer);
+            // }
+
+            // sent removing columns that are too far away 
+            // sent falling
+            // sent collapsing or sorting not needed, we get further from everyone
+
+            // rec remove rows that are lower than lowerDepth+1
+            // rec falling, here we also fall right. 
+            // rec no collapse needed, we don't get unequally futher from anyone
+            // rec sorting, left coloumns, one for each descendant we fall under, some become closer descendants, some don't. 
+
+        } else if (isLowerOrEqual){
+            // sent removing columns that are too high
+
+            // sentDag Array falling
+
+            // collapse bottomleft small triangle into a column
+            // sort this column 
+
+
+            // rec Dag Array higher rows (higher than MRD- jump dist) need to be emptied.
+            // rec Dag Arrau lower rows lower than lowerDepth
+            // rec Dag Array needs lowering, right and down
+            // rec collapse bottom left rectangle (the triangle cap on top has been removed) needs to be collapsed right. 
+            // rec sort the column we collapsed into. 
+
+        } else if (isSimilar){
+            // here we are automatically not falling, as isLowerOrEqual is false.
+
+            // sentDagVote
+            // remove rows with depth under simDepth
+            for (uint32 depth =1; depth < simDepth; depth++){
+                removeSentDagVoteLineDepthEqualsValue(voter, depth);
+            }
+
+            // rising
+            increaseSentDagVoteDepthDiff(voter, simDepth-1);
+            increaseSentDagVoteDistDiff(voter, simDepth-1);
+            decreaseDistDepthFromSentOnOp(voter, simDepth-1, simDepth-1);
+
+            //collapseSentDagVoteIntoColumn(voter, );
+            // for each depth cell in the collapsed column
+                //sortSentDagVoteFromColumn(voter, ); by specifiyng the depth parent, we can calculate the dist based on that. 
+
+            // recDagVote
+            // remove higher rows (higher than MRD-jump dist) need to be emptied.
+            for (uint32 depth =MAX_REL_ROOT_DEPTH - simDist; depth <=MAX_REL_ROOT_DEPTH; depth++){
+                removeRecDagVoteLineDepthEqualsValue(voter, depth);
+            }
+
+            // here we need to collapse the left hand rectangle (cap has been emptied) into a right column first
+            // rising,
+  
+            // now we sort the coloumn we collapsed into, by depth . 
+
+        } else if ((isHigher) && (higherDepthDiff > 1)){
+
+            // remove rows with depth under higherDepthDiff
+            for (uint32 depth =1; depth < higherDepthDiff; depth++){
+                removeSentDagVoteLineDepthEqualsValue(voter, depth);
+            }
+
+           
+            
+            // because of the rising, we need to change the graph. 
+            increaseSentDagVoteDepthDiff(voter, higherDepthDiff-1);
+            increaseSentDagVoteDistDiff(voter, higherDepthDiff-1);
+            decreaseDistDepthFromSentOnOp(voter, higherDepthDiff-1, higherDepthDiff-1);
+
+            // collapseSentDagVoteIntoColumn(voter, );
+            //sorting not required, as we are out of our original tree, so we cannot jump closer. 
+
+            
+            // rec dag array needs to be emptied completely.
+            removeRecDagVote(voter);
+            
+        }  else {
+            // we jumped out completely, remove all votes. 
+            removeSentDagVote(voter);
+            removeRecDagVote(voter);            
+        }
+        // handle tree votes
+        handleLeavingVoterBranch(voter);
+        addTreeVote(voter, recipient);
     }
 }

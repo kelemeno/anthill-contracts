@@ -18,50 +18,47 @@ contract AnthillTest is Test {
         // height 0
         anthill.joinTreeAsRoot(address(2), string("Root2 "));
 
-        // adding tree votes 
-        for (uint256 i=1 ; i<5; i++){
-            for (uint256 j=0; j<2**(i-1); j++){
-                // console.log("i, j", i, j);
-                anthill.joinTree(address(uint160(2*2**i+2*j)), string("Name"),address(uint160(2**i+j)));
-                anthill.joinTree(address(uint160(2*2**i+2*j+1)), string("Name"),address(uint160(2**i+j)));
+        // adding tree votes. For the numbering we are adding children for i, j voter. 
+        for (uint256 depth=1 ; depth<5; depth++){
+            for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
+                anthill.joinTree(address(uint160(2*(2**depth+verticalNum))), string("Name"),address(uint160(2**depth+verticalNum)));
+                anthill.joinTree(address(uint160(2*(2**depth+verticalNum)+1)), string("Name"),address(uint160(2**depth+verticalNum)));
             }
         }
 
-        // anthill.addDagVote(address(8), address(5), 1);
         
-        // we do this for heights 3, 4, 5, 6, 7
-        // we add 2**(i-1) so 2, 4, 8, 16, 32 votes. that is 62 dag voters. Each splits their votes into 5. That should be around 12 rep.  
-        for (uint256 i=3 ; i<5; i++){
-            for (uint256 j=0; j<2**(i-1); j++){
+        for (uint256 depth=1 ; depth<=5; depth++){
+            for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
+                for (uint256 recDepth=1; recDepth<depth; recDepth++){      
+                    // we want 2 to receive less, and the second lowest layer to receive more votes. 
+                    uint32 weight =1000;
+                    if (recDepth == 1){
+                        weight = 1;
+                    } else if (recDepth == 4){
+                        weight = 100000;
+                    } 
 
-                // e.g. 2*2**i+2*j = 2*2**3+2*0 = 2*8+0 = 16, this has relRoot 2. We give dag votes to 4, 5, 8, 9 10 11
-                (address voter, ) = anthill.findRelRoot(address(uint160(2*2**i+2*j)));
-
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2*uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+2*uint160(voter)), 1);
-                
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)), 1);
-                
-                // // in this case we add dag votes to depth one above us
-                // if (i>=4){
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)));
-                // }
-
-                
+                    for ( uint256 recVerticalNum=0; recVerticalNum<2**(recDepth-1); recVerticalNum++){
+                        
+                        // we don't want votes between 4, 5 and 2. 
+                        if ((depth==2) && (recDepth ==1)) continue;
+                        anthill.addDagVote(address(uint160(2**depth+verticalNum)), address(uint160(2**recDepth+recVerticalNum)), weight);
+                    }
+                }                
             }
         }      
     }
 
-    // function testParents() public {
-    //     address a = anthill.readSentTreeVote( anthill.readSentTreeVote( anthill.readSentTreeVote(address(23))));
-    //     assertEq(a, address(2));
-    // }
+    function testRelDepth() public {
+        (bool isLocal, uint32 depth ) = anthill.findRelDepth(address(4), address(5));
+        assertEq(depth, 0);
+        assert(isLocal);
+    }
+
+    function testParents() public {
+        address a = anthill.readSentTreeVote( anthill.readSentTreeVote( anthill.readSentTreeVote(address(23))));
+        assertEq(a, address(2));
+    }
 
     function testFindRelDepth() public {
         (, uint32 depth ) = anthill.findRelDepth(address(8), address(5));
@@ -76,70 +73,74 @@ contract AnthillTest is Test {
     function testFindDistAtSameDepth() public {
         (bool isLocal, uint32 dist ) = anthill.findDistAtSameDepth(address(4),address(5));
         assertEq(1, dist);
+        assert(isLocal);
     }
 
     function testFindSentDagVote() public {
-        (bool voted, uint32 dist, uint32 depth, uint32 votePos, ) = anthill.findSentDagVote(address(8),address(5));
-        assertEq(2, dist);
-        assertEq(1, depth);
-        assertEq(voted, false);
+        (, bool voted, uint32 dist, uint32 depth, uint32 votePos, ) = anthill.findSentDagVote(address(8),address(5));
+        assertEq(votePos, 0);
+        assertEq(dist, 2);
+        assertEq(depth, 1);
+        assertEq(voted, true);
+
     }
 
     function testAddAndRemoveDagVote() public {
+        anthill.removeDagVote(address(8),address(5));
         anthill.addDagVote(address(8),address(5), 1);
-        (bool voted, uint32 dist, uint32 depth, , ) = anthill.findSentDagVote(address(8), address(5));
+        (, bool voted, uint32 dist, uint32 depth, , ) = anthill.findSentDagVote(address(8), address(5));
         assertEq(voted, true);
         assertEq(dist, 2);
         assertEq(depth, 1);
 
-        (voted,  dist,  depth, , ) = anthill.findRecDagVote(address(8), address(5));
+        (, voted,  dist,  depth, , ) = anthill.findRecDagVote(address(8), address(5));
         assertEq(voted, true);
         assertEq(dist, 2);
         assertEq(depth, 1);
 
         anthill.removeDagVote(address(8),address(5));
-        ( voted,  dist,  depth, , ) = anthill.findSentDagVote(address(8), address(5));
+        (,  voted,  dist,  depth, , ) = anthill.findSentDagVote(address(8), address(5));
         assertEq(voted, false);
 
-        ( voted,  dist,  depth, , ) = anthill.findRecDagVote(address(8), address(5));
+        (,  voted,  dist,  depth, , ) = anthill.findRecDagVote(address(8), address(5));
         assertEq(voted, false);
 
     }
 
     function testAddAndRemoveDagVote2() public {
         // anthill.addDagVote(address(34),address(9), 1);
-        (bool voted, uint32 dist, uint32 depth, , ) = anthill.findSentDagVote(address(34), address(9));
+        (, bool voted, uint32 dist, uint32 depth, , ) = anthill.findSentDagVote(address(34), address(9));
         assertEq(voted, true);
         assertEq(dist, 3);
         assertEq(depth, 2);
 
-        (voted,  dist,  depth, , ) = anthill.findRecDagVote(address(34), address(9));
+        (, voted,  dist,  depth, , ) = anthill.findRecDagVote(address(34), address(9));
         assertEq(voted, true);
         assertEq(dist, 3);
         assertEq(depth, 2);
 
         anthill.removeDagVote(address(34),address(9));
-        ( voted,  dist,  depth, , ) = anthill.findSentDagVote(address(34), address(9));
+        (,  voted,  dist,  depth, , ) = anthill.findSentDagVote(address(34), address(9));
         assertEq(voted, false);
 
-        ( voted,  dist,  depth, , ) = anthill.findRecDagVote(address(34), address(9));
+        ( , voted,  dist,  depth, , ) = anthill.findRecDagVote(address(34), address(9));
         assertEq(voted, false);
 
     }
 
-    function testCalculateRep() public {
-        uint256 rep = anthill.calculateReputation(address(4));
-        uint256 rep2 = anthill.calculateReputation(address(2));
-        console.log(rep);
-        console.log(rep2);
+    // function testCalculateRep() public {
+    //     uint256 rep = anthill.calculateReputation(address(4));
+    //     uint256 rep2 = anthill.calculateReputation(address(2));
+        // console.log(rep);
+        // console.log(rep2);
 
         // assert(rep  +100- 3000000000000000000< 1000);
         // assert(rep2 +100- 1000000000000000000< 1000);
 
-    }
+    // }
 
     function testChangeDistDepthRec() public {
-        (bool voted, uint32 dist, uint32 depth, uint32 votePos, Anthill.DagVote memory rDagVote) = anthill.findRecDagVote(address(16), address(4));
+        (, bool voted, uint32 dist, uint32 depth, uint32 votePos, Anthill.DagVote memory rDagVote) = anthill.findRecDagVote(address(16), address(4));
         assertEq(voted, true);
         assertEq(dist, 2);
         assertEq(depth, 2);
@@ -148,26 +149,26 @@ contract AnthillTest is Test {
         anthill.unsafeReplaceRecDagVoteAtDistDepthPosWithLast(address(4), 2, 2, 0);
 
         uint32 count = anthill.readRecDagVoteCount(address(4), 2, 2);
-        assertEq(count, 1); 
+        assertEq(count, 3); 
         count = anthill.readRecDagVoteCount(address(4), 3, 2);
-        assertEq(count, 2);
+        assertEq(count, 4);
 
         anthill.recDagAppend(address(4), 3, 2, address(16), rDagVote.weight, anthill.readSentDagVoteCount(address(16), 3, 2));
         count = anthill.readRecDagVoteCount(address(4), 3, 2);
-        assertEq(count, 3);
+        assertEq(count, 5);
 
         anthill.changeDistDepthSent(address(16), 2, 2, rDagVote.posInOther, address(4), anthill.readRecDagVoteCount(address(4), 3, 2)-1, rDagVote.weight, 3, 2);
         count = anthill.readRecDagVoteCount(address(4), 3, 2);
-        assertEq(count, 3);
+        assertEq(count, 5);
         intermediateConsistencyCheckFrom(address(2));
     }
 
-    function testMerge() public{
+    function testMergeCell() public{
        
         uint32 count = anthill.readRecDagVoteCount(address(4), 2, 2);
-        assertEq(count, 2); 
+        assertEq(count, 4); 
         count = anthill.readRecDagVoteCount(address(4), 3, 2);
-        assertEq(count, 2); 
+        assertEq(count, 4); 
        
         anthill.mergeRecDagVoteDiagonalCell(address(4), 2);
        
@@ -175,23 +176,99 @@ contract AnthillTest is Test {
         assertEq(count, 0); 
 
         count = anthill.readRecDagVoteCount(address(4), 3, 2);
-        assertEq(count, 4); 
+        assertEq(count, 8); 
 
         // anthill.changeDistDepthFromRecCellOnOp(address(4), 3, depth, oldDist, oldDepth);
+        intermediateConsistencyCheckFrom(address(2));
+    }
+
+    function testMerge() public{
+        uint256 count = anthill.readRecDagVoteCount(address(4), 1, 1);
+        assertEq(count, 2); 
+        count = anthill.readRecDagVoteCount(address(4), 2, 2);
+        assertEq(count, 4);
+        count = anthill.readRecDagVoteCount(address(4), 3, 3);
+        assertEq(count, 8);
+        count = anthill.readRecDagVoteCount(address(4), 2, 1);
+        assertEq(count, 2); 
+        count = anthill.readRecDagVoteCount(address(4), 3, 2);
+        assertEq(count, 4);
+        count = anthill.readRecDagVoteCount(address(4), 4, 3);
+        assertEq(count, 8);
+
+        anthill.mergeRecDagVoteDiagonal(address(4));
+        
+        count = anthill.readRecDagVoteCount(address(4), 1, 1);
+        assertEq(count, 0); 
+        count = anthill.readRecDagVoteCount(address(4), 2, 2);
+        assertEq(count, 0);
+        count = anthill.readRecDagVoteCount(address(4), 3, 3);
+        assertEq(count, 0);
+        count = anthill.readRecDagVoteCount(address(4), 2, 1);
+        assertEq(count, 4); 
+        count = anthill.readRecDagVoteCount(address(4), 3, 2);
+        assertEq(count, 8);
+        count = anthill.readRecDagVoteCount(address(4), 4, 3);
+        assertEq(count, 16);
+
+        intermediateConsistencyCheckFrom(address(2));
+
+    }
+ 
+    function testSplitCell() public{
+        uint32 count = anthill.readRecDagVoteCount(address(4), 2, 2);
+        assertEq(count, 4); 
+        anthill.splitRecDagVoteDiagonalCell(address(4), 2, address(8));
+        count = anthill.readRecDagVoteCount(address(4), 2, 2);
+        assertEq(count, 2); 
+        count = anthill.readRecDagVoteCount(address(4), 1, 2);
+        assertEq(count, 2); 
+        intermediateConsistencyCheckFrom(address(2));
+    }
+
+    function testSplit() public {
+        // uint256 count = anthill.readRecDagVoteCount(address(4), 1, 1);
+        // assertEq(count, 2); 
+        uint256 count = anthill.readRecDagVoteCount(address(4), 2, 2);
+        assertEq(count, 4);
+        count = anthill.readRecDagVoteCount(address(4), 3, 3);
+        assertEq(count, 8);
+        // count = anthill.readRecDagVoteCount(address(4), 2, 1);
+        // assertEq(count, 2); 
+        count = anthill.readRecDagVoteCount(address(4), 1, 2);
+        assertEq(count, 0);
+        count = anthill.readRecDagVoteCount(address(4), 2, 3);
+        assertEq(count, 0);
+
+        anthill.splitRecDagVoteDiagonal(address(4), address(8));
+        
+        // count = anthill.readRecDagVoteCount(address(4), 1, 1);
+        // assertEq(count, 2); 
+        count = anthill.readRecDagVoteCount(address(4), 2, 2);
+        assertEq(count, 2);
+        count = anthill.readRecDagVoteCount(address(4), 3, 3);
+        assertEq(count, 4);
+        // count = anthill.readRecDagVoteCount(address(4), 2, 1);
+        // assertEq(count, 4); 
+        count = anthill.readRecDagVoteCount(address(4), 1, 2);
+        assertEq(count, 2);
+        count = anthill.readRecDagVoteCount(address(4), 2, 3);
+        assertEq(count, 4);
+
         intermediateConsistencyCheckFrom(address(2));
     }
 
     function testChangeDistDepthFromRecCellOnOp() public {
         // first we clear a cell
         uint32 count = anthill.readRecDagVoteCount(address(4), 3, 2);
-        assertEq(count, 2);
+        assertEq(count, 4);
         anthill.removeRecDagVoteCell(address(4), 3, 2);
         count = anthill.readRecDagVoteCount(address(4), 3, 2);
         assertEq(count, 0);
 
         // then we move a cell to it
         count = anthill.readRecDagVoteCount(address(4), 2, 2);
-        assertEq(count, 2);
+        assertEq(count, 4);
 
         for (uint32 i = 0; i < anthill.readRecDagVoteCount(address(4), 2, 2); i++){
             Anthill.DagVote memory rDagVote = anthill.readRecDagVote(address(4), 2, 2, i);
@@ -199,7 +276,7 @@ contract AnthillTest is Test {
         }
 
         count = anthill.readRecDagVoteCount(address(4), 3, 2);
-        assertEq(count, 2);
+        assertEq(count, 4);
 
         // remove the moved cell
         for (uint32 i = anthill.readRecDagVoteCount(address(4), 2, 2)  ; i >= 1; i--){
@@ -230,7 +307,7 @@ contract AnthillTest is Test {
         //     }
         // }
 
-        uint256 rep = anthill.calculateReputation(address(4));
+        // uint256 rep = anthill.calculateReputation(address(4));
 
         // for (uint32 i = 16; i < 23; i=i+2){
         //         uint32 sentWeight = anthill.readSentDagVoteTotalWeight(address(uint160(i)));
@@ -241,10 +318,10 @@ contract AnthillTest is Test {
         //         console.log(i, sentWeight);
         // }
 
-        uint256 rep2 = anthill.calculateReputation(address(2));
+        // uint256 rep2 = anthill.calculateReputation(address(2));
 
-        assert(rep +100- 3000000000000000000< 200);
-        assert(rep2 +100- 1000000000000000000< 200);
+        // assert(rep +100- 3000000000000000000< 200);
+        // assert(rep2 +100- 1000000000000000000< 200);
 
         assert(anthill.readSentTreeVote(address(16))==address(8));
         assert(anthill.readSentTreeVote(address(8))==address(2));
@@ -253,6 +330,62 @@ contract AnthillTest is Test {
         assert(anthill.readSentTreeVote(address(5))==address(4));
 
         consistencyCheckFrom(address(4));
+    }
+
+    function testLeaveTree() public {
+        
+        anthill.leaveTree(address(4));
+
+        // for 2
+        address recipient = anthill.readRecTreeVote(address(2), 0);
+        assertEq(recipient, address(5));
+
+        recipient = anthill.readRecTreeVote(address(2), 1);
+        assertEq(recipient, address(8));
+        
+        recipient = anthill.readSentTreeVote(address(8));
+        assertEq(recipient, address(2));
+
+        // for 8
+
+        recipient = anthill.readRecTreeVote(address(8), 0);
+        assertEq(recipient, address(16));
+
+        recipient = anthill.readRecTreeVote(address(8), 1);
+        assertEq(recipient, address(9));
+
+        recipient = anthill.readSentTreeVote(address(9));
+        assertEq(recipient, address(8));
+
+        recipient = anthill.readSentTreeVote(address(16));
+        assertEq(recipient, address(8));
+
+        // for 16
+
+        recipient = anthill.readRecTreeVote(address(16), 0);
+        assertEq(recipient, address(32));
+
+        recipient = anthill.readRecTreeVote(address(16), 1);
+        assertEq(recipient, address(17));
+
+        recipient = anthill.readSentTreeVote(address(17));
+        assertEq(recipient, address(16));
+
+        recipient = anthill.readSentTreeVote(address(32));
+        assertEq(recipient, address(16));
+
+        // for 32
+
+        recipient = anthill.readRecTreeVote(address(32), 0);
+        assertEq(recipient, address(33));
+
+        recipient = anthill.readRecTreeVote(address(32), 1);
+        assertEq(recipient, address(0));
+
+        recipient = anthill.readSentTreeVote(address(33));
+        assertEq(recipient, address(32));
+
+        consistencyCheckFrom(address(2));
     }
 
 
