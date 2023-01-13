@@ -315,15 +315,17 @@ contract AnthillTest is Test {
                 assertEq(svotepos ,  rDagVote.posInOther);
                 assertEq(votepos , sDagVote.posInOther);
                 
-                // we should not need to rise, we are in the same height. 
+                // we should not need to rise, we are staying in the same place
                 anthill.sortRecDagVoteColumn(address(8), 2, address(4));
+                anthill.sortRecDagVoteColumnDescendants(address(8), (address(8)));
+                // printRecDagVotes(address(8));
 
                 (voted,  votepos, rDagVote) = anthill.findRecDagVotePosAtDistDepth(address(18), address(8), 1, 1);
                 assert (voted);
                 ( svoted,  svotepos,  sDagVote) =anthill.findSentDagVotePosAtDistDepth(address(18), address(8), 2, 1 );
                 assert (svoted);
-                assertEq(svotepos ,  rDagVote.posInOther);
-                assertEq(votepos , sDagVote.posInOther);
+                assertEq(svotepos,  rDagVote.posInOther);
+                assertEq(votepos, sDagVote.posInOther);
 
                 // intermediateDagConsistencyCheckFrom(address(2));
                 dagConsistencyCheckFrom(address(2));
@@ -333,8 +335,21 @@ contract AnthillTest is Test {
         /////////// combined square handlers
 
             function testHandleDagVoteMoveRise() public {
+                (bool votable, bool voted, uint32 rdist,  uint32 depth, uint32 votePos, Anthill.DagVote memory sDagVote) = anthill.findRecDagVote(address(8), address(4));
+                assert (voted);
+                
+                // console.log("first read ok", voted);
                 anthill.handleDagVoteMoveRise(address(4), address(1), address(2), 1, 1);
-                // intermediateDagConsistencyCheckFrom(address(2));
+                // printRecDagVotes(address(2));
+                // read rec and sent votes from 8, 20, 5
+
+                (bool voted2, uint32 votePos2, Anthill.DagVote memory rDagVote) = anthill.findRecDagVotePosAtDistDepth(address(8), address(4), 0, 2);
+                assert (voted2);
+                // console.log("votePos: ", votePos);
+                // console.log("dagVote: ",sDagVote.id, sDagVote.posInOther);
+                
+
+                intermediateDagConsistencyCheckFrom(address(2));
             }
 
     ///////////////////////////////////////////
@@ -523,8 +538,8 @@ contract AnthillTest is Test {
                     assertEq(rDagVote.weight, sDagVote.weight);
                     assertEq(rDagVote.posInOther, i);
 
-                    // assertEq(recordedDist, dist);
-                    // assertEq(recordedDepth, depth);
+                    assertEq(recordedDist, dist);
+                    assertEq(recordedDepth, depth);
                 }
 
                 for (uint32 i = 0; i < anthill.readRecDagVoteCount(voter, dist-depth, depth); i++){
@@ -548,6 +563,18 @@ contract AnthillTest is Test {
         for (uint32 i=0; i< anthill.readRecTreeVoteCount(voter); i++){
             dagConsistencyCheckFrom(anthill.readRecTreeVote(voter, i));
         } 
+    }
+
+    function printRecDagVotes(address voter) public view {
+        for (uint32 dist = 0; dist < 7; dist++){
+            for (uint32 depth = 0; depth <= 7; depth++){
+                for (uint32 i = 0; i < anthill.readRecDagVoteCount(voter, dist, depth); i++){
+                    Anthill.DagVote memory rDagVote = anthill.readRecDagVote(voter, dist, depth, i);
+                    console.log("rec dag vote: ", voter, dist, depth);
+                    console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
+                }
+            }
+        }
     }
 
     
