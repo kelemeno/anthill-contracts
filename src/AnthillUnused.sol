@@ -184,5 +184,173 @@ contract AnthillUnused {
 //                         addTreeVote(voter, recipient);
 //                     }
 //         /// CURRENTLY NOT USED END
-   
+
+
+//  if (isAnscestor){
+//             handleDagVoteMoveFall(voter, recipient, address(0), lowerDist, lowerDepth);
+//             // for (uint32 depth=lowerDepth; 0<depth; depth--){
+//             //     address replacer = findNthParent(recipient, depth-1);
+//             //     handleDagVoteForFalling(voter, replacer);
+//             //     handleDagVoteForRising(replacer);
+//             //     switchTreeVoteWithParent(replacer);
+//             // }
+
+//             // sent removing columns that are too far away 
+//             // sent falling
+//             // sent collapsing or sorting not needed, we get further from everyone
+
+//             // rec remove rows that are lower than lowerDepth+1
+//             // rec falling, here we also fall right. 
+//             // rec no collapse needed, we don't get unequally futher from anyone
+//             // rec sorting, left coloumns, one for each descendant we fall under, some become closer descendants, some don't. 
+
+//         } else if (isLowerOrEqual){
+//             // sent removing columns that are too high
+
+//             // sentDag Array falling
+
+//             // collapse bottomleft small triangle into a column
+//             // sort this column 
+
+
+//             // rec Dag Array higher rows (higher than MRD- jump dist) need to be emptied.
+//             // rec Dag Arrau lower rows lower than lowerDepth
+//             // rec Dag Array needs lowering, right and down
+//             // rec collapse bottom left rectangle (the triangle cap on top has been removed) needs to be collapsed right. 
+//             // rec sort the column we collapsed into. 
+
+//         } else if (isSimilar){
+//             // here we are automatically not falling, as isLowerOrEqual is false.
+
+//             // sentDagVote
+//             // remove rows with depth under simDepth
+//             for (uint32 depth =1; depth < simDepth; depth++){
+//                 removeSentDagVoteLineDepthEqualsValue(voter, depth);
+//             }
+
+//             // rising
+//             increaseSentDagVoteDepthDiff(voter, simDepth-1);
+//             increaseSentDagVoteDistDiff(voter, simDepth-1);
+//             decreaseDistDepthFromSentOnOp(voter, simDepth-1, simDepth-1);
+
+//             //collapseSentDagVoteIntoColumn(voter, );
+//             // for each depth cell in the collapsed column
+//                 //sortSentDagVoteFromColumn(voter, ); by specifiyng the depth parent, we can calculate the dist based on that. 
+
+//             // recDagVote
+//             // remove higher rows (higher than MRD-jump dist) need to be emptied.
+//             for (uint32 depth =MAX_REL_ROOT_DEPTH - simDist; depth <=MAX_REL_ROOT_DEPTH; depth++){
+//                 removeRecDagVoteLineDepthEqualsValue(voter, depth);
+//             }
+
+//             // here we need to collapse the left hand rectangle (cap has been emptied) into a right column first
+//             // rising,
+  
+//             // now we sort the coloumn we collapsed into, by depth . 
+
+//         } else if ((isHigher) && (higherDepthDiff > 1)){
+
+//             // remove rows with depth under higherDepthDiff
+//             for (uint32 depth =1; depth < higherDepthDiff; depth++){
+//                 removeSentDagVoteLineDepthEqualsValue(voter, depth);
+//             }
+
+           
+            
+//             // because of the rising, we need to change the graph. 
+//             increaseSentDagVoteDepthDiff(voter, higherDepthDiff-1);
+//             increaseSentDagVoteDistDiff(voter, higherDepthDiff-1);
+//             decreaseDistDepthFromSentOnOp(voter, higherDepthDiff-1, higherDepthDiff-1);
+
+//             // collapseSentDagVoteIntoColumn(voter, );
+//             //sorting not required, as we are out of our original tree, so we cannot jump closer. 
+
+            
+//             // rec dag array needs to be emptied completely.
+//             removeRecDagVoteComplete(voter);
+            
+//         }  else {
+//             // we jumped out completely, remove all votes. 
+//             removeSentDagVoteComplete(voter);
+//             removeRecDagVoteComplete(voter);            
+//         }
+
+
+
+// function handleDagVoteForFalling(address voter, address replacer) internal {
+
+        //     removeSentDagVoteLineDistEqualsValue(voter, MAX_REL_ROOT_DEPTH);
+        //     decreaseSentDagVoteDepthDiff(voter, 1);
+        //     decreaseSentDagVoteDistDiff(voter, 1);
+        //     // at this point the triangle is in its new position. 
+        //     increaseDistDepthFromSentOnOp(voter, 1, 1);
+
+        //     // splitRecDagVoteDiagonal(voter, replacer);
+        //     removeRecDagVoteLineDepthEqualsValue(voter, 1);
+        //     increaseRecDagVoteDepthDiff(voter, 1);
+        //     // decreaseDistDepthFromRecOnOp(voter, 0, 1);
+        // }
+
+        // function handleDagVoteForRising(address voter) internal {
+        //     removeSentDagVoteLineDepthEqualsValue(voter, 1);
+        //     increaseSentDagVoteDepthDiff(voter, 1);
+        //     increaseSentDagVoteDistDiff(voter, 1);
+        //     // at this point the triangle is in its new position. 
+        //     decreaseDistDepthFromSentOnOp(voter, 1, 1);          
+
+        //     // remove top right triangle
+        //     // merge diagonal parallelogram into column 
+        //     // mergeRecDagVoteDiagonal(voter);
+        //     decreaseRecDagVoteDepthDiff(voter, 1);
+        //     // increaseDistDepthFromRecOnOp(voter, 0, 1);
+        // }
+
+/////////// merge split
+            // merge recDagVoteCell on diagonal right
+            function mergeRecDagVoteDiagonalCell(address recipient, uint32 rdist) public {
+            //     if (readRecDagVoteCount(recipient, rdist, rdist) == 0) {
+            //         return;
+            //     }         
+            //     for (uint32 i = readRecDagVoteCount(recipient, rdist, rdist); 1 <= i; i--) {
+
+            //         DagVote memory rDagVote = readRecDagVote(recipient, rdist, rdist, i-1);
+
+            //         safeRemoveRecDagVoteAtDistDepthPos(recipient, rdist, rdist, i-1);
+            //         combinedDagAppend(rDagVote.id, recipient, rdist+1, rdist, rDagVote.weight);
+            //         sentDagVoteTotalWeight[rDagVote.id] += rDagVote.weight;
+            //     }
+            }
+
+            function splitRecDagVoteDiagonalCell(address recipient, uint32 dist, address checkAnscestor) public {
+            //     if (readRecDagVoteCount(recipient, dist, dist) == 0) {
+            //         return;
+            //     }
+                
+            //     for (uint32 i = readRecDagVoteCount(recipient, dist, dist);  1<=i ; i--) {
+            //         DagVote memory rDagVote = readRecDagVote(recipient, dist, dist, i-1);
+            //         if (findNthParent(rDagVote.id, dist-1) == checkAnscestor){
+            //             safeRemoveRecDagVoteAtDistDepthPos(recipient, dist, dist, i-1);
+                        
+            //             // this is over the diagonal, but we will push the frame up
+            //             combinedDagAppend(rDagVote.id, recipient, dist-1, dist, rDagVote.weight);
+            //             sentDagVoteTotalWeight[rDagVote.id] += rDagVote.weight;
+            //         }
+            //     }
+            }
+
+// function mergeRecDagVoteDiagonal(address recipient) public {
+            //     // for (uint32 i = 1; i < MAX_REL_ROOT_DEPTH; i++) {
+            //     //     mergeRecDagVoteDiagonalCell(recipient, i);
+
+            //     // }
+            //     // removeRecDagVoteCell(recipient, MAX_REL_ROOT_DEPTH, MAX_REL_ROOT_DEPTH);
+            // }
+
+            // function splitRecDagVoteDiagonal(address recipient, address checkAnscestor) public {
+            //     // for (uint32 i = 2; i <= MAX_REL_ROOT_DEPTH; i++) {
+            //     //     splitRecDagVoteDiagonalCell(recipient, i, checkAnscestor);
+            //     // }
+            // }
+
+
 }
