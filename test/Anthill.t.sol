@@ -2,9 +2,13 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/Anthill.sol";
+import  "../src/Anthill.sol";
+import {DagVote, Dag} from "../src/Anthill.sol";
 import {console} from "forge-std/console.sol";
 
+   
+
+  
 
 contract AnthillTest is Test {
     Anthill public anthill;
@@ -55,6 +59,11 @@ contract AnthillTest is Test {
             (bool isLocal, uint32 depth ) = anthill.findRelDepth(address(4), address(5));
             assertEq(depth, 0);
             assert(isLocal);
+        }
+
+        function testReadRoot() public {
+            address a = anthill.readRoot();
+            assertEq(a, address(2));
         }
 
         function testParents() public {
@@ -137,7 +146,7 @@ contract AnthillTest is Test {
         /////////////////////////////////////////
         /////////// single votes
             function testChangeDistDepthRec() public {
-                (, bool voted, uint32 rdist, uint32 depth, uint32 votePos, Anthill.DagVote memory rDagVote) = anthill.findRecDagVote(address(16), address(4));
+                (, bool voted, uint32 rdist, uint32 depth, uint32 votePos, DagVote memory rDagVote) = anthill.findRecDagVote(address(16), address(4));
                 assertEq(voted, true);
                 assertEq(rdist, 0);
                 assertEq(depth, 2);
@@ -279,7 +288,7 @@ contract AnthillTest is Test {
                 assertEq(count, 4);
 
                 for (uint32 i = 0; i < anthill.readRecDagVoteCount(address(4), 0, 2); i++){
-                    Anthill.DagVote memory rDagVote = anthill.readRecDagVote(address(4), 0, 2, i);
+                    DagVote memory rDagVote = anthill.readRecDagVote(address(4), 0, 2, i);
                     anthill.recDagAppend(address(4), 1, 2, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
                 }
 
@@ -309,9 +318,9 @@ contract AnthillTest is Test {
             function testCollapseSortRec() public {
                 anthill.collapseRecDagVoteIntoColumn(address(8), 2);
 
-                (bool voted, uint32 votepos, Anthill.DagVote memory rDagVote) = anthill.findRecDagVotePosAtDistDepth(address(18), address(8), 2, 1);
+                (bool voted, uint32 votepos, DagVote memory rDagVote) = anthill.findRecDagVotePosAtDistDepth(address(18), address(8), 2, 1);
                 assert (voted);
-                (bool svoted, uint32 svotepos, Anthill.DagVote memory sDagVote) =anthill.findSentDagVotePosAtDistDepth(address(18), address(8), 3, 1 );
+                (bool svoted, uint32 svotepos, DagVote memory sDagVote) =anthill.findSentDagVotePosAtDistDepth(address(18), address(8), 3, 1 );
                 assert (svoted);
                 assertEq(svotepos ,  rDagVote.posInOther);
                 assertEq(votepos , sDagVote.posInOther);
@@ -340,7 +349,7 @@ contract AnthillTest is Test {
                 // printRecDagVotes(address(2));
                 // read rec and sent votes from 8, 20, 5
 
-                // (bool voted2, uint32 votePos2, Anthill.DagVote memory rDagVote) = anthill.findRecDagVotePosAtDistDepth(address(8), address(4), 0, 2);
+                // (bool voted2, uint32 votePos2, DagVote memory rDagVote) = anthill.findRecDagVotePosAtDistDepth(address(8), address(4), 0, 2);
                 // assert (voted2);
                 // console.log("votePos: ", votePos);
                 // console.log("dagVote: ",sDagVote.id, sDagVote.posInOther);
@@ -522,8 +531,8 @@ contract AnthillTest is Test {
             for (uint32 dist = 0; dist < 7; dist++){
                 for (uint32 depth = 1; depth <= dist; depth++){
                     for (uint32 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++){
-                        Anthill.DagVote memory sDagVote = anthill.readSentDagVote(voter, dist, depth, i);
-                        Anthill.DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, dist-depth, depth, sDagVote.posInOther);
+                        DagVote memory sDagVote = anthill.readSentDagVote(voter, dist, depth, i);
+                        DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, dist-depth, depth, sDagVote.posInOther);
                         (bool isLocal, ,) = anthill.findSDistDepth(voter, sDagVote.id);
                         assert( isLocal);
                         // console.log("id", voter, rDagVote.id, sDagVote.id);
@@ -535,8 +544,8 @@ contract AnthillTest is Test {
                     }
 
                     for (uint32 i = 0; i < anthill.readRecDagVoteCount(voter, dist-depth, depth); i++){
-                        Anthill.DagVote memory rDagVote = anthill.readRecDagVote(voter, dist-depth, depth, i);
-                        Anthill.DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, dist, depth, rDagVote.posInOther);
+                        DagVote memory rDagVote = anthill.readRecDagVote(voter, dist-depth, depth, i);
+                        DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, dist, depth, rDagVote.posInOther);
 
                         (bool isLocal, ,) = anthill.findSDistDepth(rDagVote.id, voter);
                         assert( isLocal);
@@ -559,8 +568,8 @@ contract AnthillTest is Test {
             for (uint32 dist = 0; dist < 7; dist++){
                 for (uint32 depth = 0; depth <= dist; depth++){
                     for (uint32 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++){
-                        Anthill.DagVote memory sDagVote = anthill.readSentDagVote(voter, dist, depth, i);
-                        Anthill.DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, dist-depth, depth, sDagVote.posInOther);
+                        DagVote memory sDagVote = anthill.readSentDagVote(voter, dist, depth, i);
+                        DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, dist-depth, depth, sDagVote.posInOther);
                         (bool isLocal, uint32 recordedDist, uint32 recordedDepth) = anthill.findSDistDepth(voter, sDagVote.id);
                         assert( isLocal);
                         // console.log("id", voter, rDagVote.id, sDagVote.id);
@@ -573,8 +582,8 @@ contract AnthillTest is Test {
                     }
 
                     for (uint32 i = 0; i < anthill.readRecDagVoteCount(voter, dist-depth, depth); i++){
-                        Anthill.DagVote memory rDagVote = anthill.readRecDagVote(voter, dist-depth, depth, i);
-                        Anthill.DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, dist, depth, rDagVote.posInOther);
+                        DagVote memory rDagVote = anthill.readRecDagVote(voter, dist-depth, depth, i);
+                        DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, dist, depth, rDagVote.posInOther);
 
                         (bool isLocal, uint32 recordedDist, uint32 recordedDepth) = anthill.findSDistDepth(rDagVote.id, voter);
                         assert( isLocal);
@@ -599,7 +608,7 @@ contract AnthillTest is Test {
             for (uint32 dist = 0; dist < 7; dist++){
                 for (uint32 depth = 0; depth <= 7; depth++){
                     for (uint32 i = 0; i < anthill.readRecDagVoteCount(voter, dist, depth); i++){
-                        Anthill.DagVote memory rDagVote = anthill.readRecDagVote(voter, dist, depth, i);
+                        DagVote memory rDagVote = anthill.readRecDagVote(voter, dist, depth, i);
                         console.log("rec dag vote: ", voter, dist, depth);
                         console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
                     }
@@ -611,7 +620,7 @@ contract AnthillTest is Test {
             for (uint32 dist = 0; dist < 7; dist++){
                 for (uint32 depth = 0; depth <= 7; depth++){
                     for (uint32 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++){
-                        Anthill.DagVote memory rDagVote = anthill.readSentDagVote(voter, dist, depth, i);
+                        DagVote memory rDagVote = anthill.readSentDagVote(voter, dist, depth, i);
                         console.log("sent dag vote: ", voter, dist, depth);
                         console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
                     }

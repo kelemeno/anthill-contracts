@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Script.sol";
 
 import "../src/Anthill.sol";
+import {Dag, DagVote} from "../src/Anthill.sol";
 
 contract AnthillScript3 is Script {
     Anthill public anthill;
@@ -19,7 +20,7 @@ contract AnthillScript3 is Script {
         //for x there are two childre with addresses 2x, and 2x+1 
         
         // height 0
-        // anthill.joinTreeAsRoot(address(2), string("Root2 "));
+        anthill.joinTreeAsRoot(address(2), string("Root2 "));
 
         // adding tree votes. For the numbering we are adding children for i, j voter. 
         for (uint256 depth=1 ; depth<5; depth++){
