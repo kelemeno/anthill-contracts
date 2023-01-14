@@ -5,6 +5,57 @@ import "forge-std/Script.sol";
 
 import "../src/Anthill.sol";
 
+contract AnthillScript3 is Script {
+    Anthill public anthill;
+
+    function run() public {
+        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        vm.startBroadcast(privateKey);
+
+
+        anthill = new Anthill();
+
+        // simple logic, 2 3 are roots, 
+        //for x there are two childre with addresses 2x, and 2x+1 
+        
+        // height 0
+        // anthill.joinTreeAsRoot(address(2), string("Root2 "));
+
+        // adding tree votes. For the numbering we are adding children for i, j voter. 
+        for (uint256 depth=1 ; depth<5; depth++){
+            for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
+                anthill.joinTree(address(uint160(2*(2**depth+verticalNum))), string("Name"),address(uint160(2**depth+verticalNum)));
+                anthill.joinTree(address(uint160(2*(2**depth+verticalNum)+1)), string("Name"),address(uint160(2**depth+verticalNum)));
+            }
+        }
+
+        
+        for (uint256 depth=1 ; depth<=5; depth++){
+            for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
+                for (uint256 recDepth=1; recDepth<depth; recDepth++){      
+                    // we want 2 to receive less, and the second lowest layer to receive more votes. 
+                    uint32 weight =1000;
+                    if (recDepth == 1){
+                        weight = 1;
+                    } else if (recDepth == 4){
+                        weight = 100000;
+                    } 
+
+                    for ( uint256 recVerticalNum=0; recVerticalNum<2**(recDepth-1); recVerticalNum++){
+                        
+                        // we don't want votes between 4, 5 and 2. 
+                        if ((depth==2) && (recDepth ==1)) continue;
+                        anthill.addDagVote(address(uint160(2**depth+verticalNum)), address(uint160(2**recDepth+recVerticalNum)), weight);
+                    }
+                }                
+            }
+        }    
+
+        vm.stopBroadcast();
+
+    }
+}
+
 contract AnthillScript1 is Script {
     Anthill public anthill;
 
