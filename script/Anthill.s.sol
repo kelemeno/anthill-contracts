@@ -31,7 +31,7 @@ contract AnthillScript3 is Script {
         }
 
         
-        for (uint256 depth=1 ; depth<=5; depth++){
+        for (uint256 depth=1 ; depth<=3; depth++){
             for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
                 for (uint256 recDepth=1; recDepth<depth; recDepth++){      
                     // we want 2 to receive less, and the second lowest layer to receive more votes. 

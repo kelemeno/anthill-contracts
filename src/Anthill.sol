@@ -158,6 +158,7 @@ contract Anthill {
             AnthillInner.removeRecDagVoteComplete( dag , voter);
 
             AnthillInner.handleLeavingVoterBranch( dag , voter);
+            dag.treeVote[voter] = address(0);
         }
 
         function switchPositionWithParent(address voter) public {
@@ -228,7 +229,7 @@ contract Anthill {
     ///////////////////////
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////// imported from library
+    ///////////// imported from AnthillInner library. (Todo: remove unnecessary functions/make others internal or comment out completely, its for testing.)
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Variable readers 
         // root/base 
@@ -612,76 +613,76 @@ library AnthillInner{
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Variable readers 
         // root/base 
-        function readRoot(Dag storage dag) public view returns(address){
-            return dag.root;
-        }
+            function readRoot(Dag storage dag) public view returns(address){
+                return dag.root;
+            }
 
-        function readMaxRelRootDepth(Dag storage dag) public view returns(uint32){
-            return dag.MAX_REL_ROOT_DEPTH;
-        }
+            function readMaxRelRootDepth(Dag storage dag) public view returns(uint32){
+                return dag.MAX_REL_ROOT_DEPTH;
+            }
 
         // for node properties
-        function readReputation(Dag storage dag, address voter) public view returns(uint256){
-            return dag.reputation[voter];
-        }
+            function readReputation(Dag storage dag, address voter) public view returns(uint256){
+                return dag.reputation[voter];
+            }
 
-        function readName(Dag storage dag, address voter) public view returns(string memory){
-            return dag.names[voter];
-        }
+            function readName(Dag storage dag, address voter) public view returns(string memory){
+                return dag.names[voter];
+            }
 
         // for tree votes
-        function readSentTreeVote(Dag storage dag, address voter) public view returns(address){
-            return dag.treeVote[voter];
-        }
+            function readSentTreeVote(Dag storage dag, address voter) public view returns(address){
+                return dag.treeVote[voter];
+            }
 
-        function readRecTreeVoteCount(Dag storage dag, address recipient) public view returns(uint32){
-                return dag.recTreeVoteCount[recipient];
-        }
+            function readRecTreeVoteCount(Dag storage dag, address recipient) public view returns(uint32){
+                    return dag.recTreeVoteCount[recipient];
+            }
 
-        function readRecTreeVote(Dag storage dag, address recipient, uint32 votePos) public view returns(address){
-                return dag.recTreeVote[recipient][votePos];
-        }
+            function readRecTreeVote(Dag storage dag, address recipient, uint32 votePos) public view returns(address){
+                    return dag.recTreeVote[recipient][votePos];
+            }
 
         // for sent dag 
         
-        function readSentDagVoteDistDiff(Dag storage dag, address voter) external view returns(uint32){
-                return dag.sentDagVoteDistDiff[voter];
-        }
+            function readSentDagVoteDistDiff(Dag storage dag, address voter) external view returns(uint32){
+                    return dag.sentDagVoteDistDiff[voter];
+            }
 
-        function readSentDagVoteDepthDiff(Dag storage dag, address voter) external view returns(uint32){
-                return dag.sentDagVoteDepthDiff[voter];
-        }
+            function readSentDagVoteDepthDiff(Dag storage dag, address voter) external view returns(uint32){
+                    return dag.sentDagVoteDepthDiff[voter];
+            }
 
-        function readSentDagVoteCount(Dag storage dag, address voter, uint32 sdist, uint32 depth) public view returns(uint32){
-                return dag.sentDagVoteCount[voter][dag.sentDagVoteDistDiff[voter]+sdist][dag.sentDagVoteDepthDiff[voter]+depth];
-        }
+            function readSentDagVoteCount(Dag storage dag, address voter, uint32 sdist, uint32 depth) public view returns(uint32){
+                    return dag.sentDagVoteCount[voter][dag.sentDagVoteDistDiff[voter]+sdist][dag.sentDagVoteDepthDiff[voter]+depth];
+            }
 
-        function readSentDagVote(Dag storage dag, address voter, uint32 sdist, uint32 depth, uint32 votePos) public view returns( DagVote memory){
-                return dag.sentDagVote[voter][dag.sentDagVoteDistDiff[voter]+sdist][dag.sentDagVoteDepthDiff[voter]+depth][votePos];
-        }
+            function readSentDagVote(Dag storage dag, address voter, uint32 sdist, uint32 depth, uint32 votePos) public view returns( DagVote memory){
+                    return dag.sentDagVote[voter][dag.sentDagVoteDistDiff[voter]+sdist][dag.sentDagVoteDepthDiff[voter]+depth][votePos];
+            }
 
         
-        function readSentDagVoteTotalWeight(Dag storage dag, address voter) public view returns( uint32){
-                return dag.sentDagVoteTotalWeight[voter];
-        }
+            function readSentDagVoteTotalWeight(Dag storage dag, address voter) public view returns( uint32){
+                    return dag.sentDagVoteTotalWeight[voter];
+            }
         // for rec Dag votes
 
-        function readRecDagVoteDistDiff(Dag storage dag, address recipient) external view returns(uint32){
-                return dag.recDagVoteDistDiff[recipient];
-        }
+            function readRecDagVoteDistDiff(Dag storage dag, address recipient) external view returns(uint32){
+                    return dag.recDagVoteDistDiff[recipient];
+            }
 
-        function readRecDagVoteDepthDiff(Dag storage dag, address recipient) public view returns(uint32){
-                return dag.recDagVoteDepthDiff[recipient];
-        }
+            function readRecDagVoteDepthDiff(Dag storage dag, address recipient) public view returns(uint32){
+                    return dag.recDagVoteDepthDiff[recipient];
+            }
 
 
-        function readRecDagVoteCount(Dag storage dag, address recipient, uint32 rdist, uint32 depth) public view returns(uint32){
-                return dag.recDagVoteCount[recipient][dag.recDagVoteDistDiff[recipient]+rdist][dag.recDagVoteDepthDiff[recipient]+depth];
-        }
+            function readRecDagVoteCount(Dag storage dag, address recipient, uint32 rdist, uint32 depth) public view returns(uint32){
+                    return dag.recDagVoteCount[recipient][dag.recDagVoteDistDiff[recipient]+rdist][dag.recDagVoteDepthDiff[recipient]+depth];
+            }
 
-        function readRecDagVote(Dag storage dag, address recipient, uint32 rdist, uint32 depth, uint32 votePos) public view returns(DagVote memory){
-                return dag.recDagVote[recipient][dag.recDagVoteDistDiff[recipient]+rdist][dag.recDagVoteDepthDiff[recipient]+depth][votePos];
-        }
+            function readRecDagVote(Dag storage dag, address recipient, uint32 rdist, uint32 depth, uint32 votePos) public view returns(DagVote memory){
+                    return dag.recDagVote[recipient][dag.recDagVoteDistDiff[recipient]+rdist][dag.recDagVoteDepthDiff[recipient]+depth][votePos];
+            }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Personal tree finder 
@@ -946,7 +947,7 @@ library AnthillInner{
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Dag publics. Core logic. 
+    //// Dag internals. Core logic. 
         ///////////// Setters      
             ///////////// Diffs
                 function increaseSentDagVoteDistDiff(Dag storage dag, address voter, uint32 diff) public{
