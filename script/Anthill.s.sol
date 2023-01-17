@@ -30,6 +30,8 @@ contract AnthillScript3 is Script {
             }
         }
 
+        // we don't want votes between 4, 5 and 2. 
+        anthill.removeDagVote(address(4), address(2));
         
         for (uint256 depth=1 ; depth<=3; depth++){
             for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
@@ -44,14 +46,44 @@ contract AnthillScript3 is Script {
 
                     for ( uint256 recVerticalNum=0; recVerticalNum<2**(recDepth-1); recVerticalNum++){
                         
-                        // we don't want votes between 4, 5 and 2. 
-                        if ((depth==2) && (recDepth ==1)) continue;
+                        
+                        // we cannot add votes between parents and children, as we already added those votes in joinTree
+                        if (2**depth+verticalNum >= 2*(2**recDepth+recVerticalNum)  ){
+                            if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==0 ) continue;
+                            if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==1 ) continue;
+                        }
+                        
                         anthill.addDagVote(address(uint160(2**depth+verticalNum)), address(uint160(2**recDepth+recVerticalNum)), weight);
                     }
                 }                
             }
         }    
 
+        vm.stopBroadcast();
+
+    }
+}
+
+
+contract TutorialScript is Script {
+    Anthill public anthill;
+
+    function run() public {
+        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        vm.startBroadcast(privateKey);
+
+
+        anthill = new Anthill();
+
+        // simple logic, 2 3 are roots, 
+        //for x there are two childre with addresses 2x, and 2x+1 
+        
+        // height 0
+        anthill.joinTreeAsRoot(address(2), string("Some other person"));
+        anthill.joinTree(address(4), string("Dhruv"), address(2));
+        
+     
+            
         vm.stopBroadcast();
 
     }

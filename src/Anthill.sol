@@ -75,6 +75,8 @@ contract Anthill {
             dag.recDagVoteDistDiff[voter] = 1000;
             dag.recDagVoteDepthDiff[voter] = 1000;
 
+            addDagVote(voter, recipient, 1);
+
         }
 
         // when we first join the tree without a parent
@@ -93,6 +95,12 @@ contract Anthill {
             dag.sentDagVoteDepthDiff[voter] = 1000;
             dag.recDagVoteDistDiff[voter] = 1000;
             dag.recDagVoteDepthDiff[voter] = 1000;
+        }
+
+        function changeName(address voter, string calldata name)  public {
+            emit SimpleEventForUpdates("", 0);
+            assert (dag.treeVote[voter] != address(0));
+            dag.names[voter] = name;
         }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Dag externals
