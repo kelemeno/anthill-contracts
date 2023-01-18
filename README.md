@@ -12,4 +12,4 @@ Also you can leave the tree, or move to unoccupied spots in the tree.
 
 Finally: if you have higher reputation than your parent in the binary tree, you can change positions with them, thus climbing the tree. 
 
-This is the repo for the smart contract. Checkout the backend and fronted in https://github.com/kelemeno/anthill-frontend and https://github.com/kelemeno/anthill-backend. 
+This is the repo for the smart contract. 
