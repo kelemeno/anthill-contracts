@@ -60,6 +60,8 @@ contract Anthill {
         // when we first join the tree
         function joinTree(address voter, string calldata name, address recipient) public {
             emit SimpleEventForUpdates("", 0);
+            
+            assert (msg.sender == voter);
 
             assert (dag.treeVote[voter] == address(0));
             assert (dag.treeVote[recipient] != address(0));
@@ -81,8 +83,11 @@ contract Anthill {
 
         // when we first join the tree without a parent
         function joinTreeAsRoot(address voter, string calldata name) public {
+   
             emit SimpleEventForUpdates("", 1);
-            
+
+            assert (msg.sender == voter);
+  
             assert (dag.treeVote[voter] == address(0));
             assert (dag.root == address(0));
 
@@ -98,14 +103,20 @@ contract Anthill {
         }
 
         function changeName(address voter, string calldata name)  public {
+            assert (msg.sender == voter);
+
             emit SimpleEventForUpdates("", 0);
             assert (dag.treeVote[voter] != address(0));
             dag.names[voter] = name;
         }
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Dag externals
         // to add a vote to the dag.sentDagVote array, and also to the corresponding dag.recDagVote array
         function addDagVote(address voter, address recipient, uint32 weight) public {
+            
+            assert (msg.sender == voter);
+
             emit SimpleEventForUpdates("", 0);
 
             (bool votable, bool voted, uint32 sdist, uint32 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
@@ -117,8 +128,12 @@ contract Anthill {
 
         // to remove a vote from the dag.sentDagVote array, and also from the  corresponding dag.recDagVote arrays
         function removeDagVote(address voter, address recipient) public {
+           
             emit SimpleEventForUpdates("", 0);
-            
+          
+            assert (msg.sender == voter);
+
+
             // find the votes we delete
             (, bool voted, uint32 sdist, uint32 depth, uint32 sPos, ) = AnthillInner.findSentDagVote( dag , voter, recipient);
             assert (voted == true);
@@ -160,6 +175,9 @@ contract Anthill {
 
         
         function leaveTree(address voter) public {
+
+            assert (msg.sender == voter);
+
             emit SimpleEventForUpdates("", 0);
             
             AnthillInner.removeSentDagVoteComplete( dag , voter);
@@ -170,6 +188,9 @@ contract Anthill {
         }
 
         function switchPositionWithParent(address voter) public {
+
+            assert (msg.sender == voter);
+
             emit SimpleEventForUpdates("", 0);
 
             address parent = dag.treeVote[voter];
@@ -189,6 +210,10 @@ contract Anthill {
         }
 
         function moveTreeVote(address voter, address recipient) external {
+ 
+            assert (msg.sender == voter);
+
+
             emit SimpleEventForUpdates("", 0);
 
             assert (dag.treeVote[voter] != address(0));
@@ -334,8 +359,7 @@ contract Anthill {
             AnthillInner.addTreeVoteWithoutCheck(dag, voter, recipient);
         }
 
-        // todo this needs to be cleaned up
-        function switchTreeVoteWithParent(address voter) public {
+        function switchTreeVoteWithParent(address voter) internal {
             AnthillInner.switchTreeVoteWithParent(dag, voter);
         }
 
@@ -401,223 +425,225 @@ contract Anthill {
 
 
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Dag internals. Core logic. 
-        ///////////// Single vote changes
-            ///////////// appending a vote
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //// Dag internals. Core logic. 
+    //     ///////////// Single vote changes
+    //         ///////////// appending a vote
 
-                function sentDagAppend( address voter, uint32 sdist, uint32 depth, address recipient, uint32 weight, uint32 rPos ) internal{
-                    return AnthillInner.sentDagAppend(dag, voter, sdist, depth, recipient, weight, rPos);
-                }
+    //             function sentDagAppend( address voter, uint32 sdist, uint32 depth, address recipient, uint32 weight, uint32 rPos ) internal{
+    //                 return AnthillInner.sentDagAppend(dag, voter, sdist, depth, recipient, weight, rPos);
+    //             }
 
-                function recDagAppend( address recipient, uint32 rdist, uint32 depth, address voter, uint32 weight, uint32 sPos ) public{
-                    return AnthillInner.recDagAppend(dag, recipient, rdist, depth, voter, weight, sPos);   
-                }
+    //             function recDagAppend( address recipient, uint32 rdist, uint32 depth, address voter, uint32 weight, uint32 sPos ) public{
+    //                 return AnthillInner.recDagAppend(dag, recipient, rdist, depth, voter, weight, sPos);   
+    //             }
 
-                function combinedDagAppendSdist( address voter, address recipient,  uint32 sdist, uint32 depth, uint32 weight) internal{
-                    return AnthillInner.combinedDagAppendSdist(dag, voter, recipient, sdist, depth, weight);   
-                }
+    //             function combinedDagAppendSdist( address voter, address recipient,  uint32 sdist, uint32 depth, uint32 weight) internal{
+    //                 return AnthillInner.combinedDagAppendSdist(dag, voter, recipient, sdist, depth, weight);   
+    //             }
 
-            ///////////// changing position
+    //         ///////////// changing position
 
-                function changePositionSent( address voter, uint32 sdist,  uint32 depth, uint32 sPos, uint32 newRPos) internal {
-                    return AnthillInner.changePositionSent(dag, voter, sdist, depth, sPos, newRPos);
-                }
+    //             function changePositionSent( address voter, uint32 sdist,  uint32 depth, uint32 sPos, uint32 newRPos) internal {
+    //                 return AnthillInner.changePositionSent(dag, voter, sdist, depth, sPos, newRPos);
+    //             }
 
-                function changePositionRec( address recipient, uint32 rdist, uint32 depth, uint32 rPos, uint32 newSPos) internal{
-                    return AnthillInner.changePositionRec(dag, recipient, rdist, depth, rPos, newSPos);
-                }   
+    //             function changePositionRec( address recipient, uint32 rdist, uint32 depth, uint32 rPos, uint32 newSPos) internal{
+    //                 return AnthillInner.changePositionRec(dag, recipient, rdist, depth, rPos, newSPos);
+    //             }   
 
             
 
-            ///////////// delete and removal functions
-                ///// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
+    //         ///////////// delete and removal functions
+    //             ///// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
                 
-                /// careful, does not delete the opposite or deacrese count! Do not call, call unsafeReplace..  or safeRemove.. instead
-                function unsafeDeleteLastSentDagVoteAtDistDepth( address voter, uint32 sdist, uint32 depth) internal {
-                    delete dag.sentDagVote[voter][dag.sentDagVoteDistDiff[voter]+ sdist][dag.sentDagVoteDepthDiff[voter]+depth][AnthillInner.readSentDagVoteCount(dag, voter, sdist, depth)-1];
-                }
+    //             /// careful, does not delete the opposite or deacrese count! Do not call, call unsafeReplace..  or safeRemove.. instead
+    //             function unsafeDeleteLastSentDagVoteAtDistDepth( address voter, uint32 sdist, uint32 depth) internal {
+    //                 delete dag.sentDagVote[voter][dag.sentDagVoteDistDiff[voter]+ sdist][dag.sentDagVoteDepthDiff[voter]+depth][AnthillInner.readSentDagVoteCount(dag, voter, sdist, depth)-1];
+    //             }
 
-                /// careful, does not delete the opposite, or decrease count! Do not call, call unsafeReplace..  or safeRemove.. instead
-                function unsafeDeleteLastRecDagVoteAtDistDepth( address recipient, uint32 rdist, uint32 depth) internal {
-                    delete dag.recDagVote[recipient][dag.recDagVoteDistDiff[recipient]+ rdist][dag.recDagVoteDepthDiff[recipient]+depth][AnthillInner.readRecDagVoteCount(dag, recipient, rdist, depth)-1];
-                }   
+    //             /// careful, does not delete the opposite, or decrease count! Do not call, call unsafeReplace..  or safeRemove.. instead
+    //             function unsafeDeleteLastRecDagVoteAtDistDepth( address recipient, uint32 rdist, uint32 depth) internal {
+    //                 delete dag.recDagVote[recipient][dag.recDagVoteDistDiff[recipient]+ rdist][dag.recDagVoteDepthDiff[recipient]+depth][AnthillInner.readRecDagVoteCount(dag, recipient, rdist, depth)-1];
+    //             }   
 
-                // careful does not delete the opposite! Always call with opposite, or do something with the other vote
-                function unsafeReplaceSentDagVoteAtDistDepthPosWithLast( address voter, uint32 sdist, uint32 depth, uint32 sPos) internal {
-                    AnthillInner.unsafeReplaceSentDagVoteAtDistDepthPosWithLast(dag, voter, sdist, depth, sPos);
-                } 
+    //             // careful does not delete the opposite! Always call with opposite, or do something with the other vote
+    //             function unsafeReplaceSentDagVoteAtDistDepthPosWithLast( address voter, uint32 sdist, uint32 depth, uint32 sPos) internal {
+    //                 AnthillInner.unsafeReplaceSentDagVoteAtDistDepthPosWithLast(dag, voter, sdist, depth, sPos);
+    //             } 
 
-                /// careful, does not delete the opposite!
-                function unsafeReplaceRecDagVoteAtDistDepthPosWithLast( address recipient, uint32 rdist, uint32 depth, uint32 rPos) public {
-                    AnthillInner.unsafeReplaceRecDagVoteAtDistDepthPosWithLast(dag, recipient, rdist, depth, rPos);
-                } 
+    //             /// careful, does not delete the opposite!
+    //             function unsafeReplaceRecDagVoteAtDistDepthPosWithLast( address recipient, uint32 rdist, uint32 depth, uint32 rPos) public {
+    //                 AnthillInner.unsafeReplaceRecDagVoteAtDistDepthPosWithLast(dag, recipient, rdist, depth, rPos);
+    //             } 
 
-                function safeRemoveSentDagVoteAtDistDepthPos(address voter, uint32 sdist, uint32 depth, uint32 sPos) internal {
-                    AnthillInner.safeRemoveSentDagVoteAtDistDepthPos(dag, voter, sdist, depth, sPos);    
-                }
+    //             function safeRemoveSentDagVoteAtDistDepthPos(address voter, uint32 sdist, uint32 depth, uint32 sPos) internal {
+    //                 AnthillInner.safeRemoveSentDagVoteAtDistDepthPos(dag, voter, sdist, depth, sPos);    
+    //             }
 
-                function safeRemoveRecDagVoteAtDistDepthPos( address recipient, uint32 rdist, uint32 depth, uint32 rPos) internal {
-                    AnthillInner.safeRemoveRecDagVoteAtDistDepthPos(dag, recipient, rdist, depth, rPos);
-                }
+    //             function safeRemoveRecDagVoteAtDistDepthPos( address recipient, uint32 rdist, uint32 depth, uint32 rPos) internal {
+    //                 AnthillInner.safeRemoveRecDagVoteAtDistDepthPos(dag, recipient, rdist, depth, rPos);
+    //             }
 
-            ///////////// change dist and depth
-                function changeDistDepthSent( address voter, uint32 sdist, uint32 depth, uint32 sPos, uint32 newSDist, uint32 newDepth, address recipient, uint32 rPos, uint32 weight) public{
-                    // here it is ok to use unsafe, as the the vote is moved, not removed
-                   AnthillInner.changeDistDepthSent(dag, voter, sdist, depth, sPos, newSDist, newDepth, recipient, rPos, weight);
-                }
+    //         ///////////// change dist and depth
+    //             function changeDistDepthSent( address voter, uint32 sdist, uint32 depth, uint32 sPos, uint32 newSDist, uint32 newDepth, address recipient, uint32 rPos, uint32 weight) public{
+    //                 // here it is ok to use unsafe, as the the vote is moved, not removed
+    //                AnthillInner.changeDistDepthSent(dag, voter, sdist, depth, sPos, newSDist, newDepth, recipient, rPos, weight);
+    //             }
 
-                function changeDistDepthRec( address recipient, uint32 rdist, uint32 depth, uint32 rPos, uint32 newRDist, uint32 newDepth, address voter, uint32 sPos, uint32 weight) public{
-                    // here it is ok to use unsafe, as the the vote is moved, not removed
-                    AnthillInner.changeDistDepthRec(dag, recipient, rdist, depth, rPos, newRDist, newDepth, voter, sPos, weight);
-                }
+    //             function changeDistDepthRec( address recipient, uint32 rdist, uint32 depth, uint32 rPos, uint32 newRDist, uint32 newDepth, address voter, uint32 sPos, uint32 weight) public{
+    //                 // here it is ok to use unsafe, as the the vote is moved, not removed
+    //                 AnthillInner.changeDistDepthRec(dag, recipient, rdist, depth, rPos, newRDist, newDepth, voter, sPos, weight);
+    //             }
 
-        ///////////// Cell removal and handler functions 
-            ///////////// removal 
-                // to remove a row of votes from the dag.sentDagVote array, and the corresponding votes from the dag.recDagVote arrays
-                function removeSentDagVoteCell( address voter, uint32 sdist, uint32 depth) internal {
-                    AnthillInner.removeSentDagVoteCell(dag, voter, sdist, depth);
-                }
+    //     ///////////// Cell removal and handler functions 
+    //         ///////////// removal 
+    //             // to remove a row of votes from the dag.sentDagVote array, and the corresponding votes from the dag.recDagVote arrays
+    //             function removeSentDagVoteCell( address voter, uint32 sdist, uint32 depth) internal {
+    //                 AnthillInner.removeSentDagVoteCell(dag, voter, sdist, depth);
+    //             }
 
-                // to remove a row of votes from the dag.recDagVote array, and the corresponding votes from the dag.sentDagVote arrays
-                function removeRecDagVoteCell( address recipient, uint32 rdist, uint32 depth) public {
-                    AnthillInner.removeRecDagVoteCell(dag, recipient, rdist, depth);
-                }
+    //             // to remove a row of votes from the dag.recDagVote array, and the corresponding votes from the dag.sentDagVote arrays
+    //             function removeRecDagVoteCell( address recipient, uint32 rdist, uint32 depth) public {
+    //                 AnthillInner.removeRecDagVoteCell(dag, recipient, rdist, depth);
+    //             }
 
             
             
-            ///////////// dist depth on opposite 
-                function changeDistDepthFromSentCellOnOp( address voter, uint32 sdist, uint32 depth, uint32 oldSDist, uint32 oldDepth) internal {
-                    AnthillInner.changeDistDepthFromSentCellOnOp(dag, voter, sdist, depth, oldSDist, oldDepth);
-                }
+    //         ///////////// dist depth on opposite 
+    //             function changeDistDepthFromSentCellOnOp( address voter, uint32 sdist, uint32 depth, uint32 oldSDist, uint32 oldDepth) internal {
+    //                 AnthillInner.changeDistDepthFromSentCellOnOp(dag, voter, sdist, depth, oldSDist, oldDepth);
+    //             }
 
-                function changeDistDepthFromRecCellOnOp( address recipient, uint32 rdist, uint32 depth, uint32 oldRDist, uint32 oldDepth) public {
-                    AnthillInner.changeDistDepthFromRecCellOnOp(dag, recipient, rdist, depth, oldRDist, oldDepth);
-                }
+    //             function changeDistDepthFromRecCellOnOp( address recipient, uint32 rdist, uint32 depth, uint32 oldRDist, uint32 oldDepth) public {
+    //                 AnthillInner.changeDistDepthFromRecCellOnOp(dag, recipient, rdist, depth, oldRDist, oldDepth);
+    //             }
             
-            ///////////// move cell
+    //         ///////////// move cell
 
-                function moveSentDagVoteCell(address voter, uint32 sdist, uint32 depth, uint32 newSDist, uint32 newDepth) internal {
-                    AnthillInner.moveSentDagVoteCell(dag, voter, sdist, depth, newSDist, newDepth);
-                }
+    //             function moveSentDagVoteCell(address voter, uint32 sdist, uint32 depth, uint32 newSDist, uint32 newDepth) internal {
+    //                 AnthillInner.moveSentDagVoteCell(dag, voter, sdist, depth, newSDist, newDepth);
+    //             }
 
-                function moveRecDagVoteCell(address recipient, uint32 rdist, uint32 depth, uint32 newRDist, uint32 newDepth) internal {
-                    AnthillInner.moveRecDagVoteCell(dag, recipient, rdist, depth, newRDist, newDepth);
-                }
+    //             function moveRecDagVoteCell(address recipient, uint32 rdist, uint32 depth, uint32 newRDist, uint32 newDepth) internal {
+    //                 AnthillInner.moveRecDagVoteCell(dag, recipient, rdist, depth, newRDist, newDepth);
+    //             }
 
-        ///////////// Line  remover and sorter functions
-            ///////////// Line removers
+    //     ///////////// Line  remover and sorter functions
+    //         ///////////// Line removers
 
-                function removeSentDagVoteLineDepthEqualsValue( address voter, uint32 value) internal {
-                    AnthillInner.removeSentDagVoteLineDepthEqualsValue(dag, voter, value);
-                }
+    //             function removeSentDagVoteLineDepthEqualsValue( address voter, uint32 value) internal {
+    //                 AnthillInner.removeSentDagVoteLineDepthEqualsValue(dag, voter, value);
+    //             }
 
-                function removeRecDagVoteLineDepthEqualsValue( address voter, uint32 value) internal {
-                    AnthillInner.removeRecDagVoteLineDepthEqualsValue(dag, voter, value);
-                }
+    //             function removeRecDagVoteLineDepthEqualsValue( address voter, uint32 value) internal {
+    //                 AnthillInner.removeRecDagVoteLineDepthEqualsValue(dag, voter, value);
+    //             }
 
-                function removeSentDagVoteLineDistEqualsValue( address voter, uint32 value) internal {
-                    AnthillInner.removeSentDagVoteLineDistEqualsValue(dag, voter, value);
-                }
+    //             function removeSentDagVoteLineDistEqualsValue( address voter, uint32 value) internal {
+    //                 AnthillInner.removeSentDagVoteLineDistEqualsValue(dag, voter, value);
+    //             }
 
 
-            ///////////// Sort Cell into line
-                function sortSentDagVoteCell( address voter, uint32 sdist, uint32 depth, address anscestorAtDepth) internal {
-                    AnthillInner.sortSentDagVoteCell(dag, voter, sdist, depth, anscestorAtDepth); 
-                }
+    //         ///////////// Sort Cell into line
+    //             function sortSentDagVoteCell( address voter, uint32 sdist, uint32 depth, address anscestorAtDepth) internal {
+    //                 AnthillInner.sortSentDagVoteCell(dag, voter, sdist, depth, anscestorAtDepth); 
+    //             }
 
-                function sortRecDagVoteCell( address recipient, uint32 rdist, uint32 depth,  address newTreeVote) internal {
-                    AnthillInner.sortRecDagVoteCell(dag, recipient, rdist, depth, newTreeVote);
-                }
+    //             function sortRecDagVoteCell( address recipient, uint32 rdist, uint32 depth,  address newTreeVote) internal {
+    //                 AnthillInner.sortRecDagVoteCell(dag, recipient, rdist, depth, newTreeVote);
+    //             }
 
-                function sortRecDagVoteCellDescendants( address recipient, uint32 depth, address replaced) internal {
-                    AnthillInner.sortRecDagVoteCellDescendants(dag, recipient, depth, replaced);
-                }
+    //             function sortRecDagVoteCellDescendants( address recipient, uint32 depth, address replaced) internal {
+    //                 AnthillInner.sortRecDagVoteCellDescendants(dag, recipient, depth, replaced);
+    //             }
         
-        ///////////// Area/whole triangle changers
+    //     ///////////// Area/whole triangle changers
                      
-            ///////////// Depth and pos change across graph
-                function increaseDistDepthFromSentOnOpFalling( address voter, uint32 diff) internal {
-                    AnthillInner.increaseDistDepthFromSentOnOpFalling(dag, voter, diff); 
-                }
+    //         ///////////// Depth and pos change across graph
+    //             function increaseDistDepthFromSentOnOpFalling( address voter, uint32 diff) internal {
+    //                 AnthillInner.increaseDistDepthFromSentOnOpFalling(dag, voter, diff); 
+    //             }
 
-                function decreaseDistDepthFromSentOnOpRising( address voter, uint32 diff) internal {
-                    AnthillInner.decreaseDistDepthFromSentOnOpRising(dag, voter, diff);
-                }
+    //             function decreaseDistDepthFromSentOnOpRising( address voter, uint32 diff) internal {
+    //                 AnthillInner.decreaseDistDepthFromSentOnOpRising(dag, voter, diff);
+    //             }
 
-                function changeDistDepthFromRecOnOpFalling( address voter, uint32 diff) internal {
-                    AnthillInner.changeDistDepthFromRecOnOpFalling(dag, voter, diff);
-                }
+    //             function changeDistDepthFromRecOnOpFalling( address voter, uint32 diff) internal {
+    //                 AnthillInner.changeDistDepthFromRecOnOpFalling(dag, voter, diff);
+    //             }
 
-                function changeDistDepthFromRecOnOpRising( address voter, uint32 diff) internal {
-                    AnthillInner.changeDistDepthFromRecOnOpRising(dag, voter, diff);
-                }
+    //             function changeDistDepthFromRecOnOpRising( address voter, uint32 diff) internal {
+    //                 AnthillInner.changeDistDepthFromRecOnOpRising(dag, voter, diff);
+    //             }
 
-            ///////////// Movers
-                function moveSentDagVoteUpRightFalling( address voter, uint32 diff) internal {
-                    AnthillInner.moveSentDagVoteUpRightFalling(dag, voter, diff);
-                }
+    //         ///////////// Movers
+    //             function moveSentDagVoteUpRightFalling( address voter, uint32 diff) internal {
+    //                 AnthillInner.moveSentDagVoteUpRightFalling(dag, voter, diff);
+    //             }
 
-                function moveSentDagVoteDownLeftRising( address voter, uint32 diff) internal {
-                    AnthillInner.moveSentDagVoteDownLeftRising(dag, voter, diff);
-                }
+    //             function moveSentDagVoteDownLeftRising( address voter, uint32 diff) internal {
+    //                 AnthillInner.moveSentDagVoteDownLeftRising(dag, voter, diff);
+    //             }
 
-                function moveRecDagVoteUpRightFalling( address voter, uint32 diff) internal {
-                    AnthillInner.moveRecDagVoteUpRightFalling(dag, voter, diff);
-                }
+    //             function moveRecDagVoteUpRightFalling( address voter, uint32 diff) internal {
+    //                 AnthillInner.moveRecDagVoteUpRightFalling(dag, voter, diff);
+    //             }
 
-                function moveRecDagVoteDownLeftRising( address voter, uint32 diff) public {
-                    AnthillInner.moveRecDagVoteDownLeftRising(dag, voter, diff);
-                }
-            ///////////// Collapsing to, and sorting from columns
+    //             function moveRecDagVoteDownLeftRising( address voter, uint32 diff) public {
+    //                 AnthillInner.moveRecDagVoteDownLeftRising(dag, voter, diff);
+    //             }
+    //         ///////////// Collapsing to, and sorting from columns
 
-                function collapseSentDagVoteIntoColumn( address voter, uint32 sdistDestination) public {
-                    AnthillInner.collapseSentDagVoteIntoColumn(dag, voter, sdistDestination);
-                }            
+    //             function collapseSentDagVoteIntoColumn( address voter, uint32 sdistDestination) public {
+    //                 AnthillInner.collapseSentDagVoteIntoColumn(dag, voter, sdistDestination);
+    //             }            
 
-                function collapseRecDagVoteIntoColumn(  address voter, uint32 rdistDestination) public {
-                    AnthillInner.collapseRecDagVoteIntoColumn(dag, voter, rdistDestination);
-                }
+    //             function collapseRecDagVoteIntoColumn(  address voter, uint32 rdistDestination) public {
+    //                 AnthillInner.collapseRecDagVoteIntoColumn(dag, voter, rdistDestination);
+    //             }
 
-                function sortSentDagVoteColumn( address voter, uint32 sdist, address newTreeVote) public {
-                    AnthillInner.sortSentDagVoteColumn(dag, voter, sdist, newTreeVote);
-                }
+    //             function sortSentDagVoteColumn( address voter, uint32 sdist, address newTreeVote) public {
+    //                 AnthillInner.sortSentDagVoteColumn(dag, voter, sdist, newTreeVote);
+    //             }
 
-                function sortRecDagVoteColumn(  address recipient, uint32 rdist, address newTreeVote) public {
-                    AnthillInner.sortRecDagVoteColumn(dag, recipient, rdist, newTreeVote);
-                }
+    //             function sortRecDagVoteColumn(  address recipient, uint32 rdist, address newTreeVote) public {
+    //                 AnthillInner.sortRecDagVoteColumn(dag, recipient, rdist, newTreeVote);
+    //             }
 
-                function sortRecDagVoteColumnDescendants(  address recipient, address replaced) public {
-                    AnthillInner.sortRecDagVoteColumnDescendants(dag, recipient, replaced);
-                }
+    //             function sortRecDagVoteColumnDescendants(  address recipient, address replaced) public {
+    //                 AnthillInner.sortRecDagVoteColumnDescendants(dag, recipient, replaced);
+    //             }
 
-            ///////////// Combined dag Square vote handler for rising falling, a certain depth, with passing the new recipient in for selction    
+    //         ///////////// Combined dag Square vote handler for rising falling, a certain depth, with passing the new recipient in for selction    
 
-                function handleDagVoteMoveRise( address voter, address recipient, address replaced, uint32 moveDist, uint32 depthToRec ) public {
-                    AnthillInner.handleDagVoteMoveRise(dag, voter, recipient, replaced, moveDist, depthToRec);
-                }
+    //             function handleDagVoteMoveRise( address voter, address recipient, address replaced, uint32 moveDist, uint32 depthToRec ) public {
+    //                 AnthillInner.handleDagVoteMoveRise(dag, voter, recipient, replaced, moveDist, depthToRec);
+    //             }
 
-                function handleDagVoteMoveFall( address voter, address recipient, address replaced, uint32 moveDist, uint32 depthToRec) public {
-                    AnthillInner.handleDagVoteMoveFall(dag, voter, recipient, replaced, moveDist, depthToRec);
-                }
+    //             function handleDagVoteMoveFall( address voter, address recipient, address replaced, uint32 moveDist, uint32 depthToRec) public {
+    //                 AnthillInner.handleDagVoteMoveFall(dag, voter, recipient, replaced, moveDist, depthToRec);
+    //             }
 
 
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Global internal
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //// Global internal
         
-        function pullUpBranch(address pulledVoter, address parent) public {
-           AnthillInner.pullUpBranch(dag, pulledVoter, parent);
+    //     function pullUpBranch(address pulledVoter, address parent) public {
+    //        AnthillInner.pullUpBranch(dag, pulledVoter, parent);
 
-        }
+    //     }
         
-        function handleLeavingVoterBranch( address voter) public {
-            AnthillInner.handleLeavingVoterBranch(dag, voter);
-        }
+    //     function handleLeavingVoterBranch( address voter) public {
+    //         AnthillInner.handleLeavingVoterBranch(dag, voter);
+    //     }
 
 }
 
 library AnthillInner{
+    event SimpleEventForUpdates(string str, uint256 randint);
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Variable readers 
         // root/base 
@@ -737,38 +763,44 @@ library AnthillInner{
             dag.recTreeVoteCount[recipient] = dag.recTreeVoteCount[recipient] + 1;
         }
 
-        // todo this needs to be cleaned up
         function switchTreeVoteWithParent(Dag storage dag,address voter) public {
             address parent = dag.treeVote[voter];
             assert (parent != address(0));
             assert (parent != address(1));
             
-            address gparent = dag.treeVote[parent]; // this might be 1. 
-            removeTreeVote( dag , voter);
+            address gparent = dag.treeVote[parent]; // this can be 1. 
 
+            removeTreeVote( dag , voter);
+            
             if (readRoot( dag  )== parent){
-                dag.root= voter;
+                dag.root = voter;
             } else {
                 removeTreeVote( dag , parent);
             }
 
+            address brother = dag.recTreeVote[parent][0];
+
+            address child1 = dag.recTreeVote[voter][0];
+            address child2 = dag.recTreeVote[voter][1];
+            
             addTreeVoteWithoutCheck( dag , voter, gparent);
             addTreeVoteWithoutCheck( dag , parent, voter);
 
-            for (uint32 i = 0; i < dag.recTreeVoteCount[parent]; i++) {
-                address brother = dag.recTreeVote[parent][i];
-                if (brother != voter) {
-                    removeTreeVote( dag , brother);
-                    addTreeVoteWithoutCheck( dag , brother, voter);
-                }
+            if (brother != address(0)) {
+                removeTreeVote(dag, brother);
+                addTreeVoteWithoutCheck( dag , brother, voter);
             }
-            // how do we know that we are not moving the recipient back to the parent? 
-            for (uint32 i = 0; i < dag.recTreeVoteCount[voter]; i++) {
-                address child = dag.recTreeVote[voter][i];
-                removeTreeVote( dag , child);
-                addTreeVoteWithoutCheck( dag , child, parent);
+
+            if (child1 != address(0)) {
+                removeTreeVote(dag, child1);
+                addTreeVoteWithoutCheck( dag , child1, parent);
             }
-        }
+
+            if (child2 != address(0)) {
+                removeTreeVote(dag, child2);
+                addTreeVoteWithoutCheck( dag , child2, parent);
+            }
+       }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Local tree finders

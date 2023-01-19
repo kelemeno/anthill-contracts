@@ -46,7 +46,6 @@ contract AnthillScript3 is Script {
 
                     for ( uint256 recVerticalNum=0; recVerticalNum<2**(recDepth-1); recVerticalNum++){
                         
-                        
                         // we cannot add votes between parents and children, as we already added those votes in joinTree
                         if (2**depth+verticalNum >= 2*(2**recDepth+recVerticalNum)  ){
                             if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==0 ) continue;
@@ -81,6 +80,31 @@ contract TutorialScript is Script {
         // height 0
         anthill.joinTreeAsRoot(address(2), string("Some other person"));
         anthill.joinTree(address(4), string("Dhruv"), address(2));
+        
+     
+            
+        vm.stopBroadcast();
+
+    }
+}
+
+
+contract JustDeploy is Script {
+    Anthill public anthill;
+
+    function run() public {
+        uint256 privateKey =  0x01 ;
+        vm.startBroadcast(privateKey);
+
+
+        anthill = new Anthill();
+
+        // simple logic, 2 3 are roots, 
+        //for x there are two childre with addresses 2x, and 2x+1 
+        
+        // height 0
+        anthill.joinTreeAsRoot(address(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419), string("Kalman"));
+        // anthill.joinTree(address(4), string("Dhruv"), address(2));
         
      
             
