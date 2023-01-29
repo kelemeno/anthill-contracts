@@ -93,20 +93,21 @@ contract JustDeploy is Script {
     Anthill public anthill;
 
     function run() public {
-        uint256 privateKey =  0x01 ;
+        uint256 privateKey =  0x0 ;
         vm.startBroadcast(privateKey);
 
 
         anthill = new Anthill();
+                
+        anthill.joinTreeAsRoot(address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE) ,"Anon999");
+        anthill.joinTree(address(0x063089B0F679C5189F539140a4Ed076De368a528),  "Bence", address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE) );
+        anthill.joinTree(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA),  "Ago", address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+        anthill.joinTree(address(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419), "Kalman", address(0x063089B0F679C5189F539140a4Ed076De368a528));
 
-        // simple logic, 2 3 are roots, 
-        //for x there are two childre with addresses 2x, and 2x+1 
-        
-        // height 0
-        anthill.joinTreeAsRoot(address(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419), string("Kalman"));
-        // anthill.joinTree(address(4), string("Dhruv"), address(2));
-        
-     
+        anthill.removeDagVote(address(0x063089B0F679C5189F539140a4Ed076De368a528), address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+        anthill.removeDagVote(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA), address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+
+        anthill.lockTree();
             
         vm.stopBroadcast();
 

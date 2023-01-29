@@ -6,26 +6,56 @@ import {Dag,  DagVote, AnthillInner} from "./AnthillInner.sol";
 
 contract Anthill {
 
-    event SimpleEventForUpdates(string str, uint256 randint);
 
     constructor() {
         dag.decimalPoint = 18;
         dag.MAX_REL_ROOT_DEPTH = 6;
     }
 
-    ////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// State variables   
         using AnthillInner for Dag; 
         Dag public dag; 
+        bool public unlocked = true;
+    ////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Events
+
+        event SimpleEventForUpdates(string str, uint256 var);
+
+
+        event joinTreeEvent(address voter, string name, address recipietn);
+
+        event changeNameEvent(address voter, string newName);
+
+
+        event addDagVoteEvent(address voter, address recipient, uint32 weight);
+
+        event removeDagVoteEvent(address voter, address recipient);
+
+
+        event leaveTreeEvent(address voter);
+
+        event switchPositionWithParentEvent(address voter);
+
+        event moveTreeVoteEvent(address voter, address recipient);
+
+    ////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Personal tree externals
 
+        function lockTree() public {
+            if (unlocked == true) {
+                unlocked = false;
+            }
+        }
 
         // when we first join the tree
         function joinTree(address voter, string calldata name, address recipient) public {
-            emit SimpleEventForUpdates("", 0);
             
-            assert (msg.sender == voter);
+            if (!unlocked) {
+                assert (msg.sender == voter);
+            }
 
             assert (dag.treeVote[voter] == address(0));
             assert (dag.treeVote[recipient] != address(0));
@@ -43,6 +73,7 @@ contract Anthill {
 
             addDagVote(voter, recipient, 1);
 
+            emit joinTreeEvent(voter, name recipient);
         }
 
         // when we first join the tree without a parent
@@ -50,7 +81,9 @@ contract Anthill {
    
             emit SimpleEventForUpdates("", 1);
 
-            assert (msg.sender == voter);
+            if (!unlocked) {
+                assert (msg.sender == voter);
+            }          
   
             assert (dag.treeVote[voter] == address(0));
             assert (dag.root == address(0));
@@ -67,35 +100,41 @@ contract Anthill {
         }
 
         function changeName(address voter, string calldata name)  public {
-            assert (msg.sender == voter);
+            if (!unlocked) {
+                assert (msg.sender == voter);
+            }
 
-            emit SimpleEventForUpdates("", 0);
             assert (dag.treeVote[voter] != address(0));
             dag.names[voter] = name;
-        }
 
+            emit changeNameEvent(voter, name);
+
+        }
+    ////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Dag externals
         // to add a vote to the dag.sentDagVote array, and also to the corresponding dag.recDagVote array
         function addDagVote(address voter, address recipient, uint32 weight) public {
             
-            assert (msg.sender == voter);
-
-            emit SimpleEventForUpdates("", 0);
+            if (!unlocked) {
+                assert (msg.sender == voter);
+            }
 
             (bool votable, bool voted, uint32 sdist, uint32 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
             assert ((votable) && (voted == false));
 
             // add DagVotes. 
-            AnthillInner.combinedDagAppendSdist( dag , voter, recipient, sdist, depth, weight);    
+            AnthillInner.combinedDagAppendSdist( dag , voter, recipient, sdist, depth, weight);
+
+            emit addDagVoteEvent(voter, recipient, weight);
         }
 
         // to remove a vote from the dag.sentDagVote array, and also from the  corresponding dag.recDagVote arrays
         function removeDagVote(address voter, address recipient) public {
-           
-            emit SimpleEventForUpdates("", 0);
-          
-            assert (msg.sender == voter);
+                     
+            if (!unlocked) {
+                assert (msg.sender == voter);
+            }
 
 
             // find the votes we delete
@@ -103,8 +142,11 @@ contract Anthill {
             assert (voted == true);
 
             AnthillInner.safeRemoveSentDagVoteAtDistDepthPos(dag, voter, sdist, depth, sPos);
+
+            emit removeDagVoteEvent(voter, recipient)
         }
 
+    ////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Global readers 
 
@@ -134,28 +176,31 @@ contract Anthill {
             return voterReputation;
         }
 
+    ////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Global external
 
         
         function leaveTree(address voter) public {
 
-            assert (msg.sender == voter);
-
-            emit SimpleEventForUpdates("", 0);
+            if (!unlocked) {
+                assert (msg.sender == voter);
+            }
             
             dag.removeSentDagVoteComplete( voter);
             dag.removeRecDagVoteComplete(  voter);
 
             dag.handleLeavingVoterBranch(  voter);
             dag.treeVote[voter] = address(0);
+
+            emit leaveTreeEvent(voter);
         }
 
         function switchPositionWithParent(address voter) public {
 
-            assert (msg.sender == voter);
-
-            emit SimpleEventForUpdates("", 0);
+            if (!unlocked) {
+                assert (msg.sender == voter);
+            }
 
             address parent = dag.treeVote[voter];
             assert (parent != address(0));
@@ -171,14 +216,15 @@ contract Anthill {
             dag.handleDagVoteMoveRise(  voter, gparent, parent, 2, 2);
             
             dag.switchTreeVoteWithParent( voter);
+
+            emit switchPositionWithParentEvent(voter);
         }
 
         function moveTreeVote(address voter, address recipient) external {
  
-            assert (msg.sender == voter);
-
-
-            emit SimpleEventForUpdates("", 0);
+            if (!unlocked) {
+                assert (msg.sender == voter);
+            }
 
             assert (dag.treeVote[voter] != address(0));
 
@@ -220,13 +266,15 @@ contract Anthill {
             // handle tree votes
             // there is a single twise here, if recipient the descendant of the voter that rises.
             dag.addTreeVote( voter, recipient);
+
+            emit moveTreeVoteEvent(voter, recipient);
         }
 
 
     ///////////////////////
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////// imported from AnthillInner library. (Todo: remove unnecessary functions/make others internal or comment out completely, its for testing.)
+    ///////////// imported from AnthillInner library, mostly view functions. (Non-view functions  are for testing, should be commented out for deployment.
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Variable readers 
         // root/base 
