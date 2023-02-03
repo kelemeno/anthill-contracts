@@ -153,19 +153,30 @@ contract JustDeploy is Script {
     Anthill public anthill;
 
     function run() public {
-        uint256 privateKey =  0x01 ;
+        uint256 privateKey =  0xacca3e7750a8fee0aad70a861e949c678863ea8329d01977a4f8aaf862d0d7a9 ;
         vm.startBroadcast(privateKey);
 
 
         anthill = new Anthill();
                 
-        anthill.joinTreeAsRoot(address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE) ,"Anon999");
-        anthill.joinTree(address(0x063089B0F679C5189F539140a4Ed076De368a528),  "Bence", address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE) );
-        anthill.joinTree(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA),  "Ago", address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
-        anthill.joinTree(address(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419), "Kalman", address(0x063089B0F679C5189F539140a4Ed076De368a528));
+        anthill.joinTreeAsRoot(address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8), "TrueBence");
 
-        anthill.removeDagVote(address(0x063089B0F679C5189F539140a4Ed076De368a528), address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
-        anthill.removeDagVote(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA), address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+            anthill.joinTree(address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1), "Aron", address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
+                anthill.joinTree(address(0x063089B0F679C5189F539140a4Ed076De368a528),  "Bence", address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1) );
+                    anthill.removeDagVote(address(0x063089B0F679C5189F539140a4Ed076De368a528), address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1));
+
+                anthill.joinTree(address(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419), "Kalman", address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1));
+
+            anthill.joinTree(address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE) ,"Anon999", address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
+                anthill.removeDagVote(address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE), address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
+
+                anthill.joinTree(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA),  "Ago", address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+                    anthill.removeDagVote(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA), address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+
+        
+        // dagVotes:
+            //  kalman-> truebence, 
+            // Aron -> TrueBence
 
         anthill.lockTree();
             
