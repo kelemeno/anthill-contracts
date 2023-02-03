@@ -32,6 +32,8 @@ contract AnthillScript3 is Script {
 
         // we don't want votes between 4, 5 and 2. 
         anthill.removeDagVote(address(4), address(2));
+        anthill.removeDagVote(address(5), address(2)); // todo line this might have to be deleted. 
+
         
         for (uint256 depth=1 ; depth<=3; depth++){
             for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
@@ -63,6 +65,64 @@ contract AnthillScript3 is Script {
     }
 }
 
+contract SmallScript is Script {
+    Anthill public anthill;
+
+    function run() public {
+        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        vm.startBroadcast(privateKey);
+
+
+        anthill = new Anthill();
+
+        // simple logic, 2 3 are roots, 
+        //for x there are two childre with addresses 2x, and 2x+1 
+        
+        // height 0
+        anthill.joinTreeAsRoot(address(2), string("Root2 "));
+
+        // adding tree votes. For the numbering we are adding children for i, j voter. 
+        for (uint256 depth=1 ; depth<3; depth++){
+            for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
+                anthill.joinTree(address(uint160(2*(2**depth+verticalNum))), string("Name"),address(uint160(2**depth+verticalNum)));
+                anthill.joinTree(address(uint160(2*(2**depth+verticalNum)+1)), string("Name"),address(uint160(2**depth+verticalNum)));
+            }
+        }
+
+        // we don't want votes between 4, 5 and 2. 
+        anthill.removeDagVote(address(4), address(2));
+        anthill.removeDagVote(address(5), address(2));
+
+        
+        for (uint256 depth=1 ; depth<=2; depth++){
+            for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
+                for (uint256 recDepth=1; recDepth<depth; recDepth++){      
+                    // we want 2 to receive less, and the second lowest layer to receive more votes. 
+                    uint32 weight =1000;
+                    if (recDepth == 1){
+                        weight = 1;
+                    } else if (recDepth == 4){
+                        weight = 100000;
+                    } 
+
+                    for ( uint256 recVerticalNum=0; recVerticalNum<2**(recDepth-1); recVerticalNum++){
+                        
+                        // we cannot add votes between parents and children, as we already added those votes in joinTree
+                        if (2**depth+verticalNum >= 2*(2**recDepth+recVerticalNum)  ){
+                            if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==0 ) continue;
+                            if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==1 ) continue;
+                        }
+                        
+                        anthill.addDagVote(address(uint160(2**depth+verticalNum)), address(uint160(2**recDepth+recVerticalNum)), weight);
+                    }
+                }                
+            }
+        }    
+
+        vm.stopBroadcast();
+
+    }
+}
 
 contract TutorialScript is Script {
     Anthill public anthill;
@@ -93,7 +153,7 @@ contract JustDeploy is Script {
     Anthill public anthill;
 
     function run() public {
-        uint256 privateKey =  0x0 ;
+        uint256 privateKey =  0x01 ;
         vm.startBroadcast(privateKey);
 
 

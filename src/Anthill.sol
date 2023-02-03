@@ -21,10 +21,10 @@ contract Anthill {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Events
 
-        event SimpleEventForUpdates(string str, uint256 var);
+        event SimpleEventForUpdates(string str, uint256 num);
 
 
-        event joinTreeEvent(address voter, string name, address recipietn);
+        event joinTreeEvent(address voter, string name, address recipient);
 
         event changeNameEvent(address voter, string newName);
 
@@ -70,10 +70,17 @@ contract Anthill {
             dag.sentDagVoteDepthDiff[voter] = 1000;
             dag.recDagVoteDistDiff[voter] = 1000;
             dag.recDagVoteDepthDiff[voter] = 1000;
+            
 
-            addDagVote(voter, recipient, 1);
+            // adding Dag Vote, copied from addDagVote
+                (bool votable, bool voted, uint32 sdist, uint32 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
+                assert ((votable) && (voted == false));
 
-            emit joinTreeEvent(voter, name recipient);
+                // add DagVotes. 
+                AnthillInner.combinedDagAppendSdist( dag , voter, recipient, sdist, depth, 1);
+
+            emit joinTreeEvent(voter, name, recipient);
+
         }
 
         // when we first join the tree without a parent
@@ -91,6 +98,8 @@ contract Anthill {
             dag.names[voter] = name;
             dag.treeVote[voter] = address(1);
             dag.root = voter;
+            dag.recTreeVote[address(1)][0] = voter;
+            dag.recTreeVoteCount[address(1)] =1;
             
 
             dag.sentDagVoteDistDiff[voter] = 1000;
@@ -110,6 +119,7 @@ contract Anthill {
             emit changeNameEvent(voter, name);
 
         }
+
     ////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Dag externals
@@ -143,7 +153,7 @@ contract Anthill {
 
             AnthillInner.safeRemoveSentDagVoteAtDistDepthPos(dag, voter, sdist, depth, sPos);
 
-            emit removeDagVoteEvent(voter, recipient)
+            emit removeDagVoteEvent(voter, recipient);
         }
 
     ////////////////////////////////////////////
@@ -436,7 +446,7 @@ contract Anthill {
         }
 
 
-
+    // used for testing: 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////
     // //// Dag internals. Core logic. 
     //     ///////////// Single vote changes

@@ -928,7 +928,5 @@ library AnthillInner{
             if (dag.root == voter ){
                 dag.root = firstChild;
             }
-        }
-        
-
+        } 
 }
