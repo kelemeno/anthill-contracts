@@ -10,6 +10,7 @@ contract Anthill {
     constructor() {
         dag.decimalPoint = 18;
         dag.MAX_REL_ROOT_DEPTH = 6;
+
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17,6 +18,26 @@ contract Anthill {
         using AnthillInner for Dag; 
         Dag public dag; 
         bool public unlocked = true;
+
+        string public tokenName = "Anthill";
+        string public tokenSymbol = "ANTH";
+
+        function decimals() public view returns(uint32) {
+            return dag.decimalPoint;
+        }
+
+        function name() public view returns(string memory) {
+            return tokenName;
+        }
+
+        function symbol() public view returns(string memory) {
+            return tokenSymbol;
+        }
+
+        function balanceOf(address voter) public view returns(uint256) {
+            return dag.readReputation(voter);
+        }
+        
     ////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Events

@@ -79,7 +79,7 @@ contract SmallScript is Script {
         //for x there are two childre with addresses 2x, and 2x+1 
         
         // height 0
-        anthill.joinTreeAsRoot(address(2), string("Root2 "));
+        anthill.joinTreeAsRoot(address(2), string("Root2"));
 
         // adding tree votes. For the numbering we are adding children for i, j voter. 
         for (uint256 depth=1 ; depth<3; depth++){
@@ -153,30 +153,46 @@ contract JustDeploy is Script {
     Anthill public anthill;
 
     function run() public {
-        uint256 privateKey =  0xacca3e7750a8fee0aad70a861e949c678863ea8329d01977a4f8aaf862d0d7a9 ;
+        uint256 privateKey =  0x01 ;
         vm.startBroadcast(privateKey);
 
 
         anthill = new Anthill();
                 
-        anthill.joinTreeAsRoot(address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8), "TrueBence");
+        anthill.joinTreeAsRoot(address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41), "MMarton");
 
-            anthill.joinTree(address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1), "Aron", address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
-                anthill.joinTree(address(0x063089B0F679C5189F539140a4Ed076De368a528),  "Bence", address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1) );
-                    anthill.removeDagVote(address(0x063089B0F679C5189F539140a4Ed076De368a528), address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1));
+            anthill.joinTree(address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8), "TrueBence", address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41));
+                anthill.removeDagVote(address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8), address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41));
+
+                anthill.joinTree(address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE) ,"Anon999", address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
+                    anthill.removeDagVote(address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE), address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
+
+                    anthill.joinTree(address(0x70584a3387e038cCaCb8E64Beb8FAf90118B09d8) ,"Rob", address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+                        anthill.removeDagVote(address(0x70584a3387e038cCaCb8E64Beb8FAf90118B09d8), address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+
+
+                anthill.joinTree(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA),  "Ago", address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
+                    anthill.removeDagVote(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA), address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
+                
+            anthill.joinTree(address(0x063089B0F679C5189F539140a4Ed076De368a528),  "Bence", address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41) );
+                anthill.removeDagVote(address(0x063089B0F679C5189F539140a4Ed076De368a528), address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41));
+                
+                anthill.joinTree(address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1), "Aron", address(0x063089B0F679C5189F539140a4Ed076De368a528));
+                    anthill.removeDagVote(address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1), address(0x063089B0F679C5189F539140a4Ed076De368a528));
+                    anthill.addDagVote(address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1), address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8), 1);
+
+                    anthill.joinTree(address(0x17DB4852aa8dE2a2dF50Ee4cBE41f529458957B4), "Enlli", address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1));
+                        anthill.removeDagVote(address(0x17DB4852aa8dE2a2dF50Ee4cBE41f529458957B4), address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1));
+                        anthill.addDagVote(address(0x17DB4852aa8dE2a2dF50Ee4cBE41f529458957B4), address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1), 1);
+
 
                 anthill.joinTree(address(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419), "Kalman", address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1));
-
-            anthill.joinTree(address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE) ,"Anon999", address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
-                anthill.removeDagVote(address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE), address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8));
-
-                anthill.joinTree(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA),  "Ago", address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
-                    anthill.removeDagVote(address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA), address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE));
+                
 
         
         // dagVotes:
-            //  kalman-> truebence, 
             // Aron -> TrueBence
+            // Enlli -> Marton
 
         anthill.lockTree();
             
@@ -185,11 +201,76 @@ contract JustDeploy is Script {
     }
 }
 
+contract Redeploy is Script {
+    Anthill public anthillNew;
+    address oldAddress = 0xb2218969ECF92a3085B8345665d65FCdFED9F981;
+    Anthill public anthillOld = Anthill(oldAddress);
+
+
+     function run() public {
+        uint256 privateKey =  0x01 ;
+
+        vm.startBroadcast(privateKey);
+
+
+        anthillNew = new Anthill();
+        
+        address root = anthillOld.readRoot();
+        string memory rootName = anthillOld.readName(root);
+
+        anthillNew.joinTreeAsRoot(root, rootName);
+
+        readAndAddChildrenRec(root, anthillOld, anthillNew);
+                           
+        uint32 maxRelRootDepth = anthillOld.readMaxRelRootDepth();
+        readAndAddDagVotesRec(maxRelRootDepth, root, anthillOld, anthillNew);
+
+        anthillNew.lockTree();
+            
+        vm.stopBroadcast();
+
+    }
+
+
+    function readAndAddChildrenRec(address parent, Anthill anthillOld, Anthill anthillNew ) internal {
+        uint32 childCount = anthillOld.readRecTreeVoteCount(parent);
+        for (uint32 i=0; i<childCount; i++){
+            address child = anthillOld.readRecTreeVote(parent, i);
+            string memory childName = anthillOld.readName(child);
+            anthillNew.joinTree(child, childName, parent);
+            anthillNew.removeDagVote(child, parent);
+
+            readAndAddChildrenRec(child, anthillOld, anthillNew);
+        }
+    }
+
+    function readAndAddDagVotesRec(uint32 maxRelRootDepth, address voter, Anthill anthillOld, Anthill anthillNew) internal {
+
+        for (uint32 dist=1; dist<=maxRelRootDepth; dist++){
+           for (uint32 height = 0; height <= dist; height++){
+
+                uint32 dagVoteCount = anthillOld.readSentDagVoteCount(voter, dist, height);
+                for (uint32 i=0; i<dagVoteCount; i++){
+                    DagVote memory dagVote = anthillOld.readSentDagVote(voter, dist, height, i);
+                    anthillNew.addDagVote(voter, dagVote.id, dagVote.weight);
+                }
+            }
+        }
+
+        uint32 childCount = anthillOld.readRecTreeVoteCount(voter);
+        for (uint32 i=0; i<childCount; i++){
+            address child = anthillOld.readRecTreeVote(voter, i);
+            readAndAddDagVotesRec(maxRelRootDepth, child, anthillOld, anthillNew);
+        }
+        
+    }
+}
+
 contract AnthillScript1 is Script {
     Anthill public anthill;
 
     function run() public {
-        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        uint256 privateKey = 0x01;
         vm.startBroadcast(privateKey);
 
 
