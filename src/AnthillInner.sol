@@ -38,6 +38,7 @@ pragma solidity ^0.8.13;
         mapping(address => mapping(uint32 => mapping(uint32 => mapping(uint32 => DagVote))))  recDagVote; // voter -> rdist -> depth -> counter -> DagVote
 
         mapping(address => uint256)  reputation;
+        mapping(address => bool) repIsCalculated;
    }
 ///////////////////////////////////////////
 

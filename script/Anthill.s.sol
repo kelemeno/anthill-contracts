@@ -266,6 +266,52 @@ contract Redeploy is Script {
     }
 }
 
+contract CalculateRep is Script {
+    address oldAddress = 0x052B66427EE6560e2dF0b5d7463FAdAd6b8206E9 ;
+    Anthill public anthillOld = Anthill(oldAddress);
+
+
+     function run() public {
+        uint256 privateKey = 0x01;
+
+        vm.startBroadcast(privateKey);
+
+
+        
+        uint256 root = anthillOld.calculateReputation(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419);
+
+        console.log("root rep: ", root);
+        // calculateRepRec(root, anthillOld);
+        // TODO: add a second method to anthill dag which calculates rep for a single node. Then we can calculate rep for all nodes efficiently, buttom up. This should be in a single tx, to save fees. Finally, we should call that method here. 
+            
+        vm.stopBroadcast();
+
+    }
+
+
+}
+
+
+contract CalculateRepForAll is Script {
+    address oldAddress = 0xb2218969ECF92a3085B8345665d65FCdFED9F981;
+    Anthill public anthill = Anthill(oldAddress);
+
+
+     function run() public {
+        uint256 privateKey =  0x01 ;
+
+        vm.startBroadcast(privateKey);
+
+        anthill.recalculateAllReputation();
+
+        vm.stopBroadcast();
+
+    }
+
+
+    
+}
+
 contract AnthillScript1 is Script {
     Anthill public anthill;
 

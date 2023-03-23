@@ -187,8 +187,13 @@ contract Anthill {
 
             return readDepth(dag.treeVote[voter]) + 1;
         } 
+    ////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Reputation Related
 
+        
         // to calculate the reputation of a voter, i.e. the sum of the votes of the voter and all its descendants
+        // not efficient
         function calculateReputation(address voter)  public returns (uint256){
             uint256 voterReputation = 0 ;
             if (voter == address(0)) return 0;
@@ -207,6 +212,56 @@ contract Anthill {
             return voterReputation;
         }
 
+
+        function clearReputationCalculatedRec(address voter) public {
+            if (readSentTreeVote(voter) == address(0)) {
+                return;
+            }
+
+            dag.repIsCalculated[voter] = false;
+
+            for (uint32 count =0; count< dag.recTreeVoteCount[voter]; count++) {
+                clearReputationCalculatedRec(dag.recTreeVote[voter][count]);
+            }
+
+        }
+        
+        function calculateReputationRec(address voter) public {
+            if (readSentTreeVote(voter) == address(0)) {
+                return;
+            }
+            
+            if (dag.repIsCalculated[voter]) {
+                return;
+            }
+
+            for (uint32 count =0; count< dag.recTreeVoteCount[voter]; count++) {
+                calculateReputationRec(dag.recTreeVote[voter][count]);
+            }
+
+            uint256 voterReputation = 0;
+
+            for (uint32 dist=0; dist< dag.MAX_REL_ROOT_DEPTH; dist++){    
+                for (uint32 depth=1; depth<= dag.MAX_REL_ROOT_DEPTH - dist; depth++){
+                    for (uint32 count =0; count< AnthillInner.readRecDagVoteCount( dag , voter, dist, depth); count++) {
+                    DagVote memory rDagVote = AnthillInner.readRecDagVote( dag , voter, dist, depth, count);
+                        voterReputation += dag.reputation[rDagVote.id]*(rDagVote.weight)/ dag.sentDagVoteTotalWeight[rDagVote.id];
+                    }
+                }
+            }
+
+            voterReputation += 10**dag.decimalPoint;
+            dag.reputation[voter] = voterReputation;
+
+            dag.repIsCalculated[voter] = true;
+           
+        }
+
+
+        function recalculateAllReputation() public {
+            clearReputationCalculatedRec(dag.root);
+            calculateReputationRec(dag.root);
+        }
     ////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Global external
