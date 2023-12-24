@@ -39,7 +39,7 @@ contract AnthillScript3 is Script {
             for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
                 for (uint256 recDepth=1; recDepth<depth; recDepth++){      
                     // we want 2 to receive less, and the second lowest layer to receive more votes. 
-                    uint32 weight =1000;
+                    uint256 weight =1000;
                     if (recDepth == 1){
                         weight = 1;
                     } else if (recDepth == 4){
@@ -98,7 +98,7 @@ contract SmallScript is Script {
             for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
                 for (uint256 recDepth=1; recDepth<depth; recDepth++){      
                     // we want 2 to receive less, and the second lowest layer to receive more votes. 
-                    uint32 weight =1000;
+                    uint256 weight =1000;
                     if (recDepth == 1){
                         weight = 1;
                     } else if (recDepth == 4){
@@ -222,7 +222,7 @@ contract Redeploy is Script {
 
         readAndAddChildrenRec(root, anthillOld, anthillNew);
                            
-        uint32 maxRelRootDepth = anthillOld.readMaxRelRootDepth();
+        uint256 maxRelRootDepth = anthillOld.readMaxRelRootDepth();
         readAndAddDagVotesRec(maxRelRootDepth, root, anthillOld, anthillNew);
 
         anthillNew.lockTree();
@@ -233,8 +233,8 @@ contract Redeploy is Script {
 
 
     function readAndAddChildrenRec(address parent, Anthill anthillOld, Anthill anthillNew ) internal {
-        uint32 childCount = anthillOld.readRecTreeVoteCount(parent);
-        for (uint32 i=0; i<childCount; i++){
+        uint256 childCount = anthillOld.readRecTreeVoteCount(parent);
+        for (uint256 i=0; i<childCount; i++){
             address child = anthillOld.readRecTreeVote(parent, i);
             string memory childName = anthillOld.readName(child);
             anthillNew.joinTree(child, childName, parent);
@@ -244,21 +244,21 @@ contract Redeploy is Script {
         }
     }
 
-    function readAndAddDagVotesRec(uint32 maxRelRootDepth, address voter, Anthill anthillOld, Anthill anthillNew) internal {
+    function readAndAddDagVotesRec(uint256 maxRelRootDepth, address voter, Anthill anthillOld, Anthill anthillNew) internal {
 
-        for (uint32 dist=1; dist<=maxRelRootDepth; dist++){
-           for (uint32 height = 0; height <= dist; height++){
+        for (uint256 dist=1; dist<=maxRelRootDepth; dist++){
+           for (uint256 height = 0; height <= dist; height++){
 
-                uint32 dagVoteCount = anthillOld.readSentDagVoteCount(voter, dist, height);
-                for (uint32 i=0; i<dagVoteCount; i++){
+                uint256 dagVoteCount = anthillOld.readSentDagVoteCount(voter, dist, height);
+                for (uint256 i=0; i<dagVoteCount; i++){
                     DagVote memory dagVote = anthillOld.readSentDagVote(voter, dist, height, i);
                     anthillNew.addDagVote(voter, dagVote.id, dagVote.weight);
                 }
             }
         }
 
-        uint32 childCount = anthillOld.readRecTreeVoteCount(voter);
-        for (uint32 i=0; i<childCount; i++){
+        uint256 childCount = anthillOld.readRecTreeVoteCount(voter);
+        for (uint256 i=0; i<childCount; i++){
             address child = anthillOld.readRecTreeVote(voter, i);
             readAndAddDagVotesRec(maxRelRootDepth, child, anthillOld, anthillNew);
         }

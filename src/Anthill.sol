@@ -22,7 +22,7 @@ contract Anthill {
         string public tokenName = "Anthill";
         string public tokenSymbol = "ANTH";
 
-        function decimals() public view returns(uint32) {
+        function decimals() public view returns(uint256) {
             return dag.decimalPoint;
         }
 
@@ -50,7 +50,7 @@ contract Anthill {
         event changeNameEvent(address voter, string newName);
 
 
-        event addDagVoteEvent(address voter, address recipient, uint32 weight);
+        event addDagVoteEvent(address voter, address recipient, uint256 weight);
 
         event removeDagVoteEvent(address voter, address recipient);
 
@@ -94,7 +94,7 @@ contract Anthill {
             
 
             // adding Dag Vote, copied from addDagVote
-                (bool votable, bool voted, uint32 sdist, uint32 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
+                (bool votable, bool voted, uint256 sdist, uint256 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
                 assert ((votable) && (voted == false));
 
                 // add DagVotes. 
@@ -145,13 +145,13 @@ contract Anthill {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Dag externals
         // to add a vote to the dag.sentDagVote array, and also to the corresponding dag.recDagVote array
-        function addDagVote(address voter, address recipient, uint32 weight) public {
+        function addDagVote(address voter, address recipient, uint256 weight) public {
             
             if (!unlocked) {
                 assert (msg.sender == voter);
             }
 
-            (bool votable, bool voted, uint32 sdist, uint32 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
+            (bool votable, bool voted, uint256 sdist, uint256 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
             assert ((votable) && (voted == false));
 
             // add DagVotes. 
@@ -169,7 +169,7 @@ contract Anthill {
 
 
             // find the votes we delete
-            (, bool voted, uint32 sdist, uint32 depth, uint32 sPos, ) = AnthillInner.findSentDagVote( dag , voter, recipient);
+            (, bool voted, uint256 sdist, uint256 depth, uint256 sPos, ) = AnthillInner.findSentDagVote( dag , voter, recipient);
             assert (voted == true);
 
             AnthillInner.safeRemoveSentDagVoteAtDistDepthPos(dag, voter, sdist, depth, sPos);
@@ -181,7 +181,7 @@ contract Anthill {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Global readers 
 
-        function readDepth(address voter) public view returns(uint32){
+        function readDepth(address voter) public view returns(uint256){
             if (dag.treeVote[voter] == address(0)) return 0;
             if (dag.treeVote[voter] == address(1)) return 0;
 
@@ -198,9 +198,9 @@ contract Anthill {
             uint256 voterReputation = 0 ;
             if (voter == address(0)) return 0;
 
-            for (uint32 dist=0; dist< dag.MAX_REL_ROOT_DEPTH; dist++){    
-                for (uint32 depth=1; depth<= dag.MAX_REL_ROOT_DEPTH - dist; depth++){
-                    for (uint32 count =0; count< AnthillInner.readRecDagVoteCount( dag , voter, dist, depth); count++) {
+            for (uint256 dist=0; dist< dag.MAX_REL_ROOT_DEPTH; dist++){    
+                for (uint256 depth=1; depth<= dag.MAX_REL_ROOT_DEPTH - dist; depth++){
+                    for (uint256 count =0; count< AnthillInner.readRecDagVoteCount( dag , voter, dist, depth); count++) {
                     DagVote memory rDagVote = AnthillInner.readRecDagVote( dag , voter, dist, depth, count);
                         voterReputation += calculateReputation(rDagVote.id)*(rDagVote.weight)/ dag.sentDagVoteTotalWeight[rDagVote.id];
                     }
@@ -220,7 +220,7 @@ contract Anthill {
 
             dag.repIsCalculated[voter] = false;
 
-            for (uint32 count =0; count< dag.recTreeVoteCount[voter]; count++) {
+            for (uint256 count =0; count< dag.recTreeVoteCount[voter]; count++) {
                 clearReputationCalculatedRec(dag.recTreeVote[voter][count]);
             }
 
@@ -235,15 +235,15 @@ contract Anthill {
                 return;
             }
 
-            for (uint32 count =0; count< dag.recTreeVoteCount[voter]; count++) {
+            for (uint256 count =0; count< dag.recTreeVoteCount[voter]; count++) {
                 calculateReputationRec(dag.recTreeVote[voter][count]);
             }
 
             uint256 voterReputation = 0;
 
-            for (uint32 dist=0; dist< dag.MAX_REL_ROOT_DEPTH; dist++){    
-                for (uint32 depth=1; depth<= dag.MAX_REL_ROOT_DEPTH - dist; depth++){
-                    for (uint32 count =0; count< AnthillInner.readRecDagVoteCount( dag , voter, dist, depth); count++) {
+            for (uint256 dist=0; dist< dag.MAX_REL_ROOT_DEPTH; dist++){    
+                for (uint256 depth=1; depth<= dag.MAX_REL_ROOT_DEPTH - dist; depth++){
+                    for (uint256 count =0; count< AnthillInner.readRecDagVoteCount( dag , voter, dist, depth); count++) {
                     DagVote memory rDagVote = AnthillInner.readRecDagVote( dag , voter, dist, depth, count);
                         voterReputation += dag.reputation[rDagVote.id]*(rDagVote.weight)/ dag.sentDagVoteTotalWeight[rDagVote.id];
                     }
@@ -318,12 +318,12 @@ contract Anthill {
             assert (dag.recTreeVoteCount[recipient] < 2);
 
             (address relRoot, ) = AnthillInner.findRelRoot( dag , voter);
-            (bool isLowerOrEqual, uint32 lowerSDist, uint32 lowerDepth) = AnthillInner.findSDistDepth( dag , recipient, voter);
-            uint32 lowerRDist = lowerSDist - lowerDepth;
-            (bool isSimilar, uint32 simDist, uint32 simDepth) = AnthillInner.findSDistDepth( dag , voter, recipient);
-            (bool isHigher, uint32 higherRDist, uint32 higherDepthToRelRoot) = AnthillInner.findSDistDepth( dag , recipient, relRoot);
-            uint32 higherDepth = dag.MAX_REL_ROOT_DEPTH - higherDepthToRelRoot;
-            uint32 higherDist = higherRDist + higherDepth;
+            (bool isLowerOrEqual, uint256 lowerSDist, uint256 lowerDepth) = AnthillInner.findSDistDepth( dag , recipient, voter);
+            uint256 lowerRDist = lowerSDist - lowerDepth;
+            (bool isSimilar, uint256 simDist, uint256 simDepth) = AnthillInner.findSDistDepth( dag , voter, recipient);
+            (bool isHigher, uint256 higherRDist, uint256 higherDepthToRelRoot) = AnthillInner.findSDistDepth( dag , recipient, relRoot);
+            uint256 higherDepth = dag.MAX_REL_ROOT_DEPTH - higherDepthToRelRoot;
+            uint256 higherDist = higherRDist + higherDepth;
 
             // we need to leave the tree nowm so that our descendants can rise. 
             address parent= dag.treeVote[voter];
@@ -368,7 +368,7 @@ contract Anthill {
                 return dag.readRoot();
             }
 
-            function readMaxRelRootDepth() public view returns(uint32){
+            function readMaxRelRootDepth() public view returns(uint256){
                 return dag.readMaxRelRootDepth();
             }
 
@@ -386,60 +386,60 @@ contract Anthill {
                 return dag.readSentTreeVote( voter);
             }
 
-            function readRecTreeVoteCount( address recipient) public view returns(uint32){
+            function readRecTreeVoteCount( address recipient) public view returns(uint256){
                 return dag.readRecTreeVoteCount( recipient);
             }
 
-            function readRecTreeVote( address recipient, uint32 votePos) public view returns(address){
+            function readRecTreeVote( address recipient, uint256 votePos) public view returns(address){
                 return dag.readRecTreeVote( recipient, votePos);
             }
 
         // for sent dag 
             
-            function readSentDagVoteDistDiff( address voter) external view returns(uint32){
+            function readSentDagVoteDistDiff( address voter) external view returns(uint256){
                 return dag.readSentDagVoteDistDiff( voter);
             }
 
-            function readSentDagVoteDepthDiff( address voter) external view returns(uint32){
+            function readSentDagVoteDepthDiff( address voter) external view returns(uint256){
                 return dag.readSentDagVoteDepthDiff( voter);
             }
 
-            function readSentDagVoteCount( address voter, uint32 sdist, uint32 depth) public view returns(uint32){
+            function readSentDagVoteCount( address voter, uint256 sdist, uint256 depth) public view returns(uint256){
                 return dag.readSentDagVoteCount( voter, sdist, depth);
             }
 
-            function readSentDagVote( address voter, uint32 sdist, uint32 depth, uint32 votePos) public view returns( DagVote memory){
+            function readSentDagVote( address voter, uint256 sdist, uint256 depth, uint256 votePos) public view returns( DagVote memory){
                 return dag.readSentDagVote( voter, sdist, depth, votePos);
             }
 
         
-            function readSentDagVoteTotalWeight( address voter) public view returns( uint32){
+            function readSentDagVoteTotalWeight( address voter) public view returns( uint256){
                 return dag.readSentDagVoteTotalWeight( voter);
             }
 
         // for rec Dag votes
 
-            function readRecDagVoteDistDiff( address recipient) external view returns(uint32){
+            function readRecDagVoteDistDiff( address recipient) external view returns(uint256){
                 return dag.readRecDagVoteDistDiff( recipient);
             }
 
-            function readRecDagVoteDepthDiff( address recipient) public view returns(uint32){
+            function readRecDagVoteDepthDiff( address recipient) public view returns(uint256){
                 return dag.readRecDagVoteDepthDiff( recipient);
             }
 
 
-            function readRecDagVoteCount( address recipient, uint32 rdist, uint32 depth) public view returns(uint32){
+            function readRecDagVoteCount( address recipient, uint256 rdist, uint256 depth) public view returns(uint256){
                 return dag.readRecDagVoteCount( recipient, rdist, depth);
             }
 
-            function readRecDagVote( address recipient, uint32 rdist, uint32 depth, uint32 votePos) public view returns(DagVote memory){
+            function readRecDagVote( address recipient, uint256 rdist, uint256 depth, uint256 votePos) public view returns(DagVote memory){
                 return dag.readRecDagVote( recipient, rdist, depth, votePos);
             }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Personal tree finder 
 
-        function findRecTreeVotePos( address voter, address recipient) public view returns (bool voted, uint32 votePos) {
+        function findRecTreeVotePos( address voter, address recipient) public view returns (bool voted, uint256 votePos) {
             return dag.findRecTreeVotePos( voter, recipient);
         }
 
@@ -464,28 +464,28 @@ contract Anthill {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Local tree finders
         
-        function findNthParent(address voter, uint32 height) public view returns (address parent){
+        function findNthParent(address voter, uint256 height) public view returns (address parent){
             return dag.findNthParent( voter, height);
         }
 
         // to find our relative dag.root, our ancestor at depth dag.MAX_REL_ROOT_DEPTH
-        function findRelRoot( address voter) public view returns (address relRoot, uint32 relDepth){
+        function findRelRoot( address voter) public view returns (address relRoot, uint256 relDepth){
             return dag.findRelRoot( voter);
         }
 
         // to find the depth difference between two locally close voters. Locally close means the recipient is a descendant of the voter's relative dag.root
-        function findRelDepth(address voter, address recipient) public view returns (bool isLocal, uint32 relDepth){
+        function findRelDepth(address voter, address recipient) public view returns (bool isLocal, uint256 relDepth){
             return dag.findRelDepth( voter, recipient);
         }
 
         // to find the distance between voter and recipient, within maxDistance. 
         // THIS IS ACTUALLY A GLOBAL FUNTION!
-        function findDistAtSameDepth(address add1, address add2) public view returns (bool isSameDepth, uint32 distance) {
+        function findDistAtSameDepth(address add1, address add2) public view returns (bool isSameDepth, uint256 distance) {
             return dag.findDistAtSameDepth( add1, add2);
         }
 
         // 
-        function findSDistDepth(address voter, address recipient) public view returns (bool isLocal, uint32 distance, uint32 relDepth){
+        function findSDistDepth(address voter, address recipient) public view returns (bool isLocal, uint256 distance, uint256 relDepth){
             return dag.findSDistDepth( voter, recipient);
         }
 
@@ -494,248 +494,248 @@ contract Anthill {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// DAG finders
         // to check the existence and to find the position of a vote in a given row of the sentDagVote array
-        function findSentDagVotePosAtDistDepth(address voter, address recipient, uint32 sdist,  uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
+        function findSentDagVotePosAtDistDepth(address voter, address recipient, uint256 sdist,  uint256 depth) public view returns (bool voted, uint256 votePos, DagVote memory vote){
             return dag.findSentDagVotePosAtDistDepth( voter, recipient, sdist, depth);
         }
 
         // to check the existence and to find the position of a vote in a given row of the recDagVote array
-        function findRecDagVotePosAtDistDepth(address voter, address recipient, uint32 rdist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
+        function findRecDagVotePosAtDistDepth(address voter, address recipient, uint256 rdist, uint256 depth) public view returns (bool voted, uint256 votePos, DagVote memory vote){
             return dag.findRecDagVotePosAtDistDepth( voter, recipient, rdist, depth); 
         }
 
-        function findLastSentDagVoteAtDistDepth(address voter, uint32 sdist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
+        function findLastSentDagVoteAtDistDepth(address voter, uint256 sdist, uint256 depth) public view returns (bool voted, uint256 votePos, DagVote memory vote){
             return dag.findLastSentDagVoteAtDistDepth( voter, sdist, depth);
         }
 
-        function findLastRecDagVoteAtDistDepth(address recipient, uint32 rdist, uint32 depth) public view returns (bool voted, uint32 votePos, DagVote memory vote){
+        function findLastRecDagVoteAtDistDepth(address recipient, uint256 rdist, uint256 depth) public view returns (bool voted, uint256 votePos, DagVote memory vote){
             return dag.findLastRecDagVoteAtDistDepth( recipient, rdist, depth);
         }
 
         // to check the existence and to find the position of a vote in the sentDagVote array (depth diff is the row position, votePos is column pos) 
-        function findSentDagVote(address voter, address recipient) public view returns (bool votable, bool voted, uint32 sdist,  uint32 depth, uint32 votePos, DagVote memory dagVote){ 
+        function findSentDagVote(address voter, address recipient) public view returns (bool votable, bool voted, uint256 sdist,  uint256 depth, uint256 votePos, DagVote memory dagVote){ 
             return dag.findSentDagVote( voter, recipient);
         }
 
         // to check the existence and to find the position of a vote in the recDagVote array (depth diff is the row position (first index), votePos is column pos (second index))
-        function findRecDagVote(address voter, address recipient) public view returns (bool votable, bool voted, uint32 rdist, uint32 depth, uint32 votePos, DagVote memory dagVote){
+        function findRecDagVote(address voter, address recipient) public view returns (bool votable, bool voted, uint256 rdist, uint256 depth, uint256 votePos, DagVote memory dagVote){
             return dag.findRecDagVote( voter, recipient);
         }
 
 
     // used for testing: 
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // //// Dag internals. Core logic. 
-    //     ///////////// Single vote changes
-    //         ///////////// appending a vote
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Dag internals. Core logic. 
+        ///////////// Single vote changes
+            ///////////// appending a vote
 
-    //             function sentDagAppend( address voter, uint32 sdist, uint32 depth, address recipient, uint32 weight, uint32 rPos ) internal{
-    //                 return dag.sentDagAppend( voter, sdist, depth, recipient, weight, rPos);
-    //             }
+                function sentDagAppend( address voter, uint256 sdist, uint256 depth, address recipient, uint256 weight, uint256 rPos ) internal{
+                    return dag.sentDagAppend( voter, sdist, depth, recipient, weight, rPos);
+                }
 
-    //             function recDagAppend( address recipient, uint32 rdist, uint32 depth, address voter, uint32 weight, uint32 sPos ) public{
-    //                 return dag.recDagAppend( recipient, rdist, depth, voter, weight, sPos);   
-    //             }
+                function recDagAppend( address recipient, uint256 rdist, uint256 depth, address voter, uint256 weight, uint256 sPos ) public{
+                    return dag.recDagAppend( recipient, rdist, depth, voter, weight, sPos);   
+                }
 
-    //             function combinedDagAppendSdist( address voter, address recipient,  uint32 sdist, uint32 depth, uint32 weight) internal{
-    //                 return dag.combinedDagAppendSdist( voter, recipient, sdist, depth, weight);   
-    //             }
+                function combinedDagAppendSdist( address voter, address recipient,  uint256 sdist, uint256 depth, uint256 weight) internal{
+                    return dag.combinedDagAppendSdist( voter, recipient, sdist, depth, weight);   
+                }
 
-    //         ///////////// changing position
+            ///////////// changing position
 
-    //             function changePositionSent( address voter, uint32 sdist,  uint32 depth, uint32 sPos, uint32 newRPos) internal {
-    //                 return dag.changePositionSent( voter, sdist, depth, sPos, newRPos);
-    //             }
+                function changePositionSent( address voter, uint256 sdist,  uint256 depth, uint256 sPos, uint256 newRPos) internal {
+                    return dag.changePositionSent( voter, sdist, depth, sPos, newRPos);
+                }
 
-    //             function changePositionRec( address recipient, uint32 rdist, uint32 depth, uint32 rPos, uint32 newSPos) internal{
-    //                 return dag.changePositionRec( recipient, rdist, depth, rPos, newSPos);
-    //             }   
+                function changePositionRec( address recipient, uint256 rdist, uint256 depth, uint256 rPos, uint256 newSPos) internal{
+                    return dag.changePositionRec( recipient, rdist, depth, rPos, newSPos);
+                }   
 
             
 
-    //         ///////////// delete and removal functions
-    //             ///// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
+            ///////////// delete and removal functions
+                ///// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
                 
-    //             /// careful, does not delete the opposite or deacrese count! Do not call, call unsafeReplace..  or safeRemove.. instead
-    //             function unsafeDeleteLastSentDagVoteAtDistDepth( address voter, uint32 sdist, uint32 depth) internal {
-    //                 delete dag.sentDagVote[voter][dag.sentDagVoteDistDiff[voter]+ sdist][dag.sentDagVoteDepthDiff[voter]+depth][dag.readSentDagVoteCount( voter, sdist, depth)-1];
-    //             }
+                /// careful, does not delete the opposite or deacrese count! Do not call, call unsafeReplace..  or safeRemove.. instead
+                function unsafeDeleteLastSentDagVoteAtDistDepth( address voter, uint256 sdist, uint256 depth) internal {
+                    delete dag.sentDagVote[voter][dag.sentDagVoteDistDiff[voter]+ sdist][dag.sentDagVoteDepthDiff[voter]+depth][dag.readSentDagVoteCount( voter, sdist, depth)-1];
+                }
 
-    //             /// careful, does not delete the opposite, or decrease count! Do not call, call unsafeReplace..  or safeRemove.. instead
-    //             function unsafeDeleteLastRecDagVoteAtDistDepth( address recipient, uint32 rdist, uint32 depth) internal {
-    //                 delete dag.recDagVote[recipient][dag.recDagVoteDistDiff[recipient]+ rdist][dag.recDagVoteDepthDiff[recipient]+depth][dag.readRecDagVoteCount( recipient, rdist, depth)-1];
-    //             }   
+                /// careful, does not delete the opposite, or decrease count! Do not call, call unsafeReplace..  or safeRemove.. instead
+                function unsafeDeleteLastRecDagVoteAtDistDepth( address recipient, uint256 rdist, uint256 depth) internal {
+                    delete dag.recDagVote[recipient][dag.recDagVoteDistDiff[recipient]+ rdist][dag.recDagVoteDepthDiff[recipient]+depth][dag.readRecDagVoteCount( recipient, rdist, depth)-1];
+                }   
 
-    //             // careful does not delete the opposite! Always call with opposite, or do something with the other vote
-    //             function unsafeReplaceSentDagVoteAtDistDepthPosWithLast( address voter, uint32 sdist, uint32 depth, uint32 sPos) internal {
-    //                 dag.unsafeReplaceSentDagVoteAtDistDepthPosWithLast( voter, sdist, depth, sPos);
-    //             } 
+                // careful does not delete the opposite! Always call with opposite, or do something with the other vote
+                function unsafeReplaceSentDagVoteAtDistDepthPosWithLast( address voter, uint256 sdist, uint256 depth, uint256 sPos) internal {
+                    dag.unsafeReplaceSentDagVoteAtDistDepthPosWithLast( voter, sdist, depth, sPos);
+                } 
 
-    //             /// careful, does not delete the opposite!
-    //             function unsafeReplaceRecDagVoteAtDistDepthPosWithLast( address recipient, uint32 rdist, uint32 depth, uint32 rPos) public {
-    //                 dag.unsafeReplaceRecDagVoteAtDistDepthPosWithLast( recipient, rdist, depth, rPos);
-    //             } 
+                /// careful, does not delete the opposite!
+                function unsafeReplaceRecDagVoteAtDistDepthPosWithLast( address recipient, uint256 rdist, uint256 depth, uint256 rPos) public {
+                    dag.unsafeReplaceRecDagVoteAtDistDepthPosWithLast( recipient, rdist, depth, rPos);
+                } 
 
-    //             function safeRemoveSentDagVoteAtDistDepthPos(address voter, uint32 sdist, uint32 depth, uint32 sPos) internal {
-    //                 dag.safeRemoveSentDagVoteAtDistDepthPos( voter, sdist, depth, sPos);    
-    //             }
+                function safeRemoveSentDagVoteAtDistDepthPos(address voter, uint256 sdist, uint256 depth, uint256 sPos) internal {
+                    dag.safeRemoveSentDagVoteAtDistDepthPos( voter, sdist, depth, sPos);    
+                }
 
-    //             function safeRemoveRecDagVoteAtDistDepthPos( address recipient, uint32 rdist, uint32 depth, uint32 rPos) internal {
-    //                 dag.safeRemoveRecDagVoteAtDistDepthPos( recipient, rdist, depth, rPos);
-    //             }
+                function safeRemoveRecDagVoteAtDistDepthPos( address recipient, uint256 rdist, uint256 depth, uint256 rPos) internal {
+                    dag.safeRemoveRecDagVoteAtDistDepthPos( recipient, rdist, depth, rPos);
+                }
 
-    //         ///////////// change dist and depth
-    //             function changeDistDepthSent( address voter, uint32 sdist, uint32 depth, uint32 sPos, uint32 newSDist, uint32 newDepth, address recipient, uint32 rPos, uint32 weight) public{
-    //                 // here it is ok to use unsafe, as the the vote is moved, not removed
-    //                dag.changeDistDepthSent( voter, sdist, depth, sPos, newSDist, newDepth, recipient, rPos, weight);
-    //             }
+            ///////////// change dist and depth
+                function changeDistDepthSent( address voter, uint256 sdist, uint256 depth, uint256 sPos, uint256 newSDist, uint256 newDepth, address recipient, uint256 rPos, uint256 weight) public{
+                    // here it is ok to use unsafe, as the the vote is moved, not removed
+                   dag.changeDistDepthSent( voter, sdist, depth, sPos, newSDist, newDepth, recipient, rPos, weight);
+                }
 
-    //             function changeDistDepthRec( address recipient, uint32 rdist, uint32 depth, uint32 rPos, uint32 newRDist, uint32 newDepth, address voter, uint32 sPos, uint32 weight) public{
-    //                 // here it is ok to use unsafe, as the the vote is moved, not removed
-    //                 dag.changeDistDepthRec( recipient, rdist, depth, rPos, newRDist, newDepth, voter, sPos, weight);
-    //             }
+                function changeDistDepthRec( address recipient, uint256 rdist, uint256 depth, uint256 rPos, uint256 newRDist, uint256 newDepth, address voter, uint256 sPos, uint256 weight) public{
+                    // here it is ok to use unsafe, as the the vote is moved, not removed
+                    dag.changeDistDepthRec( recipient, rdist, depth, rPos, newRDist, newDepth, voter, sPos, weight);
+                }
 
-    //     ///////////// Cell removal and handler functions 
-    //         ///////////// removal 
-    //             // to remove a row of votes from the dag.sentDagVote array, and the corresponding votes from the dag.recDagVote arrays
-    //             function removeSentDagVoteCell( address voter, uint32 sdist, uint32 depth) internal {
-    //                 dag.removeSentDagVoteCell( voter, sdist, depth);
-    //             }
+        ///////////// Cell removal and handler functions 
+            ///////////// removal 
+                // to remove a row of votes from the dag.sentDagVote array, and the corresponding votes from the dag.recDagVote arrays
+                function removeSentDagVoteCell( address voter, uint256 sdist, uint256 depth) internal {
+                    dag.removeSentDagVoteCell( voter, sdist, depth);
+                }
 
-    //             // to remove a row of votes from the dag.recDagVote array, and the corresponding votes from the dag.sentDagVote arrays
-    //             function removeRecDagVoteCell( address recipient, uint32 rdist, uint32 depth) public {
-    //                 dag.removeRecDagVoteCell( recipient, rdist, depth);
-    //             }
+                // to remove a row of votes from the dag.recDagVote array, and the corresponding votes from the dag.sentDagVote arrays
+                function removeRecDagVoteCell( address recipient, uint256 rdist, uint256 depth) public {
+                    dag.removeRecDagVoteCell( recipient, rdist, depth);
+                }
 
             
             
-    //         ///////////// dist depth on opposite 
-    //             function changeDistDepthFromSentCellOnOp( address voter, uint32 sdist, uint32 depth, uint32 oldSDist, uint32 oldDepth) internal {
-    //                 dag.changeDistDepthFromSentCellOnOp( voter, sdist, depth, oldSDist, oldDepth);
-    //             }
+            ///////////// dist depth on opposite 
+                function changeDistDepthFromSentCellOnOp( address voter, uint256 sdist, uint256 depth, uint256 oldSDist, uint256 oldDepth) internal {
+                    dag.changeDistDepthFromSentCellOnOp( voter, sdist, depth, oldSDist, oldDepth);
+                }
 
-    //             function changeDistDepthFromRecCellOnOp( address recipient, uint32 rdist, uint32 depth, uint32 oldRDist, uint32 oldDepth) public {
-    //                 dag.changeDistDepthFromRecCellOnOp( recipient, rdist, depth, oldRDist, oldDepth);
-    //             }
+                function changeDistDepthFromRecCellOnOp( address recipient, uint256 rdist, uint256 depth, uint256 oldRDist, uint256 oldDepth) public {
+                    dag.changeDistDepthFromRecCellOnOp( recipient, rdist, depth, oldRDist, oldDepth);
+                }
             
-    //         ///////////// move cell
+            ///////////// move cell
 
-    //             function moveSentDagVoteCell(address voter, uint32 sdist, uint32 depth, uint32 newSDist, uint32 newDepth) internal {
-    //                 dag.moveSentDagVoteCell( voter, sdist, depth, newSDist, newDepth);
-    //             }
+                function moveSentDagVoteCell(address voter, uint256 sdist, uint256 depth, uint256 newSDist, uint256 newDepth) internal {
+                    dag.moveSentDagVoteCell( voter, sdist, depth, newSDist, newDepth);
+                }
 
-    //             function moveRecDagVoteCell(address recipient, uint32 rdist, uint32 depth, uint32 newRDist, uint32 newDepth) internal {
-    //                 dag.moveRecDagVoteCell( recipient, rdist, depth, newRDist, newDepth);
-    //             }
+                function moveRecDagVoteCell(address recipient, uint256 rdist, uint256 depth, uint256 newRDist, uint256 newDepth) internal {
+                    dag.moveRecDagVoteCell( recipient, rdist, depth, newRDist, newDepth);
+                }
 
-    //     ///////////// Line  remover and sorter functions
-    //         ///////////// Line removers
+        ///////////// Line  remover and sorter functions
+            ///////////// Line removers
 
-    //             function removeSentDagVoteLineDepthEqualsValue( address voter, uint32 value) internal {
-    //                 dag.removeSentDagVoteLineDepthEqualsValue( voter, value);
-    //             }
+                function removeSentDagVoteLineDepthEqualsValue( address voter, uint256 value) internal {
+                    dag.removeSentDagVoteLineDepthEqualsValue( voter, value);
+                }
 
-    //             function removeRecDagVoteLineDepthEqualsValue( address voter, uint32 value) internal {
-    //                 dag.removeRecDagVoteLineDepthEqualsValue( voter, value);
-    //             }
+                function removeRecDagVoteLineDepthEqualsValue( address voter, uint256 value) internal {
+                    dag.removeRecDagVoteLineDepthEqualsValue( voter, value);
+                }
 
-    //             function removeSentDagVoteLineDistEqualsValue( address voter, uint32 value) internal {
-    //                 dag.removeSentDagVoteLineDistEqualsValue( voter, value);
-    //             }
+                function removeSentDagVoteLineDistEqualsValue( address voter, uint256 value) internal {
+                    dag.removeSentDagVoteLineDistEqualsValue( voter, value);
+                }
 
 
-    //         ///////////// Sort Cell into line
-    //             function sortSentDagVoteCell( address voter, uint32 sdist, uint32 depth, address anscestorAtDepth) internal {
-    //                 dag.sortSentDagVoteCell( voter, sdist, depth, anscestorAtDepth); 
-    //             }
+            ///////////// Sort Cell into line
+                function sortSentDagVoteCell( address voter, uint256 sdist, uint256 depth, address anscestorAtDepth) internal {
+                    dag.sortSentDagVoteCell( voter, sdist, depth, anscestorAtDepth); 
+                }
 
-    //             function sortRecDagVoteCell( address recipient, uint32 rdist, uint32 depth,  address newTreeVote) internal {
-    //                 dag.sortRecDagVoteCell( recipient, rdist, depth, newTreeVote);
-    //             }
+                function sortRecDagVoteCell( address recipient, uint256 rdist, uint256 depth,  address newTreeVote) internal {
+                    dag.sortRecDagVoteCell( recipient, rdist, depth, newTreeVote);
+                }
 
-    //             function sortRecDagVoteCellDescendants( address recipient, uint32 depth, address replaced) internal {
-    //                 dag.sortRecDagVoteCellDescendants( recipient, depth, replaced);
-    //             }
+                function sortRecDagVoteCellDescendants( address recipient, uint256 depth, address replaced) internal {
+                    dag.sortRecDagVoteCellDescendants( recipient, depth, replaced);
+                }
         
-    //     ///////////// Area/whole triangle changers
+        ///////////// Area/whole triangle changers
                      
-    //         ///////////// Depth and pos change across graph
-    //             function increaseDistDepthFromSentOnOpFalling( address voter, uint32 diff) internal {
-    //                 dag.increaseDistDepthFromSentOnOpFalling( voter, diff); 
-    //             }
+            ///////////// Depth and pos change across graph
+                function increaseDistDepthFromSentOnOpFalling( address voter, uint256 diff) internal {
+                    dag.increaseDistDepthFromSentOnOpFalling( voter, diff); 
+                }
 
-    //             function decreaseDistDepthFromSentOnOpRising( address voter, uint32 diff) internal {
-    //                 dag.decreaseDistDepthFromSentOnOpRising( voter, diff);
-    //             }
+                function decreaseDistDepthFromSentOnOpRising( address voter, uint256 diff) internal {
+                    dag.decreaseDistDepthFromSentOnOpRising( voter, diff);
+                }
 
-    //             function changeDistDepthFromRecOnOpFalling( address voter, uint32 diff) internal {
-    //                 dag.changeDistDepthFromRecOnOpFalling( voter, diff);
-    //             }
+                function changeDistDepthFromRecOnOpFalling( address voter, uint256 diff) internal {
+                    dag.changeDistDepthFromRecOnOpFalling( voter, diff);
+                }
 
-    //             function changeDistDepthFromRecOnOpRising( address voter, uint32 diff) internal {
-    //                 dag.changeDistDepthFromRecOnOpRising( voter, diff);
-    //             }
+                function changeDistDepthFromRecOnOpRising( address voter, uint256 diff) internal {
+                    dag.changeDistDepthFromRecOnOpRising( voter, diff);
+                }
 
-    //         ///////////// Movers
-    //             function moveSentDagVoteUpRightFalling( address voter, uint32 diff) internal {
-    //                 dag.moveSentDagVoteUpRightFalling( voter, diff);
-    //             }
+            ///////////// Movers
+                function moveSentDagVoteUpRightFalling( address voter, uint256 diff) internal {
+                    dag.moveSentDagVoteUpRightFalling( voter, diff);
+                }
 
-    //             function moveSentDagVoteDownLeftRising( address voter, uint32 diff) internal {
-    //                 dag.moveSentDagVoteDownLeftRising( voter, diff);
-    //             }
+                function moveSentDagVoteDownLeftRising( address voter, uint256 diff) internal {
+                    dag.moveSentDagVoteDownLeftRising( voter, diff);
+                }
 
-    //             function moveRecDagVoteUpRightFalling( address voter, uint32 diff) internal {
-    //                 dag.moveRecDagVoteUpRightFalling( voter, diff);
-    //             }
+                function moveRecDagVoteUpRightFalling( address voter, uint256 diff) internal {
+                    dag.moveRecDagVoteUpRightFalling( voter, diff);
+                }
 
-    //             function moveRecDagVoteDownLeftRising( address voter, uint32 diff) public {
-    //                 dag.moveRecDagVoteDownLeftRising( voter, diff);
-    //             }
-    //         ///////////// Collapsing to, and sorting from columns
+                function moveRecDagVoteDownLeftRising( address voter, uint256 diff) public {
+                    dag.moveRecDagVoteDownLeftRising( voter, diff);
+                }
+            ///////////// Collapsing to, and sorting from columns
 
-    //             function collapseSentDagVoteIntoColumn( address voter, uint32 sdistDestination) public {
-    //                 dag.collapseSentDagVoteIntoColumn( voter, sdistDestination);
-    //             }            
+                function collapseSentDagVoteIntoColumn( address voter, uint256 sdistDestination) public {
+                    dag.collapseSentDagVoteIntoColumn( voter, sdistDestination);
+                }            
 
-    //             function collapseRecDagVoteIntoColumn(  address voter, uint32 rdistDestination) public {
-    //                 dag.collapseRecDagVoteIntoColumn( voter, rdistDestination);
-    //             }
+                function collapseRecDagVoteIntoColumn(  address voter, uint256 rdistDestination) public {
+                    dag.collapseRecDagVoteIntoColumn( voter, rdistDestination);
+                }
 
-    //             function sortSentDagVoteColumn( address voter, uint32 sdist, address newTreeVote) public {
-    //                 dag.sortSentDagVoteColumn( voter, sdist, newTreeVote);
-    //             }
+                function sortSentDagVoteColumn( address voter, uint256 sdist, address newTreeVote) public {
+                    dag.sortSentDagVoteColumn( voter, sdist, newTreeVote);
+                }
 
-    //             function sortRecDagVoteColumn(  address recipient, uint32 rdist, address newTreeVote) public {
-    //                 dag.sortRecDagVoteColumn( recipient, rdist, newTreeVote);
-    //             }
+                function sortRecDagVoteColumn(  address recipient, uint256 rdist, address newTreeVote) public {
+                    dag.sortRecDagVoteColumn( recipient, rdist, newTreeVote);
+                }
 
-    //             function sortRecDagVoteColumnDescendants(  address recipient, address replaced) public {
-    //                 dag.sortRecDagVoteColumnDescendants( recipient, replaced);
-    //             }
+                function sortRecDagVoteColumnDescendants(  address recipient, address replaced) public {
+                    dag.sortRecDagVoteColumnDescendants( recipient, replaced);
+                }
 
-    //         ///////////// Combined dag Square vote handler for rising falling, a certain depth, with passing the new recipient in for selction    
+            ///////////// Combined dag Square vote handler for rising falling, a certain depth, with passing the new recipient in for selction    
 
-    //             function handleDagVoteMoveRise( address voter, address recipient, address replaced, uint32 moveDist, uint32 depthToRec ) public {
-    //                 dag.handleDagVoteMoveRise( voter, recipient, replaced, moveDist, depthToRec);
-    //             }
+                function handleDagVoteMoveRise( address voter, address recipient, address replaced, uint256 moveDist, uint256 depthToRec ) public {
+                    dag.handleDagVoteMoveRise( voter, recipient, replaced, moveDist, depthToRec);
+                }
 
-    //             function handleDagVoteMoveFall( address voter, address recipient, address replaced, uint32 moveDist, uint32 depthToRec) public {
-    //                 dag.handleDagVoteMoveFall( voter, recipient, replaced, moveDist, depthToRec);
-    //             }
+                function handleDagVoteMoveFall( address voter, address recipient, address replaced, uint256 moveDist, uint256 depthToRec) public {
+                    dag.handleDagVoteMoveFall( voter, recipient, replaced, moveDist, depthToRec);
+                }
 
 
 
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // //// Global internal
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Global internal
         
-    //     function pullUpBranch(address pulledVoter, address parent) public {
-    //        dag.pullUpBranch( pulledVoter, parent);
+        function pullUpBranch(address pulledVoter, address parent) public {
+           dag.pullUpBranch( pulledVoter, parent);
 
-    //     }
+        }
         
-    //     function handleLeavingVoterBranch( address voter) public {
-    //         dag.handleLeavingVoterBranch( voter);
-    //     }
+        function handleLeavingVoterBranch( address voter) public {
+            dag.handleLeavingVoterBranch( voter);
+        }
 
 }
 
