@@ -12,4 +12,6 @@ Also you can leave the tree, or move to unoccupied spots in the tree.
 
 Finally: if you have higher reputation than your parent in the binary tree, you can change positions with them, thus climbing the tree. 
 
-This is the repo for the smart contract. 
+This is the repo for the smart contracts.
+
+## start 
