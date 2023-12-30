@@ -10,6 +10,7 @@ contract AnthillScript3 is Script {
     Anthill public anthill;
 
     function run() public {
+        // hardhat rich private key
         uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         vm.startBroadcast(privateKey);
 
@@ -69,6 +70,7 @@ contract SmallScript is Script {
     Anthill public anthill;
 
     function run() public {
+        // hardhat rich private key
         uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         vm.startBroadcast(privateKey);
 
@@ -128,6 +130,7 @@ contract TutorialScript is Script {
     Anthill public anthill;
 
     function run() public {
+        // hardhat rich private key
         uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         vm.startBroadcast(privateKey);
 
@@ -148,8 +151,22 @@ contract TutorialScript is Script {
     }
 }
 
-
 contract JustDeploy is Script {
+    Anthill public anthill;
+
+    function run() public {
+        uint256 privateKey =  0x01 ;
+        vm.startBroadcast(privateKey);
+
+
+        anthill = new Anthill();
+                            
+        vm.stopBroadcast();
+
+    }
+}
+
+contract OldDeploy is Script {
     Anthill public anthill;
 
     function run() public {
@@ -203,7 +220,7 @@ contract JustDeploy is Script {
 
 contract Redeploy is Script {
     Anthill public anthillNew;
-    address oldAddress = 0xb2218969ECF92a3085B8345665d65FCdFED9F981;
+    address oldAddress = 0x69649a6E7E9c090a742f0671C64f4c7c31a1e4ce;
     Anthill public anthillOld = Anthill(oldAddress);
 
 
