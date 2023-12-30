@@ -4,6 +4,20 @@ pragma solidity ^0.8.13;
 
 ///////////////////////////////////////////
 /////////  Structs
+
+    // As described we have a general directed tree which fixes the position of the voters, and we have dag votes going upwards in the tree.  
+    // The Dag votes only go upwards in the tree, this guarantees acyclicity of the Dag votes. 
+    // The Dag votes determine the reputation of each person, this reputation is the core feature of the system. 
+    // The reputation is calculated from the bottom to the top of the tree, each person has a base repuation of 1, 
+    // and the reputation of higher people is their own base repuation (which is 1), plus the reputation they have received from their Dag voters. 
+    // Each voter splits and passes on their reputation along their Dag votes to the recipients, the total sum they pass along is their own repuation.  
+
+    // in addition to this, we also have to enable movements in the tree, jumping to empty places, and switching with parents. 
+
+
+    // This is all a relatively complex data structure. To optimize storage writes, we store the 
+    // this is how we store each dag Vote. For each vote we store two of these structs, one for the voter and one for the recipient. 
+    // This is needed so that we can  the id specifies the voter/recipient    
     struct DagVote {
         address id;
         uint256 weight;
@@ -72,7 +86,7 @@ library AnthillInner{
             }
 
             function readRecTreeVoteCount(Dag storage dag, address recipient) public view returns(uint256){
-                    return dag.recTreeVoteCount[recipient];
+                return dag.recTreeVoteCount[recipient];
             }
 
             function readRecTreeVote(Dag storage dag, address recipient, uint256 votePos) public view returns(address){
@@ -165,6 +179,8 @@ library AnthillInner{
             dag.recTreeVoteCount[recipient] = dag.recTreeVoteCount[recipient] + 1;
         }
 
+
+        // this switches the position of a voter and its parent, without considering the Dag. 
         function switchTreeVoteWithParent(Dag storage dag,address voter) public {
             address parent = dag.treeVote[voter];
             assert (parent != address(0));
@@ -585,7 +601,9 @@ library AnthillInner{
                         DagVote memory sDagVote = readSentDagVote(dag, voter, sdist, depth, i);
                  
                         changeDistDepthRec(dag, sDagVote.id, oldSDist-oldDepth, oldDepth, sDagVote.posInOther, sdist-depth, depth, voter, i, sDagVote.weight);
-                        changePositionSent(dag, voter, sdist, depth, i, readRecDagVoteCount(dag, sDagVote.id, sdist-depth, depth)-1);
+                        uint256 recDagVoteCount;
+                        { recDagVoteCount= readRecDagVoteCount(dag, sDagVote.id, sdist-depth, depth);}
+                        changePositionSent(dag, voter, sdist, depth, i, recDagVoteCount-1);
                     }
                 }
 

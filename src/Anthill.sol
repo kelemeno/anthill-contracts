@@ -306,44 +306,53 @@ contract Anthill {
             emit switchPositionWithParentEvent(voter);
         }
 
+        struct CheckPositionResult {
+            bool isLowerOrEqual;
+            bool isSimilar;
+            bool isHigher;
+            uint256 lowerSDist;
+            uint256 lowerRDist;
+            uint256 lowerDepth;
+            uint256 simDist;
+            uint256 simDepth;
+            uint256 higherDist;
+            uint256 higherDepth;
+        }
+
         function moveTreeVote(address voter, address recipient) external {
- 
-            if (!unlocked) {
-                assert (msg.sender == voter);
+            {
+                if (!unlocked) {
+                    assert (msg.sender == voter);
+                }
             }
+            {
+                assert (dag.treeVote[voter] != address(0));
+                assert (dag.treeVote[recipient] != address(0));
+                assert (dag.recTreeVoteCount[recipient] < 2);
+            }
+            CheckPositionResult memory positionResult = _checkPosition(voter, recipient);
 
-            assert (dag.treeVote[voter] != address(0));
+            {
+                // we need to leave the tree nowm so that our descendants can rise. 
+                address parent= dag.treeVote[voter];
+                dag.handleLeavingVoterBranch( voter);
 
-            assert (dag.treeVote[recipient] != address(0));
-            assert (dag.recTreeVoteCount[recipient] < 2);
-
-            (address relRoot, ) = AnthillInner.findRelRoot( dag , voter);
-            (bool isLowerOrEqual, uint256 lowerSDist, uint256 lowerDepth) = AnthillInner.findSDistDepth( dag , recipient, voter);
-            uint256 lowerRDist = lowerSDist - lowerDepth;
-            (bool isSimilar, uint256 simDist, uint256 simDepth) = AnthillInner.findSDistDepth( dag , voter, recipient);
-            (bool isHigher, uint256 higherRDist, uint256 higherDepthToRelRoot) = AnthillInner.findSDistDepth( dag , recipient, relRoot);
-            uint256 higherDepth = dag.MAX_REL_ROOT_DEPTH - higherDepthToRelRoot;
-            uint256 higherDist = higherRDist + higherDepth;
-
-            // we need to leave the tree nowm so that our descendants can rise. 
-            address parent= dag.treeVote[voter];
-            dag.handleLeavingVoterBranch( voter);
-
-            if ((lowerRDist == 0) && (isLowerOrEqual)){
-                // if we are jumping to our descendant who just rose, we have to modify the lowerSDist
-                if (  dag.findNthParent( recipient, lowerDepth)==parent){
-                    lowerSDist = lowerSDist - 1;
-                    lowerDepth = lowerDepth - 1;
+                if ((positionResult.lowerRDist == 0) && (positionResult.isLowerOrEqual)){
+                    // if we are jumping to our descendant who just rose, we have to modify the lowerSDist
+                    if (  dag.findNthParent( recipient, positionResult.lowerDepth)==parent){
+                        positionResult.lowerSDist = positionResult.lowerSDist - 1;
+                        positionResult.lowerDepth = positionResult.lowerDepth - 1;
+                    }
                 }
             }
 
             // currently we don't support position swithces here, so replaced address is always 0. 
-            if (isLowerOrEqual){
-                dag.handleDagVoteMoveFall( voter, recipient, address(0), lowerRDist, lowerDepth);
-            } else if (isSimilar){
-                dag.handleDagVoteMoveRise( voter, recipient, address(0), simDist, simDepth);
-            } else if ((isHigher) && (higherDepth > 1)){
-                dag.handleDagVoteMoveRise( voter, recipient, address(0), higherDist, higherDepth);
+            if (positionResult.isLowerOrEqual){
+                dag.handleDagVoteMoveFall( voter, recipient, address(0), positionResult.lowerRDist, positionResult.lowerDepth);
+            } else if (positionResult.isSimilar){
+                dag.handleDagVoteMoveRise( voter, recipient, address(0), positionResult.simDist, positionResult.simDepth);
+            } else if ((positionResult.isHigher) && (positionResult.higherDepth > 1)){
+                dag.handleDagVoteMoveRise( voter, recipient, address(0), positionResult.higherDist, positionResult.higherDepth);
             }  else {
                 // we completely jumped out. remove all dagVotes. 
                 dag.removeSentDagVoteComplete( voter);
@@ -356,6 +365,27 @@ contract Anthill {
             emit moveTreeVoteEvent(voter, recipient);
         }
 
+
+        function _checkPosition(address voter, address recipient) internal view returns (CheckPositionResult memory result) {
+            (address relRoot, ) = AnthillInner.findRelRoot( dag , voter);
+            (bool isLowerOrEqual, uint256 lowerSDist, uint256 lowerDepth) = AnthillInner.findSDistDepth( dag , recipient, voter);
+            uint256 lowerRDist = lowerSDist - lowerDepth;
+            (bool isSimilar, uint256 simDist, uint256 simDepth) = AnthillInner.findSDistDepth( dag , voter, recipient);
+            (bool isHigher, uint256 higherRDist, uint256 higherDepthToRelRoot) = AnthillInner.findSDistDepth( dag , recipient, relRoot);
+            uint256 higherDepth = dag.MAX_REL_ROOT_DEPTH - higherDepthToRelRoot;
+            uint256 higherDist = higherRDist + higherDepth;
+
+            result.isLowerOrEqual = isLowerOrEqual;
+            result.isSimilar = isSimilar;
+            result.isHigher = isHigher;
+            result.lowerSDist = lowerSDist;
+            result.lowerRDist = lowerRDist;
+            result.lowerDepth = lowerDepth;
+            result.simDist = simDist;
+            result.simDepth = simDepth;
+            result.higherDist = higherDist;
+            result.higherDepth = higherDepth;
+        }
 
     ///////////////////////
 
@@ -533,6 +563,7 @@ contract Anthill {
                 }
 
                 function recDagAppend( address recipient, uint256 rdist, uint256 depth, address voter, uint256 weight, uint256 sPos ) public{
+                    assert (unlocked == true);
                     return dag.recDagAppend( recipient, rdist, depth, voter, weight, sPos);   
                 }
 
@@ -572,6 +603,7 @@ contract Anthill {
 
                 /// careful, does not delete the opposite!
                 function unsafeReplaceRecDagVoteAtDistDepthPosWithLast( address recipient, uint256 rdist, uint256 depth, uint256 rPos) public {
+                    assert (unlocked == true);
                     dag.unsafeReplaceRecDagVoteAtDistDepthPosWithLast( recipient, rdist, depth, rPos);
                 } 
 
@@ -585,11 +617,13 @@ contract Anthill {
 
             ///////////// change dist and depth
                 function changeDistDepthSent( address voter, uint256 sdist, uint256 depth, uint256 sPos, uint256 newSDist, uint256 newDepth, address recipient, uint256 rPos, uint256 weight) public{
+                    assert (unlocked == true);
                     // here it is ok to use unsafe, as the the vote is moved, not removed
                    dag.changeDistDepthSent( voter, sdist, depth, sPos, newSDist, newDepth, recipient, rPos, weight);
                 }
 
                 function changeDistDepthRec( address recipient, uint256 rdist, uint256 depth, uint256 rPos, uint256 newRDist, uint256 newDepth, address voter, uint256 sPos, uint256 weight) public{
+                    assert (unlocked == true);
                     // here it is ok to use unsafe, as the the vote is moved, not removed
                     dag.changeDistDepthRec( recipient, rdist, depth, rPos, newRDist, newDepth, voter, sPos, weight);
                 }
@@ -603,6 +637,7 @@ contract Anthill {
 
                 // to remove a row of votes from the dag.recDagVote array, and the corresponding votes from the dag.sentDagVote arrays
                 function removeRecDagVoteCell( address recipient, uint256 rdist, uint256 depth) public {
+                    assert (unlocked == true);
                     dag.removeRecDagVoteCell( recipient, rdist, depth);
                 }
 
@@ -614,6 +649,7 @@ contract Anthill {
                 }
 
                 function changeDistDepthFromRecCellOnOp( address recipient, uint256 rdist, uint256 depth, uint256 oldRDist, uint256 oldDepth) public {
+                    assert (unlocked == true);
                     dag.changeDistDepthFromRecCellOnOp( recipient, rdist, depth, oldRDist, oldDepth);
                 }
             
@@ -689,37 +725,45 @@ contract Anthill {
                 }
 
                 function moveRecDagVoteDownLeftRising( address voter, uint256 diff) public {
+                    assert (unlocked == true);
                     dag.moveRecDagVoteDownLeftRising( voter, diff);
                 }
             ///////////// Collapsing to, and sorting from columns
 
                 function collapseSentDagVoteIntoColumn( address voter, uint256 sdistDestination) public {
+                    assert (unlocked == true);
                     dag.collapseSentDagVoteIntoColumn( voter, sdistDestination);
                 }            
 
                 function collapseRecDagVoteIntoColumn(  address voter, uint256 rdistDestination) public {
+                    assert (unlocked == true);
                     dag.collapseRecDagVoteIntoColumn( voter, rdistDestination);
                 }
 
                 function sortSentDagVoteColumn( address voter, uint256 sdist, address newTreeVote) public {
+                    assert (unlocked == true);
                     dag.sortSentDagVoteColumn( voter, sdist, newTreeVote);
                 }
 
                 function sortRecDagVoteColumn(  address recipient, uint256 rdist, address newTreeVote) public {
+                    assert (unlocked == true);
                     dag.sortRecDagVoteColumn( recipient, rdist, newTreeVote);
                 }
 
                 function sortRecDagVoteColumnDescendants(  address recipient, address replaced) public {
+                    assert (unlocked == true);
                     dag.sortRecDagVoteColumnDescendants( recipient, replaced);
                 }
 
             ///////////// Combined dag Square vote handler for rising falling, a certain depth, with passing the new recipient in for selction    
 
                 function handleDagVoteMoveRise( address voter, address recipient, address replaced, uint256 moveDist, uint256 depthToRec ) public {
+                    assert (unlocked == true);
                     dag.handleDagVoteMoveRise( voter, recipient, replaced, moveDist, depthToRec);
                 }
 
                 function handleDagVoteMoveFall( address voter, address recipient, address replaced, uint256 moveDist, uint256 depthToRec) public {
+                    assert (unlocked == true);
                     dag.handleDagVoteMoveFall( voter, recipient, replaced, moveDist, depthToRec);
                 }
 
@@ -729,11 +773,12 @@ contract Anthill {
     //// Global internal
         
         function pullUpBranch(address pulledVoter, address parent) public {
+            assert (unlocked == true);
            dag.pullUpBranch( pulledVoter, parent);
-
         }
         
         function handleLeavingVoterBranch( address voter) public {
+            assert (unlocked == true);
             dag.handleLeavingVoterBranch( voter);
         }
 
