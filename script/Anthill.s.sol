@@ -11,7 +11,9 @@ contract AnthillScript3 is Script {
 
     function run() public {
         // hardhat rich private key
-        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        // uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        // era-test node rich private key 
+        uint256 privateKey = 0x3d3cbc973389cb26f657686445bcc75662b415b656078503592ac8c1abb8810e;
         vm.startBroadcast(privateKey);
 
 
@@ -71,7 +73,9 @@ contract SmallScript is Script {
 
     function run() public {
         // hardhat rich private key
-        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        // uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        // era-test node rich private key 
+        uint256 privateKey = 0x3d3cbc973389cb26f657686445bcc75662b415b656078503592ac8c1abb8810e;
         vm.startBroadcast(privateKey);
 
 
@@ -249,35 +253,35 @@ contract Redeploy is Script {
     }
 
 
-    function readAndAddChildrenRec(address parent, Anthill anthillOld, Anthill anthillNew ) internal {
-        uint256 childCount = anthillOld.readRecTreeVoteCount(parent);
+    function readAndAddChildrenRec(address parent, Anthill anthillOldInput, Anthill anthillNewInput ) internal {
+        uint256 childCount = anthillOldInput.readRecTreeVoteCount(parent);
         for (uint256 i=0; i<childCount; i++){
-            address child = anthillOld.readRecTreeVote(parent, i);
-            string memory childName = anthillOld.readName(child);
-            anthillNew.joinTree(child, childName, parent);
-            anthillNew.removeDagVote(child, parent);
+            address child = anthillOldInput.readRecTreeVote(parent, i);
+            string memory childName = anthillOldInput.readName(child);
+            anthillNewInput.joinTree(child, childName, parent);
+            anthillNewInput.removeDagVote(child, parent);
 
-            readAndAddChildrenRec(child, anthillOld, anthillNew);
+            readAndAddChildrenRec(child, anthillOldInput, anthillNewInput);
         }
     }
 
-    function readAndAddDagVotesRec(uint256 maxRelRootDepth, address voter, Anthill anthillOld, Anthill anthillNew) internal {
+    function readAndAddDagVotesRec(uint256 maxRelRootDepth, address voter, Anthill anthillOldInput, Anthill anthillNewInput) internal {
 
         for (uint256 dist=1; dist<=maxRelRootDepth; dist++){
            for (uint256 height = 0; height <= dist; height++){
 
-                uint256 dagVoteCount = anthillOld.readSentDagVoteCount(voter, dist, height);
+                uint256 dagVoteCount = anthillOldInput.readSentDagVoteCount(voter, dist, height);
                 for (uint256 i=0; i<dagVoteCount; i++){
-                    DagVote memory dagVote = anthillOld.readSentDagVote(voter, dist, height, i);
-                    anthillNew.addDagVote(voter, dagVote.id, dagVote.weight);
+                    DagVote memory dagVote = anthillOldInput.readSentDagVote(voter, dist, height, i);
+                    anthillNewInput.addDagVote(voter, dagVote.id, dagVote.weight);
                 }
             }
         }
 
-        uint256 childCount = anthillOld.readRecTreeVoteCount(voter);
+        uint256 childCount = anthillOldInput.readRecTreeVoteCount(voter);
         for (uint256 i=0; i<childCount; i++){
-            address child = anthillOld.readRecTreeVote(voter, i);
-            readAndAddDagVotesRec(maxRelRootDepth, child, anthillOld, anthillNew);
+            address child = anthillOldInput.readRecTreeVote(voter, i);
+            readAndAddDagVotesRec(maxRelRootDepth, child, anthillOldInput, anthillNewInput);
         }
         
     }

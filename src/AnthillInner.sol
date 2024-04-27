@@ -59,6 +59,7 @@ pragma solidity ^0.8.13;
 
 library AnthillInner{
     event SimpleEventForUpdates(string str, uint256 randint);
+    event DebugEvent(string str, uint256 randint);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Variable readers 
@@ -161,8 +162,8 @@ library AnthillInner{
         }
     
         function addTreeVote(Dag storage dag,address voter, address recipient) public {
-            assert (dag.treeVote[voter] == address(1));
-            assert (dag.recTreeVoteCount[recipient] < 2);
+            require (dag.treeVote[voter] == address(1), "Ai, aDV 1");
+            require (dag.recTreeVoteCount[recipient] < 2, "Ai, aDV 2");
 
             dag.treeVote[voter] = recipient;
 
@@ -171,7 +172,7 @@ library AnthillInner{
         }
 
         function addTreeVoteWithoutCheck(Dag storage dag,address voter, address recipient) public {
-            assert (dag.treeVote[voter] == address(1));
+            require (dag.treeVote[voter] == address(1), "Ai, aTVWC 1");
 
             dag.treeVote[voter] = recipient;
 
@@ -183,8 +184,8 @@ library AnthillInner{
         // this switches the position of a voter and its parent, without considering the Dag. 
         function switchTreeVoteWithParent(Dag storage dag,address voter) public {
             address parent = dag.treeVote[voter];
-            assert (parent != address(0));
-            assert (parent != address(1));
+            require (parent != address(0), "Ai, sTVWP 1");
+            require (parent != address(1), "Ai, sTVWP 2");
             
             address gparent = dag.treeVote[parent]; // this can be 1. 
 
@@ -233,14 +234,14 @@ library AnthillInner{
             }
 
             // this should never be the case, but it is a safety check
-            assert (dag.treeVote[voter] != address(0));
+            require (dag.treeVote[voter] != address(0), "Ai, fNP 1");
 
             return findNthParent( dag , dag.treeVote[voter], height-1);
         }
 
         // to find our relative dag.root, our ancestor at depth dag.MAX_REL_ROOT_DEPTH
         function findRelRoot(Dag storage dag, address voter) public view returns (address relRoot, uint256 relDepth){
-            assert (dag.treeVote[voter] != address(0));
+            require (dag.treeVote[voter] != address(0), "Ai, fRR 1");
 
             relRoot = voter;
             address parent;
@@ -678,7 +679,7 @@ library AnthillInner{
 
                         address anscestorOfSenderAtDepth = findNthParent( dag , rDagVote.id, depth+1);
                         (bool  sameHeight, uint256 distFromNewTreeVote)= findDistAtSameDepth( dag , newTreeVote, anscestorOfSenderAtDepth);
-                        assert (sameHeight); // sanity check 
+                        require (sameHeight, "Ai, sRDVC 1"); // sanity check 
 
                         safeRemoveRecDagVoteAtDistDepthPos( dag , recipient, rdist, depth, i-1);
                         combinedDagAppendSdist( dag , rDagVote.id, recipient, distFromNewTreeVote +depth+1, depth, rDagVote.weight);

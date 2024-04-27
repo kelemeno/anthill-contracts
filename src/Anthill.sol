@@ -61,6 +61,8 @@ contract Anthill {
 
         event moveTreeVoteEvent(address voter, address recipient);
 
+        event DebugEvent(string str, uint256 randint);
+
     ////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Personal tree externals
@@ -72,18 +74,18 @@ contract Anthill {
         }
 
         // when we first join the tree
-        function joinTree(address voter, string calldata name, address recipient) public {
+        function joinTree(address voter, string calldata voterName, address recipient) public {
             
             if (!unlocked) {
-                assert (msg.sender == voter);
+                require(msg.sender == voter, "A lT 1");
             }
 
-            assert (dag.treeVote[voter] == address(0));
-            assert (dag.treeVote[recipient] != address(0));
-            assert (dag.recTreeVoteCount[recipient] < 2);
+            require (dag.treeVote[voter] == address(0), "A lT 2");
+            require (dag.treeVote[recipient] != address(0), "A lT 3");
+            require (dag.recTreeVoteCount[recipient] < 2, "A lT 4");
 
             dag.treeVote[voter] = recipient;
-            dag.names[voter] = name;
+            dag.names[voter] = voterName;
             dag.recTreeVote[recipient][dag.recTreeVoteCount[recipient]] = voter;
             dag.recTreeVoteCount[recipient] = dag.recTreeVoteCount[recipient] + 1;
 
@@ -92,31 +94,29 @@ contract Anthill {
             dag.recDagVoteDistDiff[voter] = 1000;
             dag.recDagVoteDepthDiff[voter] = 1000;
             
-
             // adding Dag Vote, copied from addDagVote
-                (bool votable, bool voted, uint256 sdist, uint256 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
-                assert ((votable) && (voted == false));
+            (bool votable, bool voted, uint256 sdist, uint256 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
+            require ((votable) && (voted == false), "A lT 4");
 
-                // add DagVotes. 
-                AnthillInner.combinedDagAppendSdist( dag , voter, recipient, sdist, depth, 1);
+            // add DagVotes. 
+            AnthillInner.combinedDagAppendSdist( dag , voter, recipient, sdist, depth, 1);
 
-            emit joinTreeEvent(voter, name, recipient);
-
+            emit joinTreeEvent(voter, voterName, recipient);
         }
 
         // when we first join the tree without a parent
-        function joinTreeAsRoot(address voter, string calldata name) public {
+        function joinTreeAsRoot(address voter, string calldata voterName) public {
    
             emit SimpleEventForUpdates("", 1);
 
             if (!unlocked) {
-                assert (msg.sender == voter);
+                require (msg.sender == voter, "A jTAR 1");
             }          
   
-            assert (dag.treeVote[voter] == address(0));
-            assert (dag.root == address(0));
+            require (dag.treeVote[voter] == address(0), "A jTAR 2");
+            require (dag.root == address(0), "A jTAR 3");
 
-            dag.names[voter] = name;
+            dag.names[voter] = voterName;
             dag.treeVote[voter] = address(1);
             dag.root = voter;
             dag.recTreeVote[address(1)][0] = voter;
@@ -129,15 +129,15 @@ contract Anthill {
             dag.recDagVoteDepthDiff[voter] = 1000;
         }
 
-        function changeName(address voter, string calldata name)  public {
+        function changeName(address voter, string calldata voterName)  public {
             if (!unlocked) {
-                assert (msg.sender == voter);
+                require (msg.sender == voter, "A jTAR 4");
             }
 
-            assert (dag.treeVote[voter] != address(0));
-            dag.names[voter] = name;
+            require (dag.treeVote[voter] != address(0), "A jTAR 5");
+            dag.names[voter] = voterName;
 
-            emit changeNameEvent(voter, name);
+            emit changeNameEvent(voter, voterName);
 
         }
 
@@ -148,11 +148,11 @@ contract Anthill {
         function addDagVote(address voter, address recipient, uint256 weight) public {
             
             if (!unlocked) {
-                assert (msg.sender == voter);
+                require (msg.sender == voter, "A aDV 1");
             }
 
             (bool votable, bool voted, uint256 sdist, uint256 depth, , ) = AnthillInner.findSentDagVote( dag , voter, recipient);
-            assert ((votable) && (voted == false));
+            require ((votable) && (voted == false), "A aDV 2");
 
             // add DagVotes. 
             AnthillInner.combinedDagAppendSdist( dag , voter, recipient, sdist, depth, weight);
@@ -164,13 +164,13 @@ contract Anthill {
         function removeDagVote(address voter, address recipient) public {
                      
             if (!unlocked) {
-                assert (msg.sender == voter);
+                require (msg.sender == voter, "A rDV 1");
             }
 
 
             // find the votes we delete
             (, bool voted, uint256 sdist, uint256 depth, uint256 sPos, ) = AnthillInner.findSentDagVote( dag , voter, recipient);
-            assert (voted == true);
+            require (voted == true, "A rDV 2");
 
             AnthillInner.safeRemoveSentDagVoteAtDistDepthPos(dag, voter, sdist, depth, sPos);
 
@@ -270,7 +270,7 @@ contract Anthill {
         function leaveTree(address voter) public {
 
             if (!unlocked) {
-                assert (msg.sender == voter);
+                require (msg.sender == voter, "A lT 1");
             }
             
             dag.removeSentDagVoteComplete( voter);
@@ -285,18 +285,18 @@ contract Anthill {
         function switchPositionWithParent(address voter) public {
 
             if (!unlocked) {
-                assert (msg.sender == voter);
+                require (msg.sender == voter, "A lT 2");
             }
 
             address parent = dag.treeVote[voter];
-            assert (parent != address(0));
-            assert (parent != address(1));
+            require (parent != address(0), "A lT 3");
+            require (parent != address(1), "A lT 4");
             address gparent = dag.treeVote[parent];
             
             uint256 voterRep = calculateReputation(voter);
             uint256 parentRep = calculateReputation(parent);
 
-            assert (voterRep > parentRep);
+            require (voterRep > parentRep, "A lT 5");
             
             dag.handleDagVoteMoveFall(  parent, parent, voter, 0, 0);
             dag.handleDagVoteMoveRise(  voter, gparent, parent, 2, 2);
@@ -322,13 +322,13 @@ contract Anthill {
         function moveTreeVote(address voter, address recipient) external {
             {
                 if (!unlocked) {
-                    assert (msg.sender == voter);
+                    require (msg.sender == voter, "A mTV 1");
                 }
             }
             {
-                assert (dag.treeVote[voter] != address(0));
-                assert (dag.treeVote[recipient] != address(0));
-                assert (dag.recTreeVoteCount[recipient] < 2);
+                require (dag.treeVote[voter] != address(0), "A mTV 2");
+                require (dag.treeVote[recipient] != address(0), "A mTV 3");
+                require (dag.recTreeVoteCount[recipient] < 2, "A mTV 4");
             }
             CheckPositionResult memory positionResult = _checkPosition(voter, recipient);
 
@@ -542,7 +542,7 @@ contract Anthill {
         }
 
         // to check the existence and to find the position of a vote in the sentDagVote array (depth diff is the row position, votePos is column pos) 
-        function findSentDagVote(address voter, address recipient) public view returns (bool votable, bool voted, uint256 sdist,  uint256 depth, uint256 votePos, DagVote memory dagVote){ 
+        function findSentDagVote(address voter, address recipient) public returns (bool votable, bool voted, uint256 sdist,  uint256 depth, uint256 votePos, DagVote memory dagVote){ 
             return dag.findSentDagVote( voter, recipient);
         }
 
@@ -563,7 +563,7 @@ contract Anthill {
                 }
 
                 function recDagAppend( address recipient, uint256 rdist, uint256 depth, address voter, uint256 weight, uint256 sPos ) public{
-                    assert (unlocked == true);
+                    require (unlocked == true, "A rDA 1");
                     return dag.recDagAppend( recipient, rdist, depth, voter, weight, sPos);   
                 }
 
@@ -603,7 +603,7 @@ contract Anthill {
 
                 /// careful, does not delete the opposite!
                 function unsafeReplaceRecDagVoteAtDistDepthPosWithLast( address recipient, uint256 rdist, uint256 depth, uint256 rPos) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A uSRDV 1");
                     dag.unsafeReplaceRecDagVoteAtDistDepthPosWithLast( recipient, rdist, depth, rPos);
                 } 
 
@@ -617,13 +617,13 @@ contract Anthill {
 
             ///////////// change dist and depth
                 function changeDistDepthSent( address voter, uint256 sdist, uint256 depth, uint256 sPos, uint256 newSDist, uint256 newDepth, address recipient, uint256 rPos, uint256 weight) public{
-                    assert (unlocked == true);
+                    require (unlocked == true, "A cDDS 1");
                     // here it is ok to use unsafe, as the the vote is moved, not removed
                    dag.changeDistDepthSent( voter, sdist, depth, sPos, newSDist, newDepth, recipient, rPos, weight);
                 }
 
                 function changeDistDepthRec( address recipient, uint256 rdist, uint256 depth, uint256 rPos, uint256 newRDist, uint256 newDepth, address voter, uint256 sPos, uint256 weight) public{
-                    assert (unlocked == true);
+                    require (unlocked == true, "A cDDR 1");
                     // here it is ok to use unsafe, as the the vote is moved, not removed
                     dag.changeDistDepthRec( recipient, rdist, depth, rPos, newRDist, newDepth, voter, sPos, weight);
                 }
@@ -637,7 +637,7 @@ contract Anthill {
 
                 // to remove a row of votes from the dag.recDagVote array, and the corresponding votes from the dag.sentDagVote arrays
                 function removeRecDagVoteCell( address recipient, uint256 rdist, uint256 depth) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A rRDVC 1");
                     dag.removeRecDagVoteCell( recipient, rdist, depth);
                 }
 
@@ -649,7 +649,7 @@ contract Anthill {
                 }
 
                 function changeDistDepthFromRecCellOnOp( address recipient, uint256 rdist, uint256 depth, uint256 oldRDist, uint256 oldDepth) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A cDDFR 1");
                     dag.changeDistDepthFromRecCellOnOp( recipient, rdist, depth, oldRDist, oldDepth);
                 }
             
@@ -725,45 +725,45 @@ contract Anthill {
                 }
 
                 function moveRecDagVoteDownLeftRising( address voter, uint256 diff) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A mRDVDLR");
                     dag.moveRecDagVoteDownLeftRising( voter, diff);
                 }
             ///////////// Collapsing to, and sorting from columns
 
                 function collapseSentDagVoteIntoColumn( address voter, uint256 sdistDestination) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A cSDVIC");
                     dag.collapseSentDagVoteIntoColumn( voter, sdistDestination);
                 }            
 
                 function collapseRecDagVoteIntoColumn(  address voter, uint256 rdistDestination) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A cRDVIC");
                     dag.collapseRecDagVoteIntoColumn( voter, rdistDestination);
                 }
 
                 function sortSentDagVoteColumn( address voter, uint256 sdist, address newTreeVote) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A sSDVC");
                     dag.sortSentDagVoteColumn( voter, sdist, newTreeVote);
                 }
 
                 function sortRecDagVoteColumn(  address recipient, uint256 rdist, address newTreeVote) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A sRDVC");
                     dag.sortRecDagVoteColumn( recipient, rdist, newTreeVote);
                 }
 
                 function sortRecDagVoteColumnDescendants(  address recipient, address replaced) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A sRDVCD");
                     dag.sortRecDagVoteColumnDescendants( recipient, replaced);
                 }
 
             ///////////// Combined dag Square vote handler for rising falling, a certain depth, with passing the new recipient in for selction    
 
                 function handleDagVoteMoveRise( address voter, address recipient, address replaced, uint256 moveDist, uint256 depthToRec ) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A hDVMR");
                     dag.handleDagVoteMoveRise( voter, recipient, replaced, moveDist, depthToRec);
                 }
 
                 function handleDagVoteMoveFall( address voter, address recipient, address replaced, uint256 moveDist, uint256 depthToRec) public {
-                    assert (unlocked == true);
+                    require (unlocked == true, "A hDVMF");
                     dag.handleDagVoteMoveFall( voter, recipient, replaced, moveDist, depthToRec);
                 }
 
@@ -773,12 +773,12 @@ contract Anthill {
     //// Global internal
         
         function pullUpBranch(address pulledVoter, address parent) public {
-            assert (unlocked == true);
+            require (unlocked == true, "A pUB");
            dag.pullUpBranch( pulledVoter, parent);
         }
         
         function handleLeavingVoterBranch( address voter) public {
-            assert (unlocked == true);
+            require (unlocked == true, "A hLVB");
             dag.handleLeavingVoterBranch( voter);
         }
 
