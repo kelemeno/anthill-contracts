@@ -38,18 +38,33 @@ heroku builds backend based on github's main branch
 firebase frontend does not build on github yet, I should do that. But currently npm run build and firebase deploy deploys the frontend.
 
 ### zksync specific development
+Warning! Adding to AnthillInner address to foundry.toml will make normal forge tests break.
 
-On main 2024/04/27
+#### On main 2024/04/27
 - install zk forge 
-- remove Anthill from  zkout folder, AnthillInner address from foundry.toml
+- remove folder, AnthillInner address from foundry.toml
 - start zksync local node
 - ```../../zksync/fzksync/foundry-zksync/target/release/zkforge zkbuild  --contracts-to-compile src/AnthillInner.sol```
-- To find missing libraries: 
+- To find missing libraries (slow): 
     ``` ../../zksync/fzksync/foundry-zksync/target/release/zkforge zkbuild ```
--  To deploy missing libraries: 
+-  To deploy missing libraries (very slow): 
     ```../../zksync/fzksync/foundry-zksync/target/release/zkforge zkcreate --deploy-missing-libraries --private-key 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110  --rpc-url http://localhost:8011 --chain 260 ```
 - To build properly: 
     ``` ../../zksync/fzksync/foundry-zksync/target/release/zkforge zkbuild ```
 
-Now you can run tests
+Now you can run tests. Adding to AnthillInner address to foundry.toml will make normal forge tests break.
 
+ ``` ../../zksync/fzksync/foundry-zksync/target/release/zkforge test --rpc-url http://localhost:8011 --chain 260 ```
+
+Running scripts causes nonce error, ( I think the txs are sent in the incorrect order)
+
+``` ../../zksync/fzksync/foundry-zksync/target/release/zkforge script script/Anthill.s.sol:SmallScript --broadcast --rpc-url http://localhost:8011 --chain 260 ```
+
+
+#### On dev 2024/04/27 
+
+Tbh, it seems to be in a worse state than main, I could not get to compile (to say nothing of tests). Specifically, the zkbuild command does not work with the --contracts-to-compile src/AnthillInner.sol option, it keeps trying to compile all the contracts.
+
+
+Also note the interface changed, here this is the failing build command: 
+``` ./../zksync/fzksync/foundry-zksync/target/release/forge build  --contracts-to-compile src/AnthillInner.sol --avoid-contracts "script/Anthill.s.sol:AnthillScript1"  --zksync ```

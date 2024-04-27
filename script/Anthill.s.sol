@@ -13,8 +13,8 @@ contract AnthillScript3 is Script {
         // hardhat rich private key
         // uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         // era-test node rich private key 
-        uint256 privateKey = 0x3d3cbc973389cb26f657686445bcc75662b415b656078503592ac8c1abb8810e;
-        vm.startBroadcast(privateKey);
+        uint256 eraTestNodePrivateKey = 0x3d3cbc973389cb26f657686445bcc75662b415b656078503592ac8c1abb8810e;
+        vm.startBroadcast(eraTestNodePrivateKey);
 
 
         anthill = new Anthill();
@@ -73,10 +73,10 @@ contract SmallScript is Script {
 
     function run() public {
         // hardhat rich private key
-        // uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        // uint256 anvilPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         // era-test node rich private key 
-        uint256 privateKey = 0x3d3cbc973389cb26f657686445bcc75662b415b656078503592ac8c1abb8810e;
-        vm.startBroadcast(privateKey);
+        uint256 eraTestNodePrivateKey = 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110;
+        vm.startBroadcast(eraTestNodePrivateKey);
 
 
         anthill = new Anthill();

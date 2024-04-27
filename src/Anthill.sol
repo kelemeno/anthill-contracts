@@ -542,7 +542,7 @@ contract Anthill {
         }
 
         // to check the existence and to find the position of a vote in the sentDagVote array (depth diff is the row position, votePos is column pos) 
-        function findSentDagVote(address voter, address recipient) public returns (bool votable, bool voted, uint256 sdist,  uint256 depth, uint256 votePos, DagVote memory dagVote){ 
+        function findSentDagVote(address voter, address recipient) public view returns (bool votable, bool voted, uint256 sdist,  uint256 depth, uint256 votePos, DagVote memory dagVote){ 
             return dag.findSentDagVote( voter, recipient);
         }
 
