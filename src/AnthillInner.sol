@@ -27,16 +27,14 @@ pragma solidity ^0.8.13;
 
     struct Dag {
         uint256 decimalPoint;  // total weight of each voter should be 1, but we don't have floats, so we use 10**18.  
-        uint256  MAX_REL_ROOT_DEPTH ;
-        address  root;
+        uint256 MAX_REL_ROOT_DEPTH ;
+        address root;
 
         mapping(address => string)  names;
         mapping(address => address)  treeVote;
 
         mapping(address => uint256)  recTreeVoteCount;
         mapping(address => mapping(uint256 => address))  recTreeVote;
-
-    
 
         mapping(address => uint256)  sentDagVoteDistDiff; 
         mapping(address => uint256)  sentDagVoteDepthDiff;

@@ -2,5 +2,8 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
-
+ETHERSCAN_API_KEY="1"
+libraries = ["/Users/kalmanlajko/programming/anthill/anthill-contracts/src/AnthillInner.sol:AnthillInner:0x46cd6bedb95dab694ab3bfc5ec7b6df2209837e3"]
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
+[profile.cache]
+enabled = true 

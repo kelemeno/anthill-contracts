@@ -40,31 +40,24 @@ firebase frontend does not build on github yet, I should do that. But currently 
 ### zksync specific development
 Warning! Adding to AnthillInner address to foundry.toml will make normal forge tests break.
 
-#### On main 2024/04/27
-- install zk forge 
-- remove folder, AnthillInner address from foundry.toml
-- start zksync local node
-- ```../../zksync/fzksync/foundry-zksync/target/release/zkforge zkbuild  --contracts-to-compile src/AnthillInner.sol```
-- To find missing libraries (slow): 
-    ``` ../../zksync/fzksync/foundry-zksync/target/release/zkforge zkbuild ```
--  To deploy missing libraries (very slow): 
-    ```../../zksync/fzksync/foundry-zksync/target/release/zkforge zkcreate --deploy-missing-libraries --private-key 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110  --rpc-url http://localhost:8011 --chain 260 ```
-- To build properly: 
-    ``` ../../zksync/fzksync/foundry-zksync/target/release/zkforge zkbuild ```
-
-Now you can run tests. Adding to AnthillInner address to foundry.toml will make normal forge tests break.
-
- ``` ../../zksync/fzksync/foundry-zksync/target/release/zkforge test --rpc-url http://localhost:8011 --chain 260 ```
-
-Running scripts causes nonce error, ( I think the txs are sent in the incorrect order)
-
-``` ../../zksync/fzksync/foundry-zksync/target/release/zkforge script script/Anthill.s.sol:SmallScript --broadcast --rpc-url http://localhost:8011 --chain 260 ```
+https://github.com/matter-labs/foundry-zksync/tree/main
 
 
-#### On dev 2024/04/27 
 
-Tbh, it seems to be in a worse state than main, I could not get to compile (to say nothing of tests). Specifically, the zkbuild command does not work with the --contracts-to-compile src/AnthillInner.sol option, it keeps trying to compile all the contracts.
+#### On dev updated 2024/05/10 
 
+Anthill original: 
 
-Also note the interface changed, here this is the failing build command: 
-``` ./../zksync/fzksync/foundry-zksync/target/release/forge build  --contracts-to-compile src/AnthillInner.sol --avoid-contracts "script/Anthill.s.sol:AnthillScript1"  --zksync ```
+- install forge
+- start zksync dockerized local setup (check that this works). If only testing contracts local node is enough. 
+- remove compiled foler, AnthillInner address from foundry.toml
+- to detect missing libraries ``` ../../zksync/fzksync/foundry-zksync/target/release/forge build  --zksync  --contracts-to-compile src/AnthillInner.sol --avoid-contracts "script/Anthill.s.sol:AnthillScript1"  ```
+- To deploy missing libraries: ```../../zksync/fzksync/foundry-zksync/target/release/forge create --zksync --deploy-missing-libraries --private-key 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110 --rpc-url http://localhost:3050 --chain 270 --verifier-url localhost:3010```
+- To compile everything: ``` ../../zksync/fzksync/foundry-zksync/target/release/forge build  --zksync  ```
+- To run tests: ```../../zksync/fzksync/foundry-zksync/target/release/forge test --zksync --rpc-url http://localhost:3050 --chain 270```
+- To run scripts: ``` ../../zksync/fzksync/foundry-zksync/target/release/forge script --zksync --slow script/Anthill.s.sol:SmallScript --broadcast --rpc-url http://localhost:3050 --chain 270 ```
+
+Anthill2: 
+
+To compile everything the old Anthill has to be compiled, i.e. follow the steps above.
+- To run scripts: ``` ../../zksync/fzksync/foundry-zksync/target/release/forge script --zksync --slow script/Anthill2.s.sol:SmallScript --broadcast --rpc-url http://localhost:3050 --chain 270 ```

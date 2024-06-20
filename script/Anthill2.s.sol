@@ -3,11 +3,11 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 
-import "../src/Anthill.sol";
-import {Dag, DagVote} from "../src/Anthill.sol";
+import "../src/Anthill2.sol";
+import {DagVote} from "../src/Anthill2.sol";
 
-contract AnthillScript3 is Script {
-    Anthill public anthill;
+contract Anthill2Script3 is Script {
+    Anthill2 public anthill;
 
     function run() public {
         // hardhat rich private key
@@ -17,7 +17,7 @@ contract AnthillScript3 is Script {
         vm.startBroadcast(eraTestNodePrivateKey);
 
 
-        anthill = new Anthill();
+        anthill = new Anthill2();
 
         // simple logic, 2 3 are roots, 
         //for x there are two childre with addresses 2x, and 2x+1 
@@ -69,7 +69,7 @@ contract AnthillScript3 is Script {
 }
 
 contract SmallScript is Script {
-    Anthill public anthill;
+    Anthill2 public anthill;
 
     function run() public {
         // hardhat rich private key
@@ -81,7 +81,7 @@ contract SmallScript is Script {
         vm.startBroadcast(eraTestNodePrivateKey);
 
 
-        anthill = new Anthill();
+        anthill = new Anthill2();
 
         // simple logic, 2 3 are roots, 
         //for x there are two childre with addresses 2x, and 2x+1 
@@ -90,42 +90,42 @@ contract SmallScript is Script {
         anthill.joinTreeAsRoot(address(2), string("Root2"));
 
         // adding tree votes. For the numbering we are adding children for i, j voter. 
-        // for (uint256 depth=1 ; depth<3; depth++){
-        //     for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
-        //         anthill.joinTree(address(uint160(2*(2**depth+verticalNum))), string("Name"),address(uint160(2**depth+verticalNum)));
-        //         anthill.joinTree(address(uint160(2*(2**depth+verticalNum)+1)), string("Name"),address(uint160(2**depth+verticalNum)));
-        //     }
-        // }
+        for (uint256 depth=1 ; depth<3; depth++){
+            for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
+                anthill.joinTree(address(uint160(2*(2**depth+verticalNum))), string("Name"),address(uint160(2**depth+verticalNum)));
+                anthill.joinTree(address(uint160(2*(2**depth+verticalNum)+1)), string("Name"),address(uint160(2**depth+verticalNum)));
+            }
+        }
 
         // we don't want votes between 4, 5 and 2. 
-        // anthill.removeDagVote(address(4), address(2));
-        // anthill.removeDagVote(address(5), address(2));
+        anthill.removeDagVote(address(4), address(2));
+        anthill.removeDagVote(address(5), address(2));
 
         
-        // for (uint256 depth=1 ; depth<=2; depth++){
-        //     for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
-        //         for (uint256 recDepth=1; recDepth<depth; recDepth++){      
-        //             // we want 2 to receive less, and the second lowest layer to receive more votes. 
-        //             uint256 weight =1000;
-        //             if (recDepth == 1){
-        //                 weight = 1;
-        //             } else if (recDepth == 4){
-        //                 weight = 100000;
-        //             } 
+        for (uint256 depth=1 ; depth<=2; depth++){
+            for (uint256 verticalNum=0; verticalNum<2**(depth-1); verticalNum++){
+                for (uint256 recDepth=1; recDepth<depth; recDepth++){      
+                    // we want 2 to receive less, and the second lowest layer to receive more votes. 
+                    uint256 weight =1000;
+                    if (recDepth == 1){
+                        weight = 1;
+                    } else if (recDepth == 4){
+                        weight = 100000;
+                    } 
 
-        //             for ( uint256 recVerticalNum=0; recVerticalNum<2**(recDepth-1); recVerticalNum++){
+                    for ( uint256 recVerticalNum=0; recVerticalNum<2**(recDepth-1); recVerticalNum++){
                         
-        //                 // we cannot add votes between parents and children, as we already added those votes in joinTree
-        //                 if (2**depth+verticalNum >= 2*(2**recDepth+recVerticalNum)  ){
-        //                     if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==0 ) continue;
-        //                     if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==1 ) continue;
-        //                 }
+                        // we cannot add votes between parents and children, as we already added those votes in joinTree
+                        if (2**depth+verticalNum >= 2*(2**recDepth+recVerticalNum)  ){
+                            if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==0 ) continue;
+                            if (2**depth+verticalNum-2*(2**recDepth+recVerticalNum) ==1 ) continue;
+                        }
                         
-        //                 anthill.addDagVote(address(uint160(2**depth+verticalNum)), address(uint160(2**recDepth+recVerticalNum)), weight);
-        //             }
-        //         }                
-        //     }
-        // }    
+                        anthill.addDagVote(address(uint160(2**depth+verticalNum)), address(uint160(2**recDepth+recVerticalNum)), weight);
+                    }
+                }                
+            }
+        }    
 
         vm.stopBroadcast();
 
@@ -133,7 +133,7 @@ contract SmallScript is Script {
 }
 
 contract TutorialScript is Script {
-    Anthill public anthill;
+    Anthill2 public anthill;
 
     function run() public {
         // hardhat rich private key
@@ -141,7 +141,7 @@ contract TutorialScript is Script {
         vm.startBroadcast(privateKey);
 
 
-        anthill = new Anthill();
+        anthill = new Anthill2();
 
         // simple logic, 2 3 are roots, 
         //for x there are two childre with addresses 2x, and 2x+1 
@@ -158,14 +158,14 @@ contract TutorialScript is Script {
 }
 
 contract JustDeploy is Script {
-    Anthill public anthill;
+    Anthill2 public anthill;
 
     function run() public {
         uint256 privateKey =  0x01 ;
         vm.startBroadcast(privateKey);
 
 
-        anthill = new Anthill();
+        anthill = new Anthill2();
                             
         vm.stopBroadcast();
 
@@ -173,14 +173,14 @@ contract JustDeploy is Script {
 }
 
 contract OldDeploy is Script {
-    Anthill public anthill;
+    Anthill2 public anthill;
 
     function run() public {
         uint256 privateKey =  0x01 ;
         vm.startBroadcast(privateKey);
 
 
-        anthill = new Anthill();
+        anthill = new Anthill2();
                 
         anthill.joinTreeAsRoot(address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41), "MMarton");
 
@@ -225,9 +225,9 @@ contract OldDeploy is Script {
 }
 
 contract Redeploy is Script {
-    Anthill public anthillNew;
+    Anthill2 public anthillNew;
     address oldAddress = 0x69649a6E7E9c090a742f0671C64f4c7c31a1e4ce;
-    Anthill public anthillOld = Anthill(oldAddress);
+    Anthill2 public anthillOld = Anthill2(oldAddress);
 
 
      function run() public {
@@ -236,7 +236,7 @@ contract Redeploy is Script {
         vm.startBroadcast(privateKey);
 
 
-        anthillNew = new Anthill();
+        anthillNew = new Anthill2();
         
         address root = anthillOld.readRoot();
         string memory rootName = anthillOld.readName(root);
@@ -255,7 +255,7 @@ contract Redeploy is Script {
     }
 
 
-    function readAndAddChildrenRec(address parent, Anthill anthillOldInput, Anthill anthillNewInput ) internal {
+    function readAndAddChildrenRec(address parent, Anthill2 anthillOldInput, Anthill2 anthillNewInput ) internal {
         uint256 childCount = anthillOldInput.readRecTreeVoteCount(parent);
         for (uint256 i=0; i<childCount; i++){
             address child = anthillOldInput.readRecTreeVote(parent, i);
@@ -267,7 +267,7 @@ contract Redeploy is Script {
         }
     }
 
-    function readAndAddDagVotesRec(uint256 maxRelRootDepth, address voter, Anthill anthillOldInput, Anthill anthillNewInput) internal {
+    function readAndAddDagVotesRec(uint256 maxRelRootDepth, address voter, Anthill2 anthillOldInput, Anthill2 anthillNewInput) internal {
 
         for (uint256 dist=1; dist<=maxRelRootDepth; dist++){
            for (uint256 height = 0; height <= dist; height++){
@@ -291,7 +291,7 @@ contract Redeploy is Script {
 
 contract CalculateRep is Script {
     address oldAddress = 0x052B66427EE6560e2dF0b5d7463FAdAd6b8206E9 ;
-    Anthill public anthillOld = Anthill(oldAddress);
+    Anthill2 public anthillOld = Anthill2(oldAddress);
 
 
      function run() public {
@@ -317,7 +317,7 @@ contract CalculateRep is Script {
 
 contract CalculateRepForAll is Script {
     address oldAddress = 0xb2218969ECF92a3085B8345665d65FCdFED9F981;
-    Anthill public anthill = Anthill(oldAddress);
+    Anthill2 public anthill = Anthill2(oldAddress);
 
 
      function run() public {
@@ -336,14 +336,14 @@ contract CalculateRepForAll is Script {
 }
 
 contract AnthillScript1 is Script {
-    Anthill public anthill;
+    Anthill2 public anthill;
 
     function run() public {
         uint256 privateKey = 0x01;
         vm.startBroadcast(privateKey);
 
 
-        anthill = new Anthill();
+        anthill = new Anthill2();
 
         // simple logic, 2 3 are roots, 
         //for x there are two childre with addresses 2x, and 2x+1 
@@ -380,28 +380,22 @@ contract AnthillScript1 is Script {
                 //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)));
                 //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)));
                 //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)));
-                // }
-
-                
+                // }xw              
             }
         }      
-
         vm.stopBroadcast();
-
- }
-
-    
+    }  
 }
 
 contract AnthillScript2 is Script {
-    Anthill public anthill;
+    Anthill2 public anthill;
 
     function run() public {
         uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         vm.startBroadcast(privateKey);
 
 
-        anthill = new Anthill();
+        anthill = new Anthill2();
 
         // simple logic, 2 3 are roots, 
         //for x there are two childre with addresses 2x, and 2x+1 
@@ -417,8 +411,6 @@ contract AnthillScript2 is Script {
                 anthill.joinTree(address(uint160(2*(2**i+j)+1)), string("Name"),address(uint160(2**i+j)));
             }
         }
-
-        
 
         // adding dag votes
         // we add layers 3, 4
@@ -442,15 +434,9 @@ contract AnthillScript2 is Script {
                 //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)));
                 //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)));
                 //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)));
-                // }
-
-                
+                // } 
             }
         }      
-
         vm.stopBroadcast();
-
- }
-
-    
+ }    
 }
