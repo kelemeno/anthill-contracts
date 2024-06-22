@@ -9,7 +9,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "verify": "hardhat run hardhat/verify.ts"
+    "verify": "hardhat run hardhat/verify.ts",
+    "lint": "solhint \"**/*.sol\" --fix && prettier --write \"**/*.{js,json,md,sol,ts,yaml}\"",
+    "fix": "prettier --write \"**/*.{js,json,md,sol,ts,yaml}\""
   },
   "keywords": [],
   "author": "",
@@ -20,5 +22,11 @@
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.22.5",
     "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@matterlabs/prettier-config": "^1.0.3",
+    "prettier": "^3.3.2",
+    "prettier-plugin-solidity": "^1.3.1",
+    "solhint": "^5.0.1"
   }
 }

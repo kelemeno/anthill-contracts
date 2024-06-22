@@ -19,7 +19,8 @@ const config: HardhatUserConfig = {
       zksync: true,
       verifyURL: "https://zksync2-mainnet-explorer.zksync.io/contract_verification",
     },
-    zkSyncGoerliTestnet: { // deprecated network
+    zkSyncGoerliTestnet: {
+      // deprecated network
       url: "https://testnet.era.zksync.dev",
       ethNetwork: "goerli",
       zksync: true,
@@ -46,19 +47,17 @@ const config: HardhatUserConfig = {
       // https://era.zksync.io/docs/tools/hardhat/hardhat-zksync-solc.html#configuration
       libraries: {
         "src/AnthillInner.sol": {
-          "AnthillInner": "0xF3a4d6E6581e12Dc5b0eCd6EA3d483fF09c3cAE0"
+          AnthillInner: "0xF3a4d6E6581e12Dc5b0eCd6EA3d483fF09c3cAE0",
         },
-      }
+      },
     },
   },
   solidity: {
     version: "0.8.17",
   },
   paths: {
-    sources: "./src",  
+    sources: "./src",
   },
-  
-
 };
 
 export default config;
