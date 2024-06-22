@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.13;
+pragma solidity 0.8.24;
 
 interface IAnthill {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Events
+
+    event JoinTreeEvent(address voter, string name, address recipient);
 
     event ChangeNameEvent(address voter, string newName);
 

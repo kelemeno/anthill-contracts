@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.24;
 
 import {Dag, DagVote, AnthillInner} from "./AnthillInner.sol";
 import {IAnthill} from "./IAnthill.sol";
@@ -76,12 +76,12 @@ contract Anthill is IAnthill {
         // add DagVotes.
         AnthillInner.combinedDagAppendSdist(dag, voter, recipient, sdist, depth, 1);
 
-        emit joinTreeEvent(voter, voterName, recipient);
+        emit JoinTreeEvent(voter, voterName, recipient);
     }
 
     // when we first join the tree without a parent
     function joinTreeAsRoot(address voter, string calldata voterName) public {
-        emit SimpleEventForUpdates("", 1);
+        // emit SimpleEventForUpdates("", 1);
 
         if (!unlocked) {
             require(msg.sender == voter, "A jTAR 1");
@@ -110,7 +110,7 @@ contract Anthill is IAnthill {
         require(dag.treeVote[voter] != address(0), "A jTAR 5");
         dag.names[voter] = voterName;
 
-        emit changeNameEvent(voter, voterName);
+        emit ChangeNameEvent(voter, voterName);
     }
 
     ////////////////////////////////////////////
@@ -132,7 +132,7 @@ contract Anthill is IAnthill {
         // add DagVotes.
         AnthillInner.combinedDagAppendSdist(dag, voter, recipient, sdist, depth, weight);
 
-        emit addDagVoteEvent(voter, recipient, weight);
+        emit AddDagVoteEvent(voter, recipient, weight);
     }
 
     // to remove a vote from the dag.sentDagVote array, and also from the  corresponding dag.recDagVote arrays
@@ -151,7 +151,7 @@ contract Anthill is IAnthill {
 
         AnthillInner.safeRemoveSentDagVoteAtDistDepthPos(dag, voter, sdist, depth, sPos);
 
-        emit removeDagVoteEvent(voter, recipient);
+        emit RemoveDagVoteEvent(voter, recipient);
     }
 
     ////////////////////////////////////////////
@@ -253,7 +253,7 @@ contract Anthill is IAnthill {
         dag.handleLeavingVoterBranch(voter);
         dag.treeVote[voter] = address(0);
 
-        emit leaveTreeEvent(voter);
+        emit LeaveTreeEvent(voter);
     }
 
     function switchPositionWithParent(address voter) public {
@@ -276,7 +276,7 @@ contract Anthill is IAnthill {
 
         dag.switchTreeVoteWithParent(voter);
 
-        emit switchPositionWithParentEvent(voter);
+        emit SwitchPositionWithParentEvent(voter);
     }
 
     struct CheckPositionResult {
@@ -347,7 +347,7 @@ contract Anthill is IAnthill {
         // there is a single twise here, if recipient the descendant of the voter that rises.
         dag.addTreeVote(voter, recipient);
 
-        emit moveTreeVoteEvent(voter, recipient);
+        emit MoveTreeVoteEvent(voter, recipient);
     }
 
     function _checkPosition(

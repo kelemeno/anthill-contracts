@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.24;
 
 // import {console} from "forge-std/console.sol";
 import {IAnthill} from "./IAnthill.sol";
@@ -168,7 +168,7 @@ contract Anthill2 is IAnthill {
 
         addDagVote(voter, recipient, 1);
 
-        emit joinTreeEvent(voter, voterName, recipient);
+        emit JoinTreeEvent(voter, voterName, recipient);
     }
 
     // when we first join the tree without a parent
@@ -187,7 +187,7 @@ contract Anthill2 is IAnthill {
         require(treeVote[voter] != address(0), "A jTAR 5");
         names[voter] = voterName;
 
-        emit changeNameEvent(voter, voterName);
+        emit ChangeNameEvent(voter, voterName);
     }
     ////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -339,7 +339,7 @@ contract Anthill2 is IAnthill {
         require((votable) && (!voted), "A aDV 2");
         combinedDagAppendSdist(voter, recipient, sDist, rDist, weight);
 
-        emit addDagVoteEvent(voter, recipient, weight);
+        emit AddDagVoteEvent(voter, recipient, weight);
     }
 
     // to remove a vote from the sentDagVote array, and also from the  corresponding recDagVote arrays
@@ -350,7 +350,7 @@ contract Anthill2 is IAnthill {
 
         safeRemoveSentDagVote(voter, sPos);
 
-        emit removeDagVoteEvent(voter, recipient);
+        emit RemoveDagVoteEvent(voter, recipient);
     }
 
     ////////////////////////////////////////////
@@ -763,7 +763,7 @@ contract Anthill2 is IAnthill {
         handleLeavingVoterBranch(voter);
         treeVote[voter] = address(0);
 
-        emit leaveTreeEvent(voter);
+        emit LeaveTreeEvent(voter);
     }
 
     function switchPositionWithParent(address voter) public onlyVoter(voter) {
@@ -782,7 +782,7 @@ contract Anthill2 is IAnthill {
 
         switchTreeVoteWithParent(voter);
 
-        emit switchPositionWithParentEvent(voter);
+        emit SwitchPositionWithParentEvent(voter);
     }
 
     /// the strategy here is we remove the mover, create the new tree strcuture, check Dag structure, and add him back.
@@ -819,7 +819,7 @@ contract Anthill2 is IAnthill {
         // there is a single twist here, if recipient is the descendant of the voter that rises. todo is this a problem?
         addTreeVote(voter, recipient);
 
-        emit moveTreeVoteEvent(voter, recipient);
+        emit MoveTreeVoteEvent(voter, recipient);
     }
 
     ////////////////////////////////////////////
