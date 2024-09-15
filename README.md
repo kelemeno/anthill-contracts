@@ -65,10 +65,10 @@ To compile everything the old Anthill has to be compiled, i.e. follow the steps 
 
 - To run scripts: `../../zksync/fzksync/foundry-zksync/target/release/forge script --zksync --slow script/Anthill2.s.sol:SmallScript --broadcast --rpc-url http://localhost:3050 --chain 270`
 
-- Testnet deployment, if for first time: 
-`../../zksync/fzksync/foundry-zksync/target/release/forge script --zksync --slow script/Anthill2.s.sol:JustDeploy --broadcast --rpc-url https://sepolia.era.zksync.dev --chain 300 --private-key`
+- Testnet deployment, if for first time:
+  `../../zksync/fzksync/foundry-zksync/target/release/forge script --zksync --slow script/Anthill2.s.sol:JustDeploy --broadcast --rpc-url https://sepolia.era.zksync.dev --chain 300 --private-key`
 
-- Save data: 
-`forge script  --zksync --slow script/Anthill2.s.sol:ReadAndSave --rpc-url https://sepolia.era.zksync.dev`
+- Save data:
+  `forge script  --zksync --slow script/Anthill2.s.sol:ReadAndSave --rpc-url https://sepolia.era.zksync.dev`
 
-- Testnet migration to new contract: 
+- Testnet migration to new contract:

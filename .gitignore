@@ -9,6 +9,7 @@ zkout/
 /broadcast/**/dry-run/
 broadcast/
 script-out/
+selectors
 
 # Dotenv file
 .env

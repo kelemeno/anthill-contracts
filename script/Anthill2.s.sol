@@ -8,7 +8,6 @@ import {Anthill, IAnthill} from "../src/Anthill.sol";
 import {DagVote} from "../src/Anthill.sol";
 import {TreeVoteExtended, DagVoteExtended, AnthillDev} from "../src/AnthillDev.sol";
 
-
 contract AnthillScript3 is Script {
     Anthill public anthill;
 
@@ -317,7 +316,17 @@ contract ReadAndSave is Script {
             uint256 sentDagVoteCount = anthillOldInput.readSentDagVoteCount(child, 0, 0);
             uint256 sentDagVoteTotalWeight = anthillOldInput.readSentDagVoteTotalWeight(child);
             uint256 recDagVoteCount = anthillOldInput.readRecDagVoteCount(child, 0, 0);
-            treeVotes.push(TreeVoteExtended(child, childName, parent, childRecTreeVoteCount, sentDagVoteCount, sentDagVoteTotalWeight, recDagVoteCount));
+            treeVotes.push(
+                TreeVoteExtended(
+                    child,
+                    childName,
+                    parent,
+                    childRecTreeVoteCount,
+                    sentDagVoteCount,
+                    sentDagVoteTotalWeight,
+                    recDagVoteCount
+                )
+            );
 
             readChildrenRec(child, anthillOldInput, anthillNewInput);
         }
@@ -334,8 +343,18 @@ contract ReadAndSave is Script {
                 uint256 dagVoteCount = anthillOldInput.readSentDagVoteCount(voter, dist, height);
                 for (uint256 i = 0; i < dagVoteCount; i++) {
                     DagVote memory sDagVote = anthillOldInput.readSentDagVote(voter, dist, height, i);
-                    DagVote memory rDagVote = anthillOldInput.readRecDagVote(sDagVote.id, 0,0, sDagVote.posInOther);
-                    dagVotes.push(DagVoteExtended(voter, sDagVote.id, sDagVote.weight, dist, rDagVote.dist, i, sDagVote.posInOther));
+                    DagVote memory rDagVote = anthillOldInput.readRecDagVote(sDagVote.id, 0, 0, sDagVote.posInOther);
+                    dagVotes.push(
+                        DagVoteExtended(
+                            voter,
+                            sDagVote.id,
+                            sDagVote.weight,
+                            dist,
+                            rDagVote.dist,
+                            i,
+                            sDagVote.posInOther
+                        )
+                    );
                 }
             }
         }
@@ -349,8 +368,6 @@ contract ReadAndSave is Script {
 }
 
 contract ReadFromFileAndDeploy is Script {
-
-
     function run() public {
         TreeVoteExtended[] memory treeVotes;
         DagVoteExtended[] memory dagVotes;

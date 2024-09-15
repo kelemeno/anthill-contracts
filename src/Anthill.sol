@@ -8,7 +8,7 @@ struct DagVote {
     address id;
     uint256 weight;
     // distance is always measured to the common ancestor
-    // this is to check movements easily, 
+    // this is to check movements easily,
     // this does not on the other side when a person moves change.
     uint256 dist;
     // position in the other person's sent/rec DagVote array
@@ -299,7 +299,7 @@ contract Anthill is IAnthill {
         return (false, 0);
     }
 
-    // to find the distance and depth from a voter to recipient. 
+    // to find the distance and depth from a voter to recipient.
     // Note, the recipient has to be higher and in the neighbourhood of the voter.
     function findDistancesRecNotLower(
         address voter,
@@ -322,10 +322,9 @@ contract Anthill is IAnthill {
         return (isLocal, distance + relDepth, distance);
     }
 
-
     // to find the distance between two voters,
     // one has to be local to the other.
-    // sDist is always the voters distance, who might be higher. 
+    // sDist is always the voters distance, who might be higher.
     function findDistances(
         address voter,
         address recipient

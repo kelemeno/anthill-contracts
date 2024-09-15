@@ -30,7 +30,7 @@ contract AnthillDev is Anthill {
         uint256,
         address voter,
         uint256 weight,
-        uint256 
+        uint256
     ) public onlyUnlocked {
         recDagVote[recipient][recDagVoteCount[recipient]] = DagVote({
             id: voter,

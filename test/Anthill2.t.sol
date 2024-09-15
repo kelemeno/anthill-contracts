@@ -234,7 +234,7 @@ contract AnthillTestMain is Test, Utils {
         assert(anthill.readSentTreeVote(address(10)) == address(5));
         assert(anthill.readSentTreeVote(address(5)) == address(4));
 
-        intermediateDagConsistencyCheckFrom( anthill, address(2));
+        intermediateDagConsistencyCheckFrom(anthill, address(2));
         dagConsistencyCheckFrom(anthill, address(4));
         treeConsistencyCheckFrom(anthill, address(4));
     }
