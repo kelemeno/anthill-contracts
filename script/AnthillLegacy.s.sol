@@ -23,6 +23,8 @@ contract CalculateRep is Script {
 
         vm.stopBroadcast();
     }
+
+    function test() public {}
 }
 
 contract CalculateRepForAll is Script {
@@ -38,6 +40,8 @@ contract CalculateRepForAll is Script {
 
         vm.stopBroadcast();
     }
+
+    function test() public {}
 }
 
 contract AnthillScript1 is Script {
@@ -92,6 +96,8 @@ contract AnthillScript1 is Script {
 
         vm.stopBroadcast();
     }
+
+    function test() public {}
 }
 
 contract AnthillScript2 is Script {
@@ -145,4 +151,6 @@ contract AnthillScript2 is Script {
 
         vm.stopBroadcast();
     }
+
+    function test() public {}
 }

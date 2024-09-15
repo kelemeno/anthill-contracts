@@ -320,6 +320,7 @@ contract AnthillTestMain is Test, Utils {
     }
 
     function testMoveInTree1() public {
+        console.log("32 tree vote", anthill.readSentTreeVote(address(32)));
         anthill.moveTreeVote(address(16), address(32));
         dagConsistencyCheckFrom(anthill, address(2));
         treeConsistencyCheckFrom(anthill, address(2));

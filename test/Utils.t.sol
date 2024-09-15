@@ -131,4 +131,6 @@ contract Utils is Test {
             }
         }
     }
+
+    function test() public {}
 }

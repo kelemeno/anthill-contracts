@@ -352,12 +352,12 @@ contract Anthill is IAnthill {
             }
         }
 
-        address voterAnscenstor = findNthParent(lower, higherRelRootDiff - lowerRelRootDiff);
+        address voterAnscenstor = findNthParent(lower, lowerRelRootDiff - higherRelRootDiff);
         (, uint256 distance) = findDistAtSameDepth(voterAnscenstor, higher);
         if (lower == voter) {
-            return (true, distance + higherRelRootDiff - lowerRelRootDiff, distance);
+            return (true, distance + lowerRelRootDiff - higherRelRootDiff, distance);
         }
-        return (isLocal, distance, distance + higherRelRootDiff - lowerRelRootDiff);
+        return (isLocal, distance, distance + lowerRelRootDiff - higherRelRootDiff);
     }
 
     //////////////////////////////////////

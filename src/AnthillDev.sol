@@ -299,4 +299,5 @@ contract AnthillDev is Anthill {
         super.moveTreeVote(voter, recipient);
     }
 
+    function test() public {}
 }

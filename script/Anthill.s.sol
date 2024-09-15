@@ -76,6 +76,8 @@ contract AnthillScript3 is Script {
 
         vm.stopBroadcast();
     }
+
+    function test() public {}
 }
 
 contract SmallScript is Script {
@@ -148,6 +150,8 @@ contract SmallScript is Script {
 
         vm.stopBroadcast();
     }
+
+    function test() public {}
 }
 
 contract TutorialScript is Script {
@@ -169,6 +173,8 @@ contract TutorialScript is Script {
 
         vm.stopBroadcast();
     }
+
+    function test() public {}
 }
 
 contract JustDeploy is Script {
@@ -185,6 +191,8 @@ contract JustDeploy is Script {
 
         vm.stopBroadcast();
     }
+
+    function test() public {}
 }
 
 contract Redeploy is Script {
@@ -248,10 +256,8 @@ contract Redeploy is Script {
             readAndAddDagVotesRec(maxRelRootDepth, child, anthillOldInput, anthillNewInput);
         }
     }
-}
 
-interface IRandom {
-    function timestamp() external view returns (uint256);
+    function test() public {}
 }
 
 contract JustRoot is Script {
@@ -280,6 +286,8 @@ contract JustRoot is Script {
         // }
         // vm.stopBroadcast();
     }
+
+    function test() public {}
 }
 
 contract ReadAndSave is Script {
@@ -365,6 +373,8 @@ contract ReadAndSave is Script {
             readDagVotesRec(maxRelRootDepth, child, anthillOldInput, anthillNewInput);
         }
     }
+
+    function test() public {}
 }
 
 contract ReadFromFileAndDeploy is Script {
@@ -382,4 +392,6 @@ contract ReadFromFileAndDeploy is Script {
         console.log("treeVotes", treeVotes.length);
         console.log("dagVotes", dagVotes.length);
     }
+
+    function test() public {}
 }
