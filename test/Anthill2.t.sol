@@ -2,19 +2,19 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import "../src/Anthill2Dev.sol";
-import {DagVote} from "../src/Anthill2.sol";
+import "../src/AnthillDev.sol";
+import {DagVote} from "../src/Anthill.sol";
 import {console} from "forge-std/console.sol";
 import {Utils} from "./Utils.t.sol";
 
 // for testing uncomment modifiers, and comment msg.sender checks out
 // until then test are also commented out.
 
-contract Anthill2TestMain is Test, Utils {
-    Anthill2Dev public anthill;
+contract AnthillTestMain is Test, Utils {
+    AnthillDev public anthill;
 
     function setUp() public {
-        anthill = new Anthill2Dev();
+        anthill = new AnthillDev();
 
         // simple logic, 2 3 are roots,
         //for x there are two childre with addresses 2x, and 2x+1

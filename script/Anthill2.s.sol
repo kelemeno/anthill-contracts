@@ -5,12 +5,12 @@ import "forge-std/Script.sol";
 import {stdToml} from "forge-std/StdToml.sol";
 
 import {Anthill, IAnthill} from "../src/Anthill.sol";
-import {DagVote} from "../src/Anthill2.sol";
+import {DagVote} from "../src/Anthill.sol";
 import {TreeVoteExtended, DagVoteExtended, AnthillDev} from "../src/AnthillDev.sol";
 
 
-contract Anthill2Script3 is Script {
-    Anthill2 public anthill;
+contract AnthillScript3 is Script {
+    Anthill public anthill;
 
     function run() public {
         // hardhat rich private key
@@ -19,7 +19,7 @@ contract Anthill2Script3 is Script {
         uint256 eraTestNodePrivateKey = 0x3d3cbc973389cb26f657686445bcc75662b415b656078503592ac8c1abb8810e;
         vm.startBroadcast(eraTestNodePrivateKey);
 
-        anthill = new Anthill2();
+        anthill = new Anthill();
 
         // simple logic, 2 3 are roots,
         //for x there are two childre with addresses 2x, and 2x+1
@@ -80,7 +80,7 @@ contract Anthill2Script3 is Script {
 }
 
 contract SmallScript is Script {
-    Anthill2 public anthill;
+    Anthill public anthill;
 
     function run() public {
         // hardhat rich private key
@@ -91,7 +91,7 @@ contract SmallScript is Script {
         uint256 eraTestNodePrivateKey = 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110;
         vm.startBroadcast(eraTestNodePrivateKey);
 
-        anthill = new Anthill2();
+        anthill = new Anthill();
 
         // simple logic, 2 3 are roots,
         //for x there are two childre with addresses 2x, and 2x+1
@@ -152,14 +152,14 @@ contract SmallScript is Script {
 }
 
 contract TutorialScript is Script {
-    Anthill2 public anthill;
+    Anthill public anthill;
 
     function run() public {
         // hardhat rich private key
         uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         vm.startBroadcast(privateKey);
 
-        anthill = new Anthill2();
+        anthill = new Anthill();
 
         // simple logic, 2 3 are roots,
         //for x there are two childre with addresses 2x, and 2x+1
@@ -173,14 +173,14 @@ contract TutorialScript is Script {
 }
 
 contract JustDeploy is Script {
-    Anthill2 public anthill;
+    Anthill public anthill;
 
     function run() public {
         // uint256 privateKey = 0x01;
         vm.startBroadcast();
 
         address zach = address(0xD5A498Bbc6D21E4E1cdBB8fec58e3eCD7124FB43);
-        anthill = new Anthill2();
+        anthill = new Anthill();
         anthill.joinTreeAsRoot(zach, string("Zach"));
         anthill.joinTree(address(0x343Ee72DdD8CCD80cd43D6Adbc6c463a2DE433a7), string("Kalman"), zach);
 
@@ -189,16 +189,16 @@ contract JustDeploy is Script {
 }
 
 contract Redeploy is Script {
-    Anthill2 public anthillNew;
+    Anthill public anthillNew;
     address oldAddress = 0x69649a6E7E9c090a742f0671C64f4c7c31a1e4ce;
-    Anthill2 public anthillOld = Anthill2(oldAddress);
+    Anthill public anthillOld = Anthill(oldAddress);
 
     function run() public {
         uint256 privateKey = 0x01;
 
         vm.startBroadcast(privateKey);
 
-        anthillNew = new Anthill2();
+        anthillNew = new Anthill();
 
         address root = anthillOld.readRoot();
         string memory rootName = anthillOld.readName(root);
@@ -215,7 +215,7 @@ contract Redeploy is Script {
         vm.stopBroadcast();
     }
 
-    function readAndAddChildrenRec(address parent, Anthill2 anthillOldInput, Anthill2 anthillNewInput) internal {
+    function readAndAddChildrenRec(address parent, Anthill anthillOldInput, Anthill anthillNewInput) internal {
         uint256 childCount = anthillOldInput.readRecTreeVoteCount(parent);
         for (uint256 i = 0; i < childCount; i++) {
             address child = anthillOldInput.readRecTreeVote(parent, i);
@@ -230,8 +230,8 @@ contract Redeploy is Script {
     function readAndAddDagVotesRec(
         uint256 maxRelRootDepth,
         address voter,
-        Anthill2 anthillOldInput,
-        Anthill2 anthillNewInput
+        Anthill anthillOldInput,
+        Anthill anthillNewInput
     ) internal {
         for (uint256 dist = 1; dist <= maxRelRootDepth; dist++) {
             for (uint256 height = 0; height <= dist; height++) {
@@ -284,9 +284,9 @@ contract JustRoot is Script {
 }
 
 contract ReadAndSave is Script {
-    Anthill2 public anthillNew;
+    Anthill public anthillNew;
     address public oldAddress = 0xe42923350EF3a534f84bb101453D9B442d42Bf0c;
-    Anthill2 public anthillOld = Anthill2(oldAddress);
+    Anthill public anthillOld = Anthill(oldAddress);
     TreeVoteExtended[] public treeVotes;
     DagVoteExtended[] public dagVotes;
 
@@ -308,7 +308,7 @@ contract ReadAndSave is Script {
         vm.stopBroadcast();
     }
 
-    function readChildrenRec(address parent, Anthill2 anthillOldInput, Anthill2 anthillNewInput) internal {
+    function readChildrenRec(address parent, Anthill anthillOldInput, Anthill anthillNewInput) internal {
         uint256 childCount = anthillOldInput.readRecTreeVoteCount(parent);
         for (uint256 i = 0; i < childCount; i++) {
             address child = anthillOldInput.readRecTreeVote(parent, i);
@@ -326,8 +326,8 @@ contract ReadAndSave is Script {
     function readDagVotesRec(
         uint256 maxRelRootDepth,
         address voter,
-        Anthill2 anthillOldInput,
-        Anthill2 anthillNewInput
+        Anthill anthillOldInput,
+        Anthill anthillNewInput
     ) internal {
         for (uint256 dist = 1; dist <= maxRelRootDepth; dist++) {
             for (uint256 height = 0; height <= dist; height++) {

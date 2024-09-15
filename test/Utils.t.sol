@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import "../src/Anthill2Dev.sol";
-import {DagVote} from "../src/Anthill2.sol";
+import "../src/AnthillDev.sol";
+import {DagVote} from "../src/Anthill.sol";
 import {console} from "forge-std/console.sol";
 
 contract Utils is Test {
-    function intermediateDagConsistencyCheckFrom(Anthill2Dev anthill, address voter) public {
+    function intermediateDagConsistencyCheckFrom(AnthillDev anthill, address voter) public {
         for (uint256 dist = 0; dist < 7; dist++) {
             for (uint256 depth = 1; depth <= dist; depth++) {
                 for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++) {
@@ -46,7 +46,7 @@ contract Utils is Test {
         }
     }
 
-    function dagConsistencyCheckFrom(Anthill2Dev anthill, address voter) public {
+    function dagConsistencyCheckFrom(AnthillDev anthill, address voter) public {
         for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, 0, 0); i++) {
             DagVote memory sDagVote = anthill.readSentDagVote(voter, 0, 0, i);
             DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, 0 - 0, 0, sDagVote.posInOther);
@@ -96,7 +96,7 @@ contract Utils is Test {
         }
     }
 
-    function printRecDagVotes(Anthill2Dev anthill, address voter) public view {
+    function printRecDagVotes(AnthillDev anthill, address voter) public view {
         for (uint256 dist = 0; dist < 7; dist++) {
             for (uint256 depth = 0; depth <= 7; depth++) {
                 for (uint256 i = 0; i < anthill.readRecDagVoteCount(voter, dist, depth); i++) {
@@ -108,7 +108,7 @@ contract Utils is Test {
         }
     }
 
-    function printSentDagVotes(Anthill2Dev anthill, address voter) public view {
+    function printSentDagVotes(AnthillDev anthill, address voter) public view {
         for (uint256 dist = 0; dist < 7; dist++) {
             for (uint256 depth = 0; depth <= 7; depth++) {
                 for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++) {
@@ -121,7 +121,7 @@ contract Utils is Test {
         console.log("rec dag votes finished");
     }
 
-    function treeConsistencyCheckFrom(Anthill2 anthill, address voter) public {
+    function treeConsistencyCheckFrom(Anthill anthill, address voter) public {
         for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
             address recipient = anthill.readRecTreeVote(voter, i);
             if (recipient != address(0)) {

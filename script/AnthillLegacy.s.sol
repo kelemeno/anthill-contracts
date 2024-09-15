@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
 
-import {Anthill2 as Anthill, DagVote} from "../src/Anthill2.sol";
+import {Anthill, DagVote} from "../src/Anthill.sol";
 
 contract CalculateRep is Script {
     address oldAddress = 0x052B66427EE6560e2dF0b5d7463FAdAd6b8206E9;
