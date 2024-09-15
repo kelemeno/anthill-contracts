@@ -16,7 +16,7 @@ struct DagVote {
     uint256 posInOther;
 }
 
-contract Anthill2 is IAnthill {
+contract Anthill is IAnthill {
     constructor() {
         decimalPoint = 18;
         MAX_REL_ROOT_DEPTH = 6;

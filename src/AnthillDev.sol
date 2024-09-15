@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import {DagVote, Anthill2} from "../src/Anthill2.sol";
+import {DagVote, Anthill} from "../src/Anthill.sol";
 
 struct TreeVoteExtended {
     address voter;
@@ -23,7 +23,7 @@ struct DagVoteExtended {
     uint256 posInRecipient;
 }
 
-contract Anthill2Dev is Anthill2 {
+contract AnthillDev is Anthill {
     function recDagAppendPublic(
         address recipient,
         uint256 recDist,

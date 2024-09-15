@@ -4,9 +4,9 @@ pragma solidity ^0.8.24;
 import "forge-std/Script.sol";
 import {stdToml} from "forge-std/StdToml.sol";
 
-import {Anthill2, IAnthill} from "../src/Anthill2.sol";
+import {Anthill, IAnthill} from "../src/Anthill.sol";
 import {DagVote} from "../src/Anthill2.sol";
-import {TreeVoteExtended, DagVoteExtended, Anthill2Dev} from "../src/Anthill2Dev.sol";
+import {TreeVoteExtended, DagVoteExtended, AnthillDev} from "../src/AnthillDev.sol";
 
 
 contract Anthill2Script3 is Script {
