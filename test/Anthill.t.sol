@@ -168,7 +168,7 @@ contract AnthillTestMain is Test, Utils {
         // assertEq(depth, 2);
         assertEq(votePos, 4);
 
-        anthill.unsafeReplaceRecDagVoteWithLast(address(4), 0);
+        anthill.unsafeReplaceRecDagVoteWithLastPublic(address(4), 0);
 
         uint256 count = anthill.readRecDagVoteCount(address(4), 0, 2);
         assertEq(count, 27);

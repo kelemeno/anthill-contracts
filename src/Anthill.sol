@@ -94,7 +94,7 @@ contract Anthill is IAnthill {
     ////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Personal tree internal
-    function removeTreeVote(address voter) internal {
+    function removeTreeVote(address voter) internal virtual {
         address recipient = treeVote[voter];
         uint256 votePos = recTreeVote[recipient][0] == voter ? 0 : 1;
 
@@ -106,12 +106,12 @@ contract Anthill is IAnthill {
         treeVote[voter] = address(1);
     }
 
-    function addTreeVote(address voter, address recipient) internal {
+    function addTreeVote(address voter, address recipient) internal virtual {
         require(recTreeVoteCount[recipient] < 2, "Ai, aDV 2");
         addTreeVoteWithoutCheck(voter, recipient);
     }
 
-    function addTreeVoteWithoutCheck(address voter, address recipient) internal {
+    function addTreeVoteWithoutCheck(address voter, address recipient) internal virtual {
         require(treeVote[voter] == address(1), "Ai, aTVWC 1");
 
         treeVote[voter] = recipient;
@@ -121,7 +121,7 @@ contract Anthill is IAnthill {
     }
 
     // this switches the position of a voter and its parent, without considering the
-    function switchTreeVoteWithParent(address voter) internal {
+    function switchTreeVoteWithParent(address voter) internal virtual {
         address parent = treeVote[voter];
         require(parent != address(0), "Ai, sTVWP 1");
         require(parent != address(1), "Ai, sTVWP 2");
@@ -165,7 +165,7 @@ contract Anthill is IAnthill {
     //// Personal tree externals
 
     // when we first join the tree
-    function joinTree(address voter, string calldata voterName, address recipient) public onlyVoter(voter) {
+    function joinTree(address voter, string calldata voterName, address recipient) public onlyVoter(voter) virtual {
         require(treeVote[voter] == address(0), "A lT 2");
         require(treeVote[recipient] != address(0), "A lT 3");
         require(recTreeVoteCount[recipient] < 2, "A lT 4");
@@ -181,7 +181,7 @@ contract Anthill is IAnthill {
     }
 
     // when we first join the tree without a parent
-    function joinTreeAsRoot(address voter, string calldata voterName) public onlyVoter(voter) {
+    function joinTreeAsRoot(address voter, string calldata voterName) public virtual onlyVoter(voter) {
         require(treeVote[voter] == address(0), "A jTAR 2");
         require(root == address(0), "A jTAR 3");
 
@@ -192,7 +192,7 @@ contract Anthill is IAnthill {
         recTreeVoteCount[address(1)] = 1;
     }
 
-    function changeName(address voter, string calldata voterName) public onlyVoter(voter) {
+    function changeName(address voter, string calldata voterName) public virtual onlyVoter(voter) {
         require(treeVote[voter] != address(0), "A jTAR 5");
         names[voter] = voterName;
 
@@ -203,7 +203,7 @@ contract Anthill is IAnthill {
     //// Local tree finders
 
     /// todo, merge this with findRelRoot
-    function findNthParent(address voter, uint256 height) public view returns (address parent) {
+    function findNthParent(address voter, uint256 height) public view virtual returns (address parent) {
         if (height == 0) {
             return voter;
         }
@@ -219,7 +219,7 @@ contract Anthill is IAnthill {
     }
 
     // to find voters relative root, = the highest ancestor of the voter (including the voter) under MAX_REL_ROOT_DEPTH
-    function findRelRoot(address voter) public view returns (address relRoot, uint256 relDepth) {
+    function findRelRoot(address voter) public view virtual returns (address relRoot, uint256 relDepth) {
         require(treeVote[voter] != address(0), "Ai, fRR 1");
 
         relRoot = voter;
@@ -243,7 +243,7 @@ contract Anthill is IAnthill {
     function findRelDepthInner(
         address voter,
         address recipient
-    ) public view returns (bool isLocal, uint256 sRelRootDiff, uint256 rRelRootDiff) {
+    ) public view virtual returns (bool isLocal, uint256 sRelRootDiff, uint256 rRelRootDiff) {
         if ((treeVote[voter] == address(0)) || (treeVote[recipient] == address(0))) {
             return (false, 0, 0);
         }
@@ -267,7 +267,7 @@ contract Anthill is IAnthill {
     }
 
     /// to find the depth difference between two locally close voters.
-    function findRelDepth(address voter, address recipient) public view returns (bool isLocal, uint256 relDepth) {
+    function findRelDepth(address voter, address recipient) public view virtual returns (bool isLocal, uint256 relDepth) {
         uint256 relRootDiff;
         uint256 rDist;
 
@@ -277,7 +277,7 @@ contract Anthill is IAnthill {
 
     // to find the distance between voter and recipient, within maxDistance.
     // THIS IS ACTUALLY A GLOBAL FUNTION!
-    function findDistAtSameDepth(address add1, address add2) public view returns (bool isSameDepth, uint256 distance) {
+    function findDistAtSameDepth(address add1, address add2) public view virtual returns (bool isSameDepth, uint256 distance) {
         if (add1 == add2) {
             return (true, 0);
         }
@@ -304,7 +304,7 @@ contract Anthill is IAnthill {
     function findDistancesRecNotLower(
         address voter,
         address recipient
-    ) public view returns (bool isLocal, uint256 sDist, uint256 rDist) {
+    ) public view virtual returns (bool isLocal, uint256 sDist, uint256 rDist) {
         if (treeVote[voter] == address(0) || treeVote[recipient] == address(0)) {
             return (false, 0, 0);
         }
@@ -328,7 +328,7 @@ contract Anthill is IAnthill {
     function findDistances(
         address voter,
         address recipient
-    ) public view returns (bool isLocalEitherWay, uint256 sDist, uint256 rDist) {
+    ) public view virtual returns (bool isLocalEitherWay, uint256 sDist, uint256 rDist) {
         if (treeVote[voter] == address(0) || treeVote[recipient] == address(0)) {
             return (false, 0, 0);
         }
@@ -364,7 +364,7 @@ contract Anthill is IAnthill {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Dag personal externals
     // to add a vote to the sentDagVote array, and also to the corresponding recDagVote array
-    function addDagVote(address voter, address recipient, uint256 weight) public onlyVoter(voter) {
+    function addDagVote(address voter, address recipient, uint256 weight) public virtual onlyVoter(voter) {
         (bool votable, bool voted, uint256 sDist, uint256 rDist, , ) = findSentDagVote(voter, recipient);
         require((votable) && (!voted), "A aDV 2");
         combinedDagAppendSdist(voter, recipient, sDist, rDist, weight);
@@ -373,7 +373,7 @@ contract Anthill is IAnthill {
     }
 
     // to remove a vote from the sentDagVote array, and also from the  corresponding recDagVote arrays
-    function removeDagVote(address voter, address recipient) public onlyVoter(voter) {
+    function removeDagVote(address voter, address recipient) public virtual onlyVoter(voter) {
         // find the votes we delete
         (, bool voted, uint256 sPos, ) = findSentDagVoteNew(voter, recipient);
         require(voted, "A rDV 2");
@@ -387,7 +387,7 @@ contract Anthill is IAnthill {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Global readers
 
-    function readDepth(address voter) public view returns (uint256) {
+    function readDepth(address voter) public view virtual returns (uint256) {
         if (treeVote[voter] == address(0)) return 0;
         if (treeVote[voter] == address(1)) return 0;
 
@@ -400,7 +400,7 @@ contract Anthill is IAnthill {
 
     // to calculate the reputation of a voter, i.e. the sum of the votes of the voter and all its descendants
     // not efficient
-    function calculateReputation(address voter) public returns (uint256) {
+    function calculateReputation(address voter) public virtual returns (uint256) {
         uint256 voterReputation = 0;
         if (voter == address(0)) return 0;
 
@@ -417,7 +417,7 @@ contract Anthill is IAnthill {
         return voterReputation;
     }
 
-    function clearReputationCalculatedRec(address voter) public {
+    function clearReputationCalculatedRec(address voter) public virtual {
         if (readSentTreeVote(voter) == address(0)) {
             return;
         }
@@ -430,7 +430,7 @@ contract Anthill is IAnthill {
     }
 
     // Todo: redo: we need to rely on external ordered calls
-    function calculateReputationRec(address voter) public {
+    function calculateReputationRec(address voter) public virtual {
         if (readSentTreeVote(voter) == address(0)) {
             return;
         }
@@ -455,7 +455,7 @@ contract Anthill is IAnthill {
         repIsCalculated[voter] = true;
     }
 
-    function recalculateAllReputation() public {
+    function recalculateAllReputation() public virtual {
         clearReputationCalculatedRec(root);
         calculateReputationRec(root);
     }
@@ -469,6 +469,7 @@ contract Anthill is IAnthill {
     )
         public
         view
+        virtual
         returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote)
     {
         (votable, sDist, rDist) = findDistancesRecNotLower(voter, recipient);
@@ -490,7 +491,7 @@ contract Anthill is IAnthill {
     function findSentDagVoteNew(
         address voter,
         address recipient
-    ) public view returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
+    ) public view virtual returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
         (votable, voted, , , votePos, dagVote) = findSentDagVote(voter, recipient);
     }
 
@@ -500,6 +501,7 @@ contract Anthill is IAnthill {
     )
         public
         view
+        virtual
         returns (bool votable, bool voted, uint256 sdist, uint256 depth, uint256 votePos, DagVote memory dagVote)
     {
         bool isLocal;
@@ -527,7 +529,7 @@ contract Anthill is IAnthill {
     function findRecDagVoteNew(
         address voter,
         address recipient
-    ) public view returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
+    ) public view virtual returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
         (votable, voted, , , votePos, dagVote) = findRecDagVote(voter, recipient);
     }
 
@@ -541,7 +543,7 @@ contract Anthill is IAnthill {
         uint256 sentDist,
         uint256 recDist,
         uint256 weight
-    ) internal {
+    ) internal virtual {
         sentDagVote[voter][sentDagVoteCount[voter]] = DagVote({
             id: recipient,
             weight: weight,
@@ -562,7 +564,7 @@ contract Anthill is IAnthill {
     ///// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
 
     // careful does not delete the opposite! Always call with opposite, or do something with the other vote
-    function unsafeReplaceSentDagVoteWithLast(address voter, uint256 sPos) internal {
+    function unsafeReplaceSentDagVoteWithLast(address voter, uint256 sPos) internal virtual {
         // find the vote we delete
         DagVote memory sDagVote = sentDagVote[voter][sPos];
         sentDagVoteTotalWeight[voter] -= sDagVote.weight;
@@ -585,7 +587,7 @@ contract Anthill is IAnthill {
     }
 
     /// careful, does not delete the opposite!
-    function unsafeReplaceRecDagVoteWithLast(address recipient, uint256 rPos) public {
+    function unsafeReplaceRecDagVoteWithLast(address recipient, uint256 rPos) internal virtual {
         require(unlocked, "A uSRDV 1");
         if (rPos != recDagVoteCount[recipient] - 1) {
             DagVote memory copiedRecDagVote = recDagVote[recipient][recDagVoteCount[recipient] - 1];
@@ -603,14 +605,14 @@ contract Anthill is IAnthill {
         --recDagVoteCount[recipient];
     }
 
-    function safeRemoveSentDagVote(address voter, uint256 sPos) internal {
+    function safeRemoveSentDagVote(address voter, uint256 sPos) internal virtual {
         DagVote memory sDagVote = sentDagVote[voter][sPos];
         unsafeReplaceSentDagVoteWithLast(voter, sPos);
         // delete the opposite
         unsafeReplaceRecDagVoteWithLast(sDagVote.id, sDagVote.posInOther);
     }
 
-    function safeRemoveRecDagVote(address recipient, uint256 rPos) internal {
+    function safeRemoveRecDagVote(address recipient, uint256 rPos) internal virtual {
         DagVote memory rDagVote = recDagVote[recipient][rPos];
         unsafeReplaceRecDagVoteWithLast(recipient, rPos);
         // delete the opposite
@@ -619,14 +621,14 @@ contract Anthill is IAnthill {
 
     ///////////// Personal changers
 
-    function removeAllSentDagVotes(address voter) public {
+    function removeAllSentDagVotes(address voter) public virtual {
         uint256 count = sentDagVoteCount[voter];
         for (uint256 i = count; 0 < i; --i) {
             safeRemoveSentDagVote(voter, i - 1);
         }
     }
 
-    function removeAllRecDagVotes(address recipient) public {
+    function removeAllRecDagVotes(address recipient) public virtual {
         uint256 count = recDagVoteCount[recipient];
         for (uint256 i = count; 0 < i; --i) {
             safeRemoveRecDagVote(recipient, i - 1);
@@ -662,7 +664,7 @@ contract Anthill is IAnthill {
         address replacedPositionInTree,
         uint256,
         uint256
-    ) public onlyUnlocked {
+    ) public virtual onlyUnlocked {
         address temp = address(99999999);
 
         if (replacedPositionInTree == address(0)) {
@@ -716,7 +718,7 @@ contract Anthill is IAnthill {
     //// Global internal
 
     //// This is recursive, we pull up the branch of the first child, handling the tree votes and changed dag votes in the process
-    function pullUpBranch(address pulledVoter, address parent) internal {
+    function pullUpBranch(address pulledVoter, address parent) internal virtual {
         require(unlocked, "A pUB");
         // we fist handle the dag structure, using the tree structure, then we change the tree votes.
 
@@ -736,7 +738,7 @@ contract Anthill is IAnthill {
     }
 
     /// here the strategy is: pull up the branch of the first child, and handle the leaving voter edge case
-    function handleLeavingVoterBranch(address voter) internal {
+    function handleLeavingVoterBranch(address voter) internal virtual {
         require(unlocked, "A hLVB");
 
         // we fist handle the dag structure, using the tree structure, then we change the tree votes.
@@ -786,7 +788,7 @@ contract Anthill is IAnthill {
     //// if yes change the distance.
     ////
 
-    function leaveTree(address voter) public onlyVoter(voter) {
+    function leaveTree(address voter) public virtual onlyVoter(voter) {
         removeAllSentDagVotes(voter);
         removeAllRecDagVotes(voter);
 
@@ -796,7 +798,7 @@ contract Anthill is IAnthill {
         emit LeaveTreeEvent(voter);
     }
 
-    function switchPositionWithParent(address voter) public onlyVoter(voter) {
+    function switchPositionWithParent(address voter) public virtual onlyVoter(voter) {
         address parent = treeVote[voter];
         require(parent != address(0), "A lT 3");
         require(parent != address(1), "A lT 4");
@@ -816,7 +818,7 @@ contract Anthill is IAnthill {
     }
 
     /// the strategy here is we remove the mover, create the new tree strcuture, check Dag structure, and add him back.
-    function moveTreeVote(address voter, address recipient) external onlyVoter(voter) {
+    function moveTreeVote(address voter, address recipient) public virtual onlyVoter(voter) {
         {
             require(treeVote[voter] != address(0), "A mTV 2");
             require(treeVote[recipient] != address(0), "A mTV 3");
