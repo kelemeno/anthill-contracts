@@ -198,104 +198,6 @@ contract Anthill2TestMain is Test, Utils {
     }
 
     ////////////////////////////////////////
-    /////////// cells
-
-    // function testMergeCell() public{
-
-    //     uint256 count = anthill.readRecDagVoteCount(address(4), 2, 2);
-    //     assertEq(count, 4);
-    //     count = anthill.readRecDagVoteCount(address(4), 3, 2);
-    //     assertEq(count, 4);
-
-    //     anthill.mergeRecDagVoteDiagonalCell(address(4), 2);
-
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 2);
-    //     assertEq(count, 0);
-
-    //     count = anthill.readRecDagVoteCount(address(4), 3, 2);
-    //     assertEq(count, 8);
-
-    //     // anthill.changeDistDepthFromRecCellOnOp(address(4), 3, depth, oldDist, oldDepth);
-    //     intermediateConsistencyCheckFrom(address(2));
-    // }
-
-    // function testMerge() public{
-    //     uint256 count = anthill.readRecDagVoteCount(address(4), 1, 1);
-    //     assertEq(count, 2);
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 2);
-    //     assertEq(count, 4);
-    //     count = anthill.readRecDagVoteCount(address(4), 3, 3);
-    //     assertEq(count, 8);
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 1);
-    //     assertEq(count, 2);
-    //     count = anthill.readRecDagVoteCount(address(4), 3, 2);
-    //     assertEq(count, 4);
-    //     count = anthill.readRecDagVoteCount(address(4), 4, 3);
-    //     assertEq(count, 8);
-
-    //     anthill.mergeRecDagVoteDiagonal(address(4));
-
-    //     count = anthill.readRecDagVoteCount(address(4), 1, 1);
-    //     assertEq(count, 0);
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 2);
-    //     assertEq(count, 0);
-    //     count = anthill.readRecDagVoteCount(address(4), 3, 3);
-    //     assertEq(count, 0);
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 1);
-    //     assertEq(count, 4);
-    //     count = anthill.readRecDagVoteCount(address(4), 3, 2);
-    //     assertEq(count, 8);
-    //     count = anthill.readRecDagVoteCount(address(4), 4, 3);
-    //     assertEq(count, 16);
-
-    //     intermediateConsistencyCheckFrom(address(2));
-
-    // }
-
-    // function testSplitCell() public{
-    //     uint256 count = anthill.readRecDagVoteCount(address(4), 2, 2);
-    //     assertEq(count, 4);
-    //     anthill.splitRecDagVoteDiagonalCell(address(4), 2, address(8));
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 2);
-    //     assertEq(count, 2);
-    //     count = anthill.readRecDagVoteCount(address(4), 1, 2);
-    //     assertEq(count, 2);
-    //     intermediateConsistencyCheckFrom(address(2));
-    // }
-
-    // function testSplit() public {
-    //     // uint256 count = anthill.readRecDagVoteCount(address(4), 1, 1);
-    //     // assertEq(count, 2);
-    //     uint256 count = anthill.readRecDagVoteCount(address(4), 2, 2);
-    //     assertEq(count, 4);
-    //     count = anthill.readRecDagVoteCount(address(4), 3, 3);
-    //     assertEq(count, 8);
-    //     // count = anthill.readRecDagVoteCount(address(4), 2, 1);
-    //     // assertEq(count, 2);
-    //     count = anthill.readRecDagVoteCount(address(4), 1, 2);
-    //     assertEq(count, 0);
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 3);
-    //     assertEq(count, 0);
-
-    //     anthill.splitRecDagVoteDiagonal(address(4), address(8));
-
-    //     // count = anthill.readRecDagVoteCount(address(4), 1, 1);
-    //     // assertEq(count, 2);
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 2);
-    //     assertEq(count, 2);
-    //     count = anthill.readRecDagVoteCount(address(4), 3, 3);
-    //     assertEq(count, 4);
-    //     // count = anthill.readRecDagVoteCount(address(4), 2, 1);
-    //     // assertEq(count, 4);
-    //     count = anthill.readRecDagVoteCount(address(4), 1, 2);
-    //     assertEq(count, 2);
-    //     count = anthill.readRecDagVoteCount(address(4), 2, 3);
-    //     assertEq(count, 4);
-
-    //     intermediateConsistencyCheckFrom(address(2));
-    // }
-
-    ////////////////////////////////////////
     /////////// combined square handlers
 
     function testHandleDagVoteMoveRise() public {
@@ -332,9 +234,9 @@ contract Anthill2TestMain is Test, Utils {
         assert(anthill.readSentTreeVote(address(10)) == address(5));
         assert(anthill.readSentTreeVote(address(5)) == address(4));
 
-        // intermediatedagConsistencyCheckFrom( anthill, address(2));
+        intermediateDagConsistencyCheckFrom( anthill, address(2));
         dagConsistencyCheckFrom(anthill, address(4));
-        treeConsistencyCheckFrom(address(4));
+        treeConsistencyCheckFrom(anthill, address(4));
     }
 
     function testSwitchPositionWithParent2() public {
@@ -348,7 +250,7 @@ contract Anthill2TestMain is Test, Utils {
         address parent = anthill.readSentTreeVote(address(16));
         assertEq(parent, address(32));
         dagConsistencyCheckFrom(anthill, address(2));
-        treeConsistencyCheckFrom(address(2));
+        treeConsistencyCheckFrom(anthill, address(2));
     }
 
     function testLeaveTree() public {
@@ -414,44 +316,30 @@ contract Anthill2TestMain is Test, Utils {
         assertEq(recipient, address(32));
 
         dagConsistencyCheckFrom(anthill, address(2));
-        treeConsistencyCheckFrom(address(2));
+        treeConsistencyCheckFrom(anthill, address(2));
     }
 
     function testMoveInTree1() public {
         anthill.moveTreeVote(address(16), address(32));
         dagConsistencyCheckFrom(anthill, address(2));
-        treeConsistencyCheckFrom(address(2));
+        treeConsistencyCheckFrom(anthill, address(2));
     }
 
     function testMoveInTree2() public {
         anthill.moveTreeVote(address(16), address(40));
         dagConsistencyCheckFrom(anthill, address(2));
-        treeConsistencyCheckFrom(address(2));
+        treeConsistencyCheckFrom(anthill, address(2));
     }
 
     function testMoveInTree3() public {
         anthill.moveTreeVote(address(32), address(40));
         anthill.moveTreeVote(address(32), address(16));
         dagConsistencyCheckFrom(anthill, address(2));
-        treeConsistencyCheckFrom(address(2));
+        treeConsistencyCheckFrom(anthill, address(2));
     }
 
     function testConsistency() public {
-        treeConsistencyCheckFrom(address(2));
+        treeConsistencyCheckFrom(anthill, address(2));
         dagConsistencyCheckFrom(anthill, address(2));
-    }
-
-    // //////////////////////////////////////////
-    // ///////////// utils
-
-    function treeConsistencyCheckFrom(address voter) public {
-        for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
-            address recipient = anthill.readRecTreeVote(voter, i);
-            if (recipient != address(0)) {
-                address sender = anthill.readSentTreeVote(recipient);
-                assertEq(sender, voter);
-                treeConsistencyCheckFrom(recipient);
-            }
-        }
     }
 }

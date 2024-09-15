@@ -2,9 +2,12 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
+import {stdToml} from "forge-std/StdToml.sol";
 
-import "../src/Anthill2.sol";
+import {Anthill2, IAnthill} from "../src/Anthill2.sol";
 import {DagVote} from "../src/Anthill2.sol";
+import {TreeVoteExtended, DagVoteExtended, Anthill2Dev} from "../src/Anthill2Dev.sol";
+
 
 contract Anthill2Script3 is Script {
     Anthill2 public anthill;
@@ -173,117 +176,13 @@ contract JustDeploy is Script {
     Anthill2 public anthill;
 
     function run() public {
-        uint256 privateKey = 0x01;
-        vm.startBroadcast(privateKey);
+        // uint256 privateKey = 0x01;
+        vm.startBroadcast();
 
+        address zach = address(0xD5A498Bbc6D21E4E1cdBB8fec58e3eCD7124FB43);
         anthill = new Anthill2();
-
-        vm.stopBroadcast();
-    }
-}
-
-contract OldDeploy is Script {
-    Anthill2 public anthill;
-
-    function run() public {
-        uint256 privateKey = 0x01;
-        vm.startBroadcast(privateKey);
-
-        anthill = new Anthill2();
-
-        anthill.joinTreeAsRoot(address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41), "MMarton");
-
-        anthill.joinTree(
-            address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8),
-            "TrueBence",
-            address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41)
-        );
-        anthill.removeDagVote(
-            address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8),
-            address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41)
-        );
-
-        anthill.joinTree(
-            address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE),
-            "Anon999",
-            address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8)
-        );
-        anthill.removeDagVote(
-            address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE),
-            address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8)
-        );
-
-        anthill.joinTree(
-            address(0x70584a3387e038cCaCb8E64Beb8FAf90118B09d8),
-            "Rob",
-            address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE)
-        );
-        anthill.removeDagVote(
-            address(0x70584a3387e038cCaCb8E64Beb8FAf90118B09d8),
-            address(0x16E203ea994D5cf97c7Ee1b50C812d0C2b1733AE)
-        );
-
-        anthill.joinTree(
-            address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA),
-            "Ago",
-            address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8)
-        );
-        anthill.removeDagVote(
-            address(0x12D53b387E8D3e171c891Cf1B15FC61EB881a5FA),
-            address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8)
-        );
-
-        anthill.joinTree(
-            address(0x063089B0F679C5189F539140a4Ed076De368a528),
-            "Bence",
-            address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41)
-        );
-        anthill.removeDagVote(
-            address(0x063089B0F679C5189F539140a4Ed076De368a528),
-            address(0xcD3aC7F2C0bB8cF66EBDdf54e1E73C29b4EEda41)
-        );
-
-        anthill.joinTree(
-            address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1),
-            "Aron",
-            address(0x063089B0F679C5189F539140a4Ed076De368a528)
-        );
-        anthill.removeDagVote(
-            address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1),
-            address(0x063089B0F679C5189F539140a4Ed076De368a528)
-        );
-        anthill.addDagVote(
-            address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1),
-            address(0x575DF80B3D6911968160a2469a71FDE0003F7dC8),
-            1
-        );
-
-        anthill.joinTree(
-            address(0x17DB4852aa8dE2a2dF50Ee4cBE41f529458957B4),
-            "Enlli",
-            address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1)
-        );
-        anthill.removeDagVote(
-            address(0x17DB4852aa8dE2a2dF50Ee4cBE41f529458957B4),
-            address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1)
-        );
-        anthill.addDagVote(
-            address(0x17DB4852aa8dE2a2dF50Ee4cBE41f529458957B4),
-            address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1),
-            1
-        );
-
-        anthill.joinTree(
-            address(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419),
-            "Kalman",
-            address(0xeacD44e3E83a51De384e0eb25556f754219A7bF1)
-        );
-
-        // dagVotes:
-        // Aron -> TrueBence
-        // Enlli -> Marton
-
-        anthill.lockTree();
+        anthill.joinTreeAsRoot(zach, string("Zach"));
+        anthill.joinTree(address(0x343Ee72DdD8CCD80cd43D6Adbc6c463a2DE433a7), string("Kalman"), zach);
 
         vm.stopBroadcast();
     }
@@ -352,143 +251,118 @@ contract Redeploy is Script {
     }
 }
 
-contract CalculateRep is Script {
-    address oldAddress = 0x052B66427EE6560e2dF0b5d7463FAdAd6b8206E9;
+interface IRandom {
+    function timestamp() external view returns (uint256);
+}
+
+contract JustRoot is Script {
+    // address public oldAddress = 0xAe45cBE2d1E90358CbD216bC16f2C9267a4EA80a;
+    address oldAddress = 0xe42923350EF3a534f84bb101453D9B442d42Bf0c;
+    // address oldAddress = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
+    IAnthill public anthillOld = IAnthill(oldAddress);
+    // IRandom public random = IRandom(oldAddress);
+
+    function run() public {
+        // uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        // vm.createSelectFork(vm.rpcUrl("zksepolia"));
+        // vm.startBroadcast();
+
+        console.log(block.chainid);
+
+        // console.log()
+        // console.logBytes(oldAddress.code);
+        address root = anthillOld.readRoot();
+        // uint256 root = random.timestamp();
+        console.log("root", root);
+        // try anthillOld.readRoot() returns (address root) {
+        //     console.log("root", root);
+        // } catch (bytes memory reason) {
+        //     console.logBytes(reason);
+        // }
+        // vm.stopBroadcast();
+    }
+}
+
+contract ReadAndSave is Script {
+    Anthill2 public anthillNew;
+    address public oldAddress = 0xe42923350EF3a534f84bb101453D9B442d42Bf0c;
     Anthill2 public anthillOld = Anthill2(oldAddress);
+    TreeVoteExtended[] public treeVotes;
+    DagVoteExtended[] public dagVotes;
 
     function run() public {
-        uint256 privateKey = 0x01;
+        address root = anthillOld.root();
+        string memory rootName = anthillOld.readName(root);
 
-        vm.startBroadcast(privateKey);
+        readChildrenRec(root, anthillOld, anthillNew);
 
-        uint256 root = anthillOld.calculateReputation(0xE2fC7b6b27800D60b8037C59B8a4c5c034dc5419);
+        uint256 maxRelRootDepth = anthillOld.readMaxRelRootDepth();
+        readDagVotesRec(maxRelRootDepth, root, anthillOld, anthillNew);
 
-        // solhint-disable-next-line no-console
-        console.log("root rep: ", root);
-        // calculateRepRec(root, anthillOld);
-        // TODO: add a second method to anthill dag which calculates rep for a single node. Then we can calculate rep for all nodes efficiently, buttom up. This should be in a single tx, to save fees. Finally, we should call that method here.
+        string memory obj1 = "key";
+        vm.serializeBytes(obj1, "tree_votes", abi.encode(treeVotes));
+        string memory finalJson = vm.serializeBytes(obj1, "dag_votes", abi.encode(dagVotes));
+
+        vm.writeJson(finalJson, "./script-out/example.json");
 
         vm.stopBroadcast();
     }
-}
 
-contract CalculateRepForAll is Script {
-    address oldAddress = 0xb2218969ECF92a3085B8345665d65FCdFED9F981;
-    Anthill2 public anthill = Anthill2(oldAddress);
+    function readChildrenRec(address parent, Anthill2 anthillOldInput, Anthill2 anthillNewInput) internal {
+        uint256 childCount = anthillOldInput.readRecTreeVoteCount(parent);
+        for (uint256 i = 0; i < childCount; i++) {
+            address child = anthillOldInput.readRecTreeVote(parent, i);
+            string memory childName = anthillOldInput.readName(child);
+            uint256 childRecTreeVoteCount = anthillOldInput.readRecTreeVoteCount(child);
+            uint256 sentDagVoteCount = anthillOldInput.readSentDagVoteCount(child, 0, 0);
+            uint256 sentDagVoteTotalWeight = anthillOldInput.readSentDagVoteTotalWeight(child);
+            uint256 recDagVoteCount = anthillOldInput.readRecDagVoteCount(child, 0, 0);
+            treeVotes.push(TreeVoteExtended(child, childName, parent, childRecTreeVoteCount, sentDagVoteCount, sentDagVoteTotalWeight, recDagVoteCount));
 
-    function run() public {
-        uint256 privateKey = 0x01;
+            readChildrenRec(child, anthillOldInput, anthillNewInput);
+        }
+    }
 
-        vm.startBroadcast(privateKey);
+    function readDagVotesRec(
+        uint256 maxRelRootDepth,
+        address voter,
+        Anthill2 anthillOldInput,
+        Anthill2 anthillNewInput
+    ) internal {
+        for (uint256 dist = 1; dist <= maxRelRootDepth; dist++) {
+            for (uint256 height = 0; height <= dist; height++) {
+                uint256 dagVoteCount = anthillOldInput.readSentDagVoteCount(voter, dist, height);
+                for (uint256 i = 0; i < dagVoteCount; i++) {
+                    DagVote memory sDagVote = anthillOldInput.readSentDagVote(voter, dist, height, i);
+                    DagVote memory rDagVote = anthillOldInput.readRecDagVote(sDagVote.id, 0,0, sDagVote.posInOther);
+                    dagVotes.push(DagVoteExtended(voter, sDagVote.id, sDagVote.weight, dist, rDagVote.dist, i, sDagVote.posInOther));
+                }
+            }
+        }
 
-        anthill.recalculateAllReputation();
-
-        vm.stopBroadcast();
+        uint256 childCount = anthillOldInput.readRecTreeVoteCount(voter);
+        for (uint256 i = 0; i < childCount; i++) {
+            address child = anthillOldInput.readRecTreeVote(voter, i);
+            readDagVotesRec(maxRelRootDepth, child, anthillOldInput, anthillNewInput);
+        }
     }
 }
 
-contract AnthillScript1 is Script {
-    Anthill2 public anthill;
+contract ReadFromFileAndDeploy is Script {
+
 
     function run() public {
-        uint256 privateKey = 0x01;
-        vm.startBroadcast(privateKey);
+        TreeVoteExtended[] memory treeVotes;
+        DagVoteExtended[] memory dagVotes;
 
-        anthill = new Anthill2();
+        string memory json = vm.readFile("./script-out/example.json");
+        bytes memory treeVotesB = vm.parseJsonBytes(json, "$.tree_votes");
+        bytes memory dagVotesB = vm.parseJsonBytes(json, "$.dag_votes");
 
-        // simple logic, 2 3 are roots,
-        //for x there are two childre with addresses 2x, and 2x+1
+        treeVotes = abi.decode(treeVotesB, (TreeVoteExtended[]));
+        dagVotes = abi.decode(dagVotesB, (DagVoteExtended[]));
 
-        // height 0
-        anthill.joinTreeAsRoot(address(2), string("Root2 "));
-        //anthill.joinTreeAsRoot(address(3));
-
-        // adding tree votes
-        for (uint256 i = 1; i < 8; i++) {
-            for (uint256 j = 0; j < 2 ** (i - 1); j++) {
-                anthill.joinTree(address(uint160(2 * 2 ** i + 2 * j)), string("Name"), address(uint160(2 ** i + j)));
-                anthill.joinTree(
-                    address(uint160(2 * 2 ** i + 2 * j + 1)),
-                    string("Name"),
-                    address(uint160(2 ** i + j))
-                );
-            }
-        }
-
-        // adding dag votes
-        for (uint256 i = 3; i < 8; i++) {
-            for (uint256 j = 0; j < 2 ** (i - 1); j++) {
-                // e.g. 2*2**i+2*j = 2*2**3+2*0 = 2*8+0 = 16, this has relRoot 2. We give dag votes to 4, 5, 8, 9 10 11
-                (address voter, ) = anthill.findRelRoot(address(uint160(2 * 2 ** i + 2 * j)));
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(2 * uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(1 + 2 * uint160(voter)), 1);
-
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(4 * uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(1 + 4 * uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(2 + 4 * uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(3 + 4 * uint160(voter)), 1);
-
-                // // in this case we add dag votes to depth one above us
-                // if (i>=4){
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)));
-                // }xw
-            }
-        }
-        vm.stopBroadcast();
-    }
-}
-
-contract AnthillScript2 is Script {
-    Anthill2 public anthill;
-
-    function run() public {
-        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-        vm.startBroadcast(privateKey);
-
-        anthill = new Anthill2();
-
-        // simple logic, 2 3 are roots,
-        //for x there are two childre with addresses 2x, and 2x+1
-
-        // height 0
-        anthill.joinTreeAsRoot(address(2), string("Root2 "));
-        // anthill.joinTreeAsRoot(address(3), string("root 3, we will want to remove second roots "));
-
-        // adding tree votes
-        for (uint256 i = 1; i < 5; i++) {
-            for (uint256 j = 0; j < 2 ** (i - 1); j++) {
-                anthill.joinTree(address(uint160(2 * (2 ** i + j))), string("Name"), address(uint160(2 ** i + j)));
-                anthill.joinTree(address(uint160(2 * (2 ** i + j) + 1)), string("Name"), address(uint160(2 ** i + j)));
-            }
-        }
-
-        // adding dag votes
-        // we add layers 3, 4
-        // then we add
-        for (uint256 i = 3; i < 5; i++) {
-            for (uint256 j = 0; j < 2 ** (i - 1); j++) {
-                // e.g. 2*2**i+2*j = 2*2**3+2*0 = 2*8+0 = 16, this has relRoot 2. We give dag votes to 4, 5, 8, 9 10 11
-                (address voter, ) = anthill.findRelRoot(address(uint160(2 * 2 ** i + 2 * j)));
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(2 * uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(1 + 2 * uint160(voter)), 1);
-
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(4 * uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(1 + 4 * uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(2 + 4 * uint160(voter)), 1);
-                anthill.addDagVote(address(uint160(2 * 2 ** i + 2 * j)), address(3 + 4 * uint160(voter)), 1);
-
-                // // in this case we add dag votes to depth one above us
-                // if (i>=4){
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(1+4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(2+4*uint160(voter)));
-                //     anthill.addDagVote(address(uint160(2*2**i+2*j)), address(3+4*uint160(voter)));
-                // }
-            }
-        }
-        vm.stopBroadcast();
+        console.log("treeVotes", treeVotes.length);
+        console.log("dagVotes", dagVotes.length);
     }
 }

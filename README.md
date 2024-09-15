@@ -38,7 +38,7 @@ If using metamask you have to clear metamask activity between different anvil se
 
 smart contract need to be deployed, and the address has to be set in the frontend, backend
 heroku builds backend based on github's main branch
-firebase frontend does not build on github yet, I should do that. But currently npm run build and firebase deploy deploys the frontend.
+firebase frontend does not build on github yet, I should do that. But currently npm run build and npx firebase deploy deploys the frontend.
 
 ### zksync specific development
 
@@ -64,3 +64,11 @@ Anthill2:
 To compile everything the old Anthill has to be compiled, i.e. follow the steps above.
 
 - To run scripts: `../../zksync/fzksync/foundry-zksync/target/release/forge script --zksync --slow script/Anthill2.s.sol:SmallScript --broadcast --rpc-url http://localhost:3050 --chain 270`
+
+- Testnet deployment, if for first time: 
+`../../zksync/fzksync/foundry-zksync/target/release/forge script --zksync --slow script/Anthill2.s.sol:JustDeploy --broadcast --rpc-url https://sepolia.era.zksync.dev --chain 300 --private-key`
+
+- Save data: 
+`forge script  --zksync --slow script/Anthill2.s.sol:ReadAndSave --rpc-url https://sepolia.era.zksync.dev`
+
+- Testnet migration to new contract: 

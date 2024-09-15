@@ -2,8 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import "../src/Anthill.sol";
-import {DagVote, Dag} from "../src/Anthill.sol";
+import {Anthill2 as Anthill, DagVote} from "../src/Anthill2.sol";
 import {console} from "forge-std/console.sol";
 
 // for testing uncomment modifiers, and comment msg.sender checks out

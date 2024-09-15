@@ -120,4 +120,15 @@ contract Utils is Test {
         }
         console.log("rec dag votes finished");
     }
+
+    function treeConsistencyCheckFrom(Anthill2 anthill, address voter) public {
+        for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
+            address recipient = anthill.readRecTreeVote(voter, i);
+            if (recipient != address(0)) {
+                address sender = anthill.readSentTreeVote(recipient);
+                assertEq(sender, voter);
+                treeConsistencyCheckFrom(anthill, recipient);
+            }
+        }
+    }
 }

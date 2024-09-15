@@ -19,4 +19,6 @@ interface IAnthill {
     event SwitchPositionWithParentEvent(address voter);
 
     event MoveTreeVoteEvent(address voter, address recipient);
+
+    function readRoot() external view returns (address);
 }

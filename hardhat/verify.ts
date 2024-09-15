@@ -15,7 +15,7 @@ async function main() {
   const promises = [];
 
   // Contracts without constructor parameters
-  for (const address of ["0xF3a4d6E6581e12Dc5b0eCd6EA3d483fF09c3cAE0"]) {
+  for (const address of ["0xe42923350EF3a534f84bb101453D9B442d42Bf0c"]) {
     const promise = verifyPromise(address);
     promises.push(promise);
   }

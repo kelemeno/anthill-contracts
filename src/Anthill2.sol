@@ -7,8 +7,11 @@ import {IAnthill} from "./IAnthill.sol";
 struct DagVote {
     address id;
     uint256 weight;
-    // this is to check movements easily, this does not often change.
+    // distance is always measured to the common ancestor
+    // this is to check movements easily, 
+    // this does not on the other side when a person moves change.
     uint256 dist;
+    // position in the other person's sent/rec DagVote array
     // to look up the opposite DagVote, used to calculate depth.
     uint256 posInOther;
 }
@@ -42,33 +45,35 @@ contract Anthill2 is IAnthill {
     //// State variables
     bool public unlocked = true;
 
-    string public tokenName = "Anthill";
-    string public tokenSymbol = "ANTH";
-
-    uint256 public decimalPoint; // total weight of each voter should be 1, but we don't have floats, so we use 10**18.
+    //Locally close means the recipient is a descendant of the voter's relative root
+    // the recipient cannot be lower than the voter ( equality ok )
+    // the relative root is the MRRD's ancestor of the voter or the root of the tree.
+    // note: the root is at the top of the tree.
     uint256 public MAX_REL_ROOT_DEPTH;
+
     /// todo: maybe have root be recTreeVote[address(1)][0] instead of a separate variable.
     address public root;
 
-    mapping(address => string) names;
-    mapping(address => address) treeVote;
+    mapping(address => string) public names;
+    mapping(address => address) public treeVote;
 
-    mapping(address => uint256) recTreeVoteCount;
-    mapping(address => mapping(uint256 => address)) recTreeVote;
+    mapping(address => uint256) public recTreeVoteCount;
+    mapping(address => mapping(uint256 => address)) public recTreeVote;
 
-    mapping(address voter => uint256 count) sentDagVoteCount;
-    mapping(address voter => mapping(uint256 counter => DagVote vote)) sentDagVote;
-    mapping(address => uint256) sentDagVoteTotalWeight;
+    mapping(address voter => uint256 count) public sentDagVoteCount;
+    mapping(address voter => mapping(uint256 counter => DagVote vote)) public sentDagVote;
+    mapping(address => uint256) public sentDagVoteTotalWeight;
 
-    mapping(address voter => uint256 count) recDagVoteCount;
-    mapping(address voter => mapping(uint256 counter => DagVote vote)) recDagVote;
+    mapping(address voter => uint256 count) public recDagVoteCount;
+    mapping(address voter => mapping(uint256 counter => DagVote vote)) public recDagVote;
 
-    mapping(address => uint256) reputation;
-    mapping(address => bool) repIsCalculated;
+    mapping(address => uint256) public reputation;
+    mapping(address => bool) public repIsCalculated;
 
-    function decimals() public view returns (uint256) {
-        return decimalPoint;
-    }
+    /// @notice This is not a token, it is used for ERC20 compatibility for voting with Snapshot.
+    string public tokenName = "Anthill";
+    string public tokenSymbol = "ANTH";
+    uint256 public decimalPoint; // total weight of each voter should be 1, but we don't have floats, so we use 10**18.
 
     function name() public view returns (string memory) {
         return tokenName;
@@ -76,6 +81,10 @@ contract Anthill2 is IAnthill {
 
     function symbol() public view returns (string memory) {
         return tokenSymbol;
+    }
+
+    function decimals() public view returns (uint256) {
+        return decimalPoint;
     }
 
     function balanceOf(address voter) public view returns (uint256) {
@@ -193,7 +202,7 @@ contract Anthill2 is IAnthill {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Local tree finders
 
-    /// ~MRRD
+    /// todo, merge this with findRelRoot
     function findNthParent(address voter, uint256 height) public view returns (address parent) {
         if (height == 0) {
             return voter;
@@ -226,23 +235,26 @@ contract Anthill2 is IAnthill {
         return (relRoot, relDepth);
     }
 
-    // to find the depth difference between two locally close voters. Locally close means the recipient is a descendant of the voter's relative root
-    // the recipient cannot be lower than the voter ( equality ok )
+    /// WARNING: do not use to calculate distance!
+    // to find the depth difference between two locally close voters.
+    /// isLocal, whether the recipient is local for the voter
+    /// sRelRootDiff, the voters difference to its relative root (distance to recipient might be less)
+    /// rRelRootDiff the recipients difference to the voters relative root (distance to recipient might be less)
     function findRelDepthInner(
         address voter,
         address recipient
-    ) public view returns (bool isLocal, uint256 relRootDiff, uint256 rDist) {
+    ) public view returns (bool isLocal, uint256 sRelRootDiff, uint256 rRelRootDiff) {
         if ((treeVote[voter] == address(0)) || (treeVote[recipient] == address(0))) {
             return (false, 0, 0);
         }
 
         address relRoot;
-        (relRoot, relRootDiff) = findRelRoot(voter);
+        (relRoot, sRelRootDiff) = findRelRoot(voter);
         address recipientAncestor = recipient;
 
-        for (uint256 i = 0; i <= relRootDiff; i++) {
+        for (uint256 i = 0; i <= sRelRootDiff; i++) {
             if (recipientAncestor == relRoot) {
-                return (true, relRootDiff, i);
+                return (true, sRelRootDiff, i);
             }
 
             recipientAncestor = treeVote[recipientAncestor];
@@ -254,6 +266,7 @@ contract Anthill2 is IAnthill {
         return (false, 0, 0);
     }
 
+    /// to find the depth difference between two locally close voters.
     function findRelDepth(address voter, address recipient) public view returns (bool isLocal, uint256 relDepth) {
         uint256 relRootDiff;
         uint256 rDist;
@@ -286,7 +299,8 @@ contract Anthill2 is IAnthill {
         return (false, 0);
     }
 
-    // to find the distance and depth from a voter to recipient. Note, the recipient has to be higher and in the neighbourhood of the voter.
+    // to find the distance and depth from a voter to recipient. 
+    // Note, the recipient has to be higher and in the neighbourhood of the voter.
     function findDistancesRecNotLower(
         address voter,
         address recipient
@@ -308,26 +322,43 @@ contract Anthill2 is IAnthill {
         return (isLocal, distance + relDepth, distance);
     }
 
+
+    // to find the distance between two voters,
+    // one has to be local to the other.
+    // sDist is always the voters distance, who might be higher. 
     function findDistances(
         address voter,
         address recipient
-    ) public view returns (bool isLocal, uint256 sDist, uint256 rDist) {
+    ) public view returns (bool isLocalEitherWay, uint256 sDist, uint256 rDist) {
         if (treeVote[voter] == address(0) || treeVote[recipient] == address(0)) {
             return (false, 0, 0);
         }
 
-        bool voterIsLocal;
-        bool recipientIsLocal;
-        uint256 voterRelRootDiff;
-        uint256 recipientRelRootDiff;
-        uint256 sDistRelRoot;
-        uint256 rDistRelRoot;
+        bool isLocal;
+        uint256 lowerRelRootDiff;
+        uint256 higherRelRootDiff;
+        address lower;
+        address higher;
 
-        (voterIsLocal, voterRelRootDiff, rDistRelRoot) = findRelDepthInner(voter, recipient);
-        (recipientIsLocal, recipientRelRootDiff, sDistRelRoot) = findRelDepthInner(recipient, voter);
-        isLocal = voterIsLocal && recipientIsLocal;
-        sDist = voterRelRootDiff + rDistRelRoot;
-        rDist = recipientRelRootDiff + sDistRelRoot; // todo check this is correct
+        (isLocal, lowerRelRootDiff, higherRelRootDiff) = findRelDepthInner(voter, recipient);
+        if (isLocal) {
+            lower = voter;
+            higher = recipient;
+        } else {
+            lower = recipient;
+            higher = voter;
+            (isLocal, lowerRelRootDiff, higherRelRootDiff) = findRelDepthInner(recipient, voter);
+            if (!isLocal) {
+                return (false, 0, 0);
+            }
+        }
+
+        address voterAnscenstor = findNthParent(lower, higherRelRootDiff - lowerRelRootDiff);
+        (, uint256 distance) = findDistAtSameDepth(voterAnscenstor, higher);
+        if (lower == voter) {
+            return (true, distance + higherRelRootDiff - lowerRelRootDiff, distance);
+        }
+        return (isLocal, distance, distance + higherRelRootDiff - lowerRelRootDiff);
     }
 
     //////////////////////////////////////
@@ -345,7 +376,7 @@ contract Anthill2 is IAnthill {
     // to remove a vote from the sentDagVote array, and also from the  corresponding recDagVote arrays
     function removeDagVote(address voter, address recipient) public onlyVoter(voter) {
         // find the votes we delete
-        (bool votable, bool voted, uint256 sPos, ) = findSentDagVoteNew(voter, recipient);
+        (, bool voted, uint256 sPos, ) = findSentDagVoteNew(voter, recipient);
         require(voted, "A rDV 2");
 
         safeRemoveSentDagVote(voter, sPos);
@@ -630,8 +661,8 @@ contract Anthill2 is IAnthill {
         address voterWithChangingDagVotes,
         address recipient,
         address replacedPositionInTree,
-        uint256 sDistToNewRec,
-        uint256 rDistForNewRec
+        uint256,
+        uint256
     ) public onlyUnlocked {
         address temp = address(99999999);
 
@@ -806,7 +837,7 @@ contract Anthill2 is IAnthill {
             }
         }
 
-        // currently we don't support position swithces here, so replaced address is always 0.
+        // currently we don't support position switches here, so replaced address is always 0.
         if (isLocal) {
             handleDagVoteReplace(voter, recipient, address(0), sDist, rDist);
         } else {
@@ -859,11 +890,11 @@ contract Anthill2 is IAnthill {
 
     // for sent dag
 
-    function readSentDagVoteDistDiff(address voter) external view returns (uint256) {
+    function readSentDagVoteDistDiff(address) external pure returns (uint256) {
         return 0;
     }
 
-    function readSentDagVoteDepthDiff(address voter) external view returns (uint256) {
+    function readSentDagVoteDepthDiff(address) external pure returns (uint256) {
         return 0;
     }
 
@@ -881,15 +912,15 @@ contract Anthill2 is IAnthill {
 
     // for rec Dag votes
 
-    function readRecDagVoteDistDiff(address recipient) external view returns (uint256) {
+    function readRecDagVoteDistDiff(address) external pure returns (uint256) {
         return 0;
     }
 
-    function readRecDagVoteDepthDiff(address recipient) public view returns (uint256) {
+    function readRecDagVoteDepthDiff(address) public pure returns (uint256) {
         return 0;
     }
 
-    function readRecDagVoteCount(address recipient, uint256 rdist, uint256 depth) public view returns (uint256) {
+    function readRecDagVoteCount(address recipient, uint256, uint256) public view returns (uint256) {
         return recDagVoteCount[recipient];
     }
 
