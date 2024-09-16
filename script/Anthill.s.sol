@@ -260,36 +260,6 @@ contract Redeploy is Script {
     function test() public {}
 }
 
-contract JustRoot is Script {
-    // address public oldAddress = 0xAe45cBE2d1E90358CbD216bC16f2C9267a4EA80a;
-    address oldAddress = 0xe42923350EF3a534f84bb101453D9B442d42Bf0c;
-    // address oldAddress = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
-    IAnthill public anthillOld = IAnthill(oldAddress);
-    // IRandom public random = IRandom(oldAddress);
-
-    function run() public {
-        // uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-        // vm.createSelectFork(vm.rpcUrl("zksepolia"));
-        // vm.startBroadcast();
-
-        console.log(block.chainid);
-
-        // console.log()
-        // console.logBytes(oldAddress.code);
-        address root = anthillOld.readRoot();
-        // uint256 root = random.timestamp();
-        console.log("root", root);
-        // try anthillOld.readRoot() returns (address root) {
-        //     console.log("root", root);
-        // } catch (bytes memory reason) {
-        //     console.logBytes(reason);
-        // }
-        // vm.stopBroadcast();
-    }
-
-    function test() public {}
-}
-
 contract ReadAndSave is Script {
     Anthill public anthillNew;
     address public oldAddress = 0xe42923350EF3a534f84bb101453D9B442d42Bf0c;
@@ -298,13 +268,10 @@ contract ReadAndSave is Script {
     DagVoteExtended[] public dagVotes;
 
     function run() public {
-        address root = anthillOld.root();
-        string memory rootName = anthillOld.readName(root);
-
-        readChildrenRec(root, anthillOld, anthillNew);
+        readChildrenRec(address(1), anthillOld, anthillNew);
 
         uint256 maxRelRootDepth = anthillOld.readMaxRelRootDepth();
-        readDagVotesRec(maxRelRootDepth, root, anthillOld, anthillNew);
+        readDagVotesRec(maxRelRootDepth, address(1), anthillOld, anthillNew);
 
         string memory obj1 = "key";
         vm.serializeBytes(obj1, "tree_votes", abi.encode(treeVotes));
@@ -312,7 +279,6 @@ contract ReadAndSave is Script {
 
         vm.writeJson(finalJson, "./script-out/example.json");
 
-        vm.stopBroadcast();
     }
 
     function readChildrenRec(address parent, Anthill anthillOldInput, Anthill anthillNewInput) internal {
@@ -324,16 +290,18 @@ contract ReadAndSave is Script {
             uint256 sentDagVoteCount = anthillOldInput.readSentDagVoteCount(child, 0, 0);
             uint256 sentDagVoteTotalWeight = anthillOldInput.readSentDagVoteTotalWeight(child);
             uint256 recDagVoteCount = anthillOldInput.readRecDagVoteCount(child, 0, 0);
+            uint256 posInRecipient = i; // Add this line to include posInRecipient
             treeVotes.push(
-                TreeVoteExtended(
-                    child,
-                    childName,
-                    parent,
-                    childRecTreeVoteCount,
-                    sentDagVoteCount,
-                    sentDagVoteTotalWeight,
-                    recDagVoteCount
-                )
+                TreeVoteExtended({
+                    voter: child,
+                    name: childName,
+                    recipient: parent,
+                    posInRecipient: posInRecipient, // Add posInRecipient here
+                    recTreeVoteCount: childRecTreeVoteCount,
+                    sentDagVoteCount: sentDagVoteCount,
+                    sentDagVoteTotalWeight: sentDagVoteTotalWeight,
+                    recDagVoteCount: recDagVoteCount
+                })
             );
 
             readChildrenRec(child, anthillOldInput, anthillNewInput);
@@ -372,25 +340,6 @@ contract ReadAndSave is Script {
             address child = anthillOldInput.readRecTreeVote(voter, i);
             readDagVotesRec(maxRelRootDepth, child, anthillOldInput, anthillNewInput);
         }
-    }
-
-    function test() public {}
-}
-
-contract ReadFromFileAndDeploy is Script {
-    function run() public {
-        TreeVoteExtended[] memory treeVotes;
-        DagVoteExtended[] memory dagVotes;
-
-        string memory json = vm.readFile("./script-out/example.json");
-        bytes memory treeVotesB = vm.parseJsonBytes(json, "$.tree_votes");
-        bytes memory dagVotesB = vm.parseJsonBytes(json, "$.dag_votes");
-
-        treeVotes = abi.decode(treeVotesB, (TreeVoteExtended[]));
-        dagVotes = abi.decode(dagVotesB, (DagVoteExtended[]));
-
-        console.log("treeVotes", treeVotes.length);
-        console.log("dagVotes", dagVotes.length);
     }
 
     function test() public {}

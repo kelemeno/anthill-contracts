@@ -3,6 +3,7 @@ src = 'src'
 out = 'out'
 libs = ['lib']
 ETHERSCAN_API_KEY="1"
+MISC_ETHERSCAN_API_KEY=""
 # libraries = ["/Users/kalmanlajko/programming/anthill/anthill-contracts/src/AnthillInner.sol:AnthillInner:0x46cd6bedb95dab694ab3bfc5ec7b6df2209837e3"]
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 remappings = [
@@ -11,5 +12,9 @@ remappings = [
 fs_permissions = [
     { access = "read-write", path = "./script-out" },
 ]
+solc_version = "0.8.24"
+zksolc = "1.5.3"
+optimizer = true
+optimizer_runs = 1000
 [profile.cache]
 enabled = true 

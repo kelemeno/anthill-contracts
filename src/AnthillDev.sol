@@ -7,7 +7,8 @@ import {DagVote, Anthill} from "../src/Anthill.sol";
 struct TreeVoteExtended {
     address voter;
     string name;
-    address sentTreeVote;
+    address recipient;
+    uint256 posInRecipient;
     uint256 recTreeVoteCount;
     uint256 sentDagVoteCount;
     uint256 sentDagVoteTotalWeight;
@@ -64,8 +65,9 @@ contract AnthillDev is Anthill {
 
     function setVoterData(TreeVoteExtended calldata data) public onlyUnlocked {
         names[data.voter] = data.name;
-        treeVote[data.voter] = data.sentTreeVote;
+        treeVote[data.voter] = data.recipient;
         recTreeVoteCount[data.voter] = data.recTreeVoteCount;
+        recTreeVote[data.recipient][data.posInRecipient] = data.voter;
         sentDagVoteCount[data.voter] = data.sentDagVoteCount;
         sentDagVoteTotalWeight[data.voter] = data.sentDagVoteTotalWeight;
         recDagVoteCount[data.voter] = data.recDagVoteCount;

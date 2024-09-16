@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "../src/AnthillDev.sol";
 import {DagVote} from "../src/Anthill.sol";
 import {console} from "forge-std/console.sol";
+import {TooManyChildren} from "../src/Errors.sol";
 
 contract Utils is Test {
     function intermediateDagConsistencyCheckFrom(AnthillDev anthill, address voter) public {
@@ -97,38 +98,35 @@ contract Utils is Test {
     }
 
     function printRecDagVotes(AnthillDev anthill, address voter) public view {
-        for (uint256 dist = 0; dist < 7; dist++) {
-            for (uint256 depth = 0; depth <= 7; depth++) {
-                for (uint256 i = 0; i < anthill.readRecDagVoteCount(voter, dist, depth); i++) {
-                    DagVote memory rDagVote = anthill.readRecDagVote(voter, dist, depth, i);
-                    console.log("rec dag vote: ", voter, dist, depth);
-                    console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
-                }
-            }
+        uint256 recDagVoteCount = anthill.readRecDagVoteCount(voter, 0, 0);
+        for (uint256 i = 0; i < recDagVoteCount; i++) {
+            DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
+            console.log("rec dag vote: ", voter, 0, 0);
+            console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
         }
     }
 
     function printSentDagVotes(AnthillDev anthill, address voter) public view {
-        for (uint256 dist = 0; dist < 7; dist++) {
-            for (uint256 depth = 0; depth <= 7; depth++) {
-                for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++) {
-                    DagVote memory rDagVote = anthill.readSentDagVote(voter, dist, depth, i);
-                    console.log("sent dag vote: ", voter, dist, depth);
-                    console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
-                }
-            }
+        uint256 dagVoteCount = anthill.readSentDagVoteCount(voter, 0, 0);
+        for (uint256 i = 0; i < dagVoteCount; i++) {
+            DagVote memory rDagVote = anthill.readSentDagVote(voter, 0, 0, i);
+            console.log("sent dag vote: ", voter, 0, 0);
+            console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
         }
         console.log("rec dag votes finished");
     }
 
     function treeConsistencyCheckFrom(Anthill anthill, address voter) public {
-        for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
+        uint256 childCount = anthill.readRecTreeVoteCount(voter);
+        if (childCount > 2) {
+            revert TooManyChildren(voter, childCount);
+        }
+        for (uint256 i = 0; i < childCount; i++) {
             address recipient = anthill.readRecTreeVote(voter, i);
-            if (recipient != address(0)) {
-                address sender = anthill.readSentTreeVote(recipient);
-                assertEq(sender, voter);
-                treeConsistencyCheckFrom(anthill, recipient);
-            }
+            require(recipient != address(0), "child can't be zero");
+            address sender = anthill.readSentTreeVote(recipient);
+            assertEq(sender, voter);
+            treeConsistencyCheckFrom(anthill, recipient);
         }
     }
 

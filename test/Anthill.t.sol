@@ -340,7 +340,7 @@ contract AnthillTestMain is Test, Utils {
     }
 
     function testConsistency() public {
-        treeConsistencyCheckFrom(anthill, address(2));
-        dagConsistencyCheckFrom(anthill, address(2));
+        treeConsistencyCheckFrom(anthill, address(1));
+        dagConsistencyCheckFrom(anthill, address(1));
     }
 }

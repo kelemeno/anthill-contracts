@@ -52,7 +52,6 @@ contract Anthill is IAnthill {
     uint256 public MAX_REL_ROOT_DEPTH;
 
     /// todo: maybe have root be recTreeVote[address(1)][0] instead of a separate variable.
-    address public root;
 
     mapping(address => string) public names;
     mapping(address => address) public treeVote;
@@ -130,11 +129,9 @@ contract Anthill is IAnthill {
 
         removeTreeVote(voter);
 
-        if (readRoot() == parent) {
-            root = voter;
-        } else {
-            removeTreeVote(parent);
-        }
+        // if (root() != parent) {
+        removeTreeVote(parent);
+        // }
 
         address brother = recTreeVote[parent][0];
 
@@ -183,11 +180,10 @@ contract Anthill is IAnthill {
     // when we first join the tree without a parent
     function joinTreeAsRoot(address voter, string calldata voterName) public virtual onlyVoter(voter) {
         require(treeVote[voter] == address(0), "A jTAR 2");
-        require(root == address(0), "A jTAR 3");
+        require(root() == address(0), "A jTAR 3");
 
         names[voter] = voterName;
         treeVote[voter] = address(1);
-        root = voter;
         recTreeVote[address(1)][0] = voter;
         recTreeVoteCount[address(1)] = 1;
     }
@@ -456,8 +452,8 @@ contract Anthill is IAnthill {
     }
 
     function recalculateAllReputation() public virtual {
-        clearReputationCalculatedRec(root);
-        calculateReputationRec(root);
+        clearReputationCalculatedRec(root());
+        calculateReputationRec(root());
     }
     ////////////////////////////////////////////
     //// DAG finders
@@ -762,11 +758,8 @@ contract Anthill is IAnthill {
         }
 
         removeTreeVote(voter);
+        /// this is a temporary measure.
         treeVote[voter] = address(1);
-
-        if (root == voter) {
-            root = firstChild;
-        }
     }
     ////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -860,7 +853,7 @@ contract Anthill is IAnthill {
     //////// Variable readers
     // root/base
     function readRoot() public view returns (address) {
-        return root;
+        return recTreeVote[address(1)][0];
     }
 
     function readMaxRelRootDepth() public view returns (uint256) {
@@ -927,5 +920,9 @@ contract Anthill is IAnthill {
 
     function readRecDagVote(address recipient, uint256, uint256, uint256 votePos) public view returns (DagVote memory) {
         return recDagVote[recipient][votePos];
+    }
+
+    function root() public view returns (address) {
+        return recTreeVote[address(1)][0];
     }
 }
