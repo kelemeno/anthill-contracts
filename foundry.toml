@@ -8,13 +8,14 @@ MISC_ETHERSCAN_API_KEY=""
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 remappings = [
     "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/=lib/openzeppelin-contracts/",
 ]
 fs_permissions = [
     { access = "read-write", path = "./script-out" },
 ]
 solc_version = "0.8.24"
 zksolc = "1.5.3"
-optimizer = true
-optimizer_runs = 1000
+# optimizer = true
+# optimizer_runs = 1000
 [profile.cache]
 enabled = true 

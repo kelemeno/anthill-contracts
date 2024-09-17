@@ -254,12 +254,12 @@ contract AnthillDev is Anthill {
         super.safeRemoveRecDagVote(recipient, rPos);
     }
 
-    function removeAllSentDagVotes(address voter) public virtual override {
+    function removeAllSentDagVotes(address voter) internal virtual override {
         console.log("removeAllSentDagVotes", voter);
         super.removeAllSentDagVotes(voter);
     }
 
-    function removeAllRecDagVotes(address recipient) public virtual override {
+    function removeAllRecDagVotes(address recipient) internal virtual override {
         console.log("removeAllRecDagVotes", recipient);
         super.removeAllRecDagVotes(recipient);
     }
@@ -270,7 +270,7 @@ contract AnthillDev is Anthill {
         address replacedPositionInTree,
         uint256 sDist,
         uint256 rDist
-    ) public virtual override {
+    ) internal virtual override {
         console.log("handleDagVoteReplace", voterWithChangingDagVotes, recipient, replacedPositionInTree);
         console.log("cont.", sDist, rDist);
         super.handleDagVoteReplace(voterWithChangingDagVotes, recipient, replacedPositionInTree, sDist, rDist);

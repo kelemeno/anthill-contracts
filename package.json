@@ -11,7 +11,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "verify": "hardhat run hardhat/verify.ts",
     "lint": "solhint \"**/*.sol\" --fix && prettier --write \"**/*.{js,json,md,sol,ts,yaml}\"",
-    "fix": "prettier --write \"**/*.{js,json,md,sol,ts,yaml}\""
+    "fix": "prettier --write \"**/*.{js,json,md,sol,ts,yaml}\"",
+    "encodeLogs": "ts-node hardhat/logs.ts"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "@nomicfoundation/hardhat-foundry": "^1.1.2",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.22.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
   "dependencies": {

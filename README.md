@@ -75,3 +75,6 @@ To compile everything the old Anthill has to be compiled, i.e. follow the steps 
   - 
 
 - Testnet migration to new contract:
+
+- save all logs: 
+`echo '{ "logs" :' > script-out/logs.json && cast logs --rpc-url https://sepolia.era.zksync.dev --address 0xe42923350EF3a534f84bb101453D9B442d42Bf0c  -j >> script-out/logs.json && echo '}' >> script-out/logs.json && yarn encodeLogs`
