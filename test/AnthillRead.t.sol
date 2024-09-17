@@ -56,41 +56,23 @@ contract ReadFromFileAndDeployTest is Test, Utils {
         // treeConsistencyCheckFrom(anthill, anthill.root());
         // dagConsistencyCheckFrom(anthill, anthill.root());
     }
-    struct Tet {
-        uint256 a;
-        uint256 b;
-    }
 
     function reexecute() public {
-        string memory json = vm.readFile("./script-out/encodedLogs.json");
-        bytes memory logsB = vm.parseJson(json, "$.encodedLogs");
+        string memory json = vm.readFile("./script-out/encodedLogsLength.json");
         uint256 len = vm.parseJsonUint(json, "$.encodedLogsLength");
+        Logs[] memory logs = new Logs[](len);
         for (uint256 i = 0; i < len; i++) {
             string memory iterator = i.toString();
             string memory json = vm.readFile(string.concat("./script-out/encodedLogs/", iterator, ".json"));
             bytes memory logB = vm.parseJsonBytes(json, "$.encodedLog");
-            // Tet memory log = abi.decode(logB, (Tet));
-            // console.log(log.a, log.b);
+            Logs memory log = abi.decode(logB, (Logs));
+            logs[i] = log;
         }
-        // console.logBytes(logsB);
-        // Tet[] memory array = getTet(); 
-        // // array[0] = Tet(9, 9);
-        // // array[1] = Tet(10, 10);
-        // bytes memory testB = abi.encode(array);
-        // console.logBytes(testB);
-        // Tet[] memory test = abi.decode(logsB, (Tet[]));
-        // Logs[len] memory logs = abi.decode(logsB, (Logs[len]));
 
         // for (uint256 i = 0; i < logs.length; i++) {
         //     Logs memory log = logs[i];
         //     console.log(log.address2);
         // }
-    }
-
-
-    function getTet() public returns (Tet[] memory array) {
-        array[0] = Tet(9, 9);
-        array[1] = Tet(10, 10);
     }
 
     function test_deployAndReexecute() public {
