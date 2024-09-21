@@ -2,11 +2,13 @@
 pragma solidity ^0.8.24;
 import {console} from "forge-std/console.sol";
 
-import {DagVote, Anthill} from "../src/Anthill.sol";
+import {DagVote} from "../src/Anthill2.sol";
+import {AnthillDev} from "./AnthillDev.sol";
+import {Anthill2} from "./Anthill2.sol";
 import {TreeVoteExtended, DagVoteExtended, IAnthillDev} from "./IAnthillDev.sol";
 import {IAnthill} from "./IAnthill.sol";
 
-contract AnthillDev is IAnthillDev, Anthill {
+contract Anthill2Dev is IAnthillDev, Anthill2 {
     function recDagVoteAppendPublic(
         address recipient,
         uint256 recDist,
@@ -14,7 +16,7 @@ contract AnthillDev is IAnthillDev, Anthill {
         address voter,
         uint256 weight,
         uint256
-    ) public onlyUnlocked {
+    ) public {
         recDagVote[recipient][recDagVoteCount[recipient]] = DagVote({
             id: voter,
             weight: weight,
@@ -30,7 +32,7 @@ contract AnthillDev is IAnthillDev, Anthill {
         address replaced,
         uint256 distToNewRec,
         uint256 depthToNewRec
-    ) public onlyUnlocked {
+    ) public {
         handleDagVoteReplace(voter, recipient, replaced, distToNewRec, distToNewRec - depthToNewRec);
     }
 
@@ -40,11 +42,11 @@ contract AnthillDev is IAnthillDev, Anthill {
         address replaced,
         uint256 distToNewRec,
         uint256 depthToNewRec
-    ) public onlyUnlocked {
+    ) public {
         handleDagVoteReplace(voter, recipient, replaced, distToNewRec, distToNewRec + depthToNewRec);
     }
 
-    function setVoterData(TreeVoteExtended calldata data) public onlyUnlocked {
+    function setVoterData(TreeVoteExtended calldata data) public {
         names[data.voter] = data.name;
         treeVote[data.voter] = data.recipient;
         recTreeVoteCount[data.voter] = data.recTreeVoteCount;
@@ -54,7 +56,7 @@ contract AnthillDev is IAnthillDev, Anthill {
         recDagVoteCount[data.voter] = data.recDagVoteCount;
     }
 
-    function setDagVote(DagVoteExtended calldata data) public onlyUnlocked {
+    function setDagVote(DagVoteExtended calldata data) public {
         sentDagVote[data.voter][data.posInVoter] = DagVote({
             id: data.recipient,
             weight: data.weight,
@@ -98,22 +100,22 @@ contract AnthillDev is IAnthillDev, Anthill {
         super.switchTreeVoteWithParent(voter);
     }
 
-    function joinTree(address voter, string calldata voterName, address recipient) public virtual override(IAnthill, Anthill) {
+    function joinTree(address voter, string calldata voterName, address recipient) public virtual override(IAnthill, Anthill2) {
         console.log("joinTree", voter, voterName, recipient);
         super.joinTree(voter, voterName, recipient);
     }
 
-    function joinTreeAsRoot(address voter, string calldata voterName) public virtual override(IAnthill, Anthill) {
+    function joinTreeAsRoot(address voter, string calldata voterName) public virtual override(IAnthill, Anthill2) {
         console.log("joinTreeAsRoot", voter, voterName);
         super.joinTreeAsRoot(voter, voterName);
     }
 
-    function changeName(address voter, string calldata voterName) public virtual override(IAnthill, Anthill) {
+    function changeName(address voter, string calldata voterName) public virtual override(IAnthill, Anthill2) {
         console.log("changeName", voter, voterName);
         super.changeName(voter, voterName);
     }
 
-    function findNthParent(address voter, uint256 height) public view virtual override(IAnthill, Anthill) returns (address parent) {
+    function findNthParent(address voter, uint256 height) public view virtual override(IAnthill, Anthill2) returns (address parent) {
         console.log("findNthParent", voter, height);
         return super.findNthParent(voter, height);
     }
@@ -128,17 +130,17 @@ contract AnthillDev is IAnthillDev, Anthill {
         return super.findRelDepthInner(voter, recipient);
     }
 
-    function findRelDepth(address voter, address recipient) public view virtual override(IAnthill, Anthill) returns (bool isLocal, uint256 relDepth) {
+    function findRelDepth(address voter, address recipient) public view virtual override(IAnthill, Anthill2) returns (bool isLocal, uint256 relDepth) {
         console.log("findRelDepth", voter, recipient);
         return super.findRelDepth(voter, recipient);
     }
 
-    function findDistAtSameDepth(address add1, address add2) public view virtual override(IAnthill, Anthill) returns (bool isSameDepth, uint256 distance) {
+    function findDistAtSameDepth(address add1, address add2) public view virtual override(IAnthill, Anthill2) returns (bool isSameDepth, uint256 distance) {
         console.log("findDistAtSameDepth", add1, add2);
         return super.findDistAtSameDepth(add1, add2);
     }
 
-    function findDistancesRecNotLower(address voter, address recipient) public view virtual override(IAnthill, Anthill) returns (bool isLocal, uint256 sDist, uint256 rDist) {
+    function findDistancesRecNotLower(address voter, address recipient) public view virtual override(IAnthill, Anthill2) returns (bool isLocal, uint256 sDist, uint256 rDist) {
         console.log("findDistancesRecNotLower", voter, recipient);
         return super.findDistancesRecNotLower(voter, recipient);
     }
@@ -148,12 +150,12 @@ contract AnthillDev is IAnthillDev, Anthill {
         return super.findDistances(voter, recipient);
     }
 
-    function addDagVote(address voter, address recipient, uint256 weight) public virtual override(IAnthill, Anthill) {
+    function addDagVote(address voter, address recipient, uint256 weight) public virtual    override(IAnthill, Anthill2) {
         console.log("addDagVote", voter, recipient, weight);
         super.addDagVote(voter, recipient, weight);
     }
 
-    function removeDagVote(address voter, address recipient) public virtual override(IAnthill, Anthill) {
+    function removeDagVote(address voter, address recipient) public virtual override(IAnthill, Anthill2) {
         console.log("removeDagVote", voter, recipient);
         super.removeDagVote(voter, recipient);
     }
@@ -163,7 +165,7 @@ contract AnthillDev is IAnthillDev, Anthill {
         return super.readDepth(voter);
     }
 
-    function calculateReputation(address voter) public virtual override(IAnthill, Anthill) returns (uint256) {
+    function calculateReputation(address voter) public virtual override(IAnthill, Anthill2) returns (uint256) {
         console.log("calculateReputation", voter);
         return super.calculateReputation(voter);
     }
@@ -183,7 +185,7 @@ contract AnthillDev is IAnthillDev, Anthill {
         super.recalculateAllReputation();
     }
 
-    function findSentDagVote(address voter, address recipient) public view virtual override(IAnthill, Anthill) returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote) {
+    function findSentDagVote(address voter, address recipient) public view virtual override(IAnthill, Anthill2) returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote) {
         console.log("findSentDagVote", voter, recipient);
         return super.findSentDagVote(voter, recipient);
     }
@@ -193,7 +195,7 @@ contract AnthillDev is IAnthillDev, Anthill {
         return super.findSentDagVoteNew(voter, recipient);
     }
 
-    function findRecDagVote(address voter, address recipient) public view virtual override(IAnthill, Anthill) returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote) {
+    function findRecDagVote(address voter, address recipient) public view virtual override(IAnthill, Anthill2) returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote) {
         console.log("findRecDagVote", voter, recipient);
         return super.findRecDagVote(voter, recipient);
     }
@@ -267,17 +269,17 @@ contract AnthillDev is IAnthillDev, Anthill {
         super.handleLeavingVoterBranch(voter);
     }
 
-    function leaveTree(address voter) public virtual override(IAnthill, Anthill) {
+    function leaveTree(address voter) public virtual  override(IAnthill, Anthill2) {
         console.log("leaveTree", voter);
         super.leaveTree(voter);
     }
 
-    function switchPositionWithParent(address voter) public virtual override(IAnthill, Anthill) {
+    function switchPositionWithParent(address voter) public virtual  override(IAnthill, Anthill2) {
         console.log("switchPositionWithParent", voter);
         super.switchPositionWithParent(voter);
     }
 
-    function moveTreeVote(address voter, address recipient) public virtual override(IAnthill, Anthill) {
+    function moveTreeVote(address voter, address recipient) public virtual  override(IAnthill, Anthill2) {
         console.log("moveTreeVote", voter, recipient);
         super.moveTreeVote(voter, recipient);
     }

@@ -11,10 +11,11 @@ import {Utils} from "./Utils.t.sol";
 // until then test are also commented out.
 
 contract AnthillTestMain is Test, Utils {
-    AnthillDev public anthill;
+    IAnthillDev public anthill;
 
     function setUp() public {
-        anthill = new AnthillDev();
+        AnthillDev anthillContract = new AnthillDev();
+        anthill = anthillContract;
 
         // simple logic, 2 3 are roots,
         //for x there are two childre with addresses 2x, and 2x+1
@@ -175,7 +176,7 @@ contract AnthillTestMain is Test, Utils {
         count = anthill.readSentDagVoteCount(address(16), 3, 2);
         assertEq(count, 7);
 
-        anthill.recDagAppendPublic(
+        anthill.recDagVoteAppendPublic(
             address(4),
             1,
             2,

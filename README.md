@@ -76,5 +76,16 @@ To compile everything the old Anthill has to be compiled, i.e. follow the steps 
 
 - Testnet migration to new contract:
 
-- save all logs: 
-`echo '{ "logs" :' > script-out/logs.json && cast logs --rpc-url https://sepolia.era.zksync.dev --address 0xe42923350EF3a534f84bb101453D9B442d42Bf0c  -j >> script-out/logs.json && echo '}' >> script-out/logs.json && yarn encodeLogs`
+Run replay test: 
+    - launch era-test node: 
+    `era_test_node fork https://sepolia.era.zksync.dev --fork-at 3074373 `
+
+    - Testnet loadblock: 
+    `forge script --zksync --slow script/Anthill.s.sol:ReadAndSave --broadcast --rpc-url localhost:8011 --chain 300`
+
+    - save all logs: 
+    `echo '{ "logs" :' > script-out/logs.json && cast logs -j --rpc-url https://sepolia.era.zksync.dev --address 0xe42923350EF3a534f84bb101453D9B442d42Bf0c --from-block 3074373 >> script-out/logs.json && echo '}' >> script-out/logs.json && yarn encodeLogs`
+
+    - run replay test: 
+    `forge test --match-test  test_deployAndReexecute -vvvv --ffi`
+    

@@ -6,9 +6,10 @@ import "../src/AnthillDev.sol";
 import {DagVote} from "../src/Anthill.sol";
 import {console} from "forge-std/console.sol";
 import {TooManyChildren} from "../src/Errors.sol";
+import {IAnthillDev} from "../src/IAnthillDev.sol";
 
 contract Utils is Test {
-    function intermediateDagConsistencyCheckFrom(AnthillDev anthill, address voter) public {
+    function intermediateDagConsistencyCheckFrom(IAnthillDev anthill, address voter) public {
         for (uint256 dist = 0; dist < 7; dist++) {
             for (uint256 depth = 1; depth <= dist; depth++) {
                 for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++) {
@@ -47,12 +48,18 @@ contract Utils is Test {
         }
     }
 
-    function dagConsistencyCheckFrom(AnthillDev anthill, address voter) public {
+    function dagConsistencyCheckFrom(IAnthillDev anthill, address voter) public {
+        console.log("dagConsistencyCheckFrom", voter);
         for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, 0, 0); i++) {
             DagVote memory sDagVote = anthill.readSentDagVote(voter, 0, 0, i);
             DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, 0 - 0, 0, sDagVote.posInOther);
-            (bool isLocal, uint256 recordedDist, ) = anthill.findDistancesRecNotLower(voter, sDagVote.id);
-            assert(isLocal);
+            (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(voter, sDagVote.id);
+            assert(isLocal && recordedDist != recordedRDist);
+            // if ((voter == address(0xFb60921A1Dc09bFEDa73e26CB217B0fc76c41461)) && (sDagVote.id == address(0xD5A498Bbc6D21E4E1cdBB8fec58e3eCD7124FB43))) {
+            //     console.log("voter: ", voter, sDagVote.id);
+            //     console.log("i", i);
+            //     console.log("distances", sDagVote.dist, rDagVote.dist);
+            // }
 
             assertEq(rDagVote.id, voter);
             assertEq(rDagVote.weight, sDagVote.weight);
@@ -80,8 +87,8 @@ contract Utils is Test {
             DagVote memory rDagVote = anthill.readRecDagVote(voter, 0 - 0, 0, i);
             DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, 0, 0, rDagVote.posInOther);
 
-            (bool isLocal, , uint256 recordedRDist) = anthill.findDistancesRecNotLower(rDagVote.id, voter);
-            assert(isLocal);
+            (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(rDagVote.id, voter);
+            assert(isLocal && recordedDist != recordedRDist);
 
             // console.log("voter: ", voter, recordedDist, 0);
             // console.log( 0, 0, i, rDagVote.id);
@@ -97,7 +104,7 @@ contract Utils is Test {
         }
     }
 
-    function printRecDagVotes(AnthillDev anthill, address voter) public view {
+    function printRecDagVotes(IAnthillDev anthill, address voter) public view {
         uint256 recDagVoteCount = anthill.readRecDagVoteCount(voter, 0, 0);
         for (uint256 i = 0; i < recDagVoteCount; i++) {
             DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
@@ -106,17 +113,17 @@ contract Utils is Test {
         }
     }
 
-    function printSentDagVotes(AnthillDev anthill, address voter) public view {
+    function printSentDagVotes(IAnthillDev anthill, address voter) public view {
         uint256 dagVoteCount = anthill.readSentDagVoteCount(voter, 0, 0);
         for (uint256 i = 0; i < dagVoteCount; i++) {
             DagVote memory rDagVote = anthill.readSentDagVote(voter, 0, 0, i);
             console.log("sent dag vote: ", voter, 0, 0);
             console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
         }
-        console.log("rec dag votes finished");
+        console.log("sent dag votes finished");
     }
 
-    function treeConsistencyCheckFrom(Anthill anthill, address voter) public {
+    function treeConsistencyCheckFrom(IAnthillDev anthill, address voter) public {
         uint256 childCount = anthill.readRecTreeVoteCount(voter);
         if (childCount > 2) {
             revert TooManyChildren(voter, childCount);

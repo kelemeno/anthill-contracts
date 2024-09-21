@@ -2,19 +2,7 @@
 pragma solidity ^0.8.24;
 
 // import {console} from "forge-std/console.sol";
-import {IAnthill} from "./IAnthill.sol";
-
-struct DagVote {
-    address id;
-    uint256 weight;
-    // distance is always measured to the common ancestor
-    // this is to check movements easily,
-    // this does not on the other side when a person moves change.
-    uint256 dist;
-    // position in the other person's sent/rec DagVote array
-    // to look up the opposite DagVote, used to calculate depth.
-    uint256 posInOther;
-}
+import {IAnthill, DagVote} from "./IAnthill.sol";
 
 contract Anthill is IAnthill {
     constructor() {
@@ -64,8 +52,9 @@ contract Anthill is IAnthill {
     mapping(address voter => uint256 count) public recDagVoteCount;
     mapping(address voter => mapping(uint256 counter => DagVote vote)) public recDagVote;
 
+    uint256 public reputationEpoch;
+    mapping(address => uint256) public calculatedReputationForEpoch;
     mapping(address => uint256) public reputation;
-    mapping(address => bool) public repIsCalculated;
 
     /// @notice This is not a token, it is used for ERC20 compatibility for voting with Snapshot.
     string public tokenName = "Anthill";

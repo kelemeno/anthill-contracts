@@ -6,7 +6,8 @@ import {stdToml} from "forge-std/StdToml.sol";
 
 import {Anthill, IAnthill} from "../src/Anthill.sol";
 import {DagVote} from "../src/Anthill.sol";
-import {TreeVoteExtended, DagVoteExtended, AnthillDev} from "../src/AnthillDev.sol";
+import {TreeVoteExtended, DagVoteExtended} from "../src/IAnthillDev.sol";
+import {AnthillDev} from "../src/AnthillDev.sol";
 
 contract AnthillScript3 is Script {
     Anthill public anthill;
