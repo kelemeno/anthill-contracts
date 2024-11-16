@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "../src/AnthillDev.sol";
 import {DagVote} from "../src/Anthill.sol";
 import {console} from "forge-std/console.sol";
-import {TooManyChildren} from "../src/Errors.sol";
+import {TooManyChildren, DagConsistencyCheckFailed} from "../src/Errors.sol";
 import {IAnthillDev} from "../src/IAnthillDev.sol";
 
 contract Utils is Test {
@@ -51,36 +51,27 @@ contract Utils is Test {
     function dagConsistencyCheckFrom(IAnthillDev anthill, address voter) public {
         console.log("dagConsistencyCheckFrom", voter);
         for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, 0, 0); i++) {
+            uint256 failCase = 0;
             DagVote memory sDagVote = anthill.readSentDagVote(voter, 0, 0, i);
             DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, 0 - 0, 0, sDagVote.posInOther);
             (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(voter, sDagVote.id);
-            assert(isLocal && recordedDist != recordedRDist);
-            // if ((voter == address(0xFb60921A1Dc09bFEDa73e26CB217B0fc76c41461)) && (sDagVote.id == address(0xD5A498Bbc6D21E4E1cdBB8fec58e3eCD7124FB43))) {
-            //     console.log("voter: ", voter, sDagVote.id);
-            //     console.log("i", i);
-            //     console.log("distances", sDagVote.dist, rDagVote.dist);
-            // }
 
-            assertEq(rDagVote.id, voter);
-            assertEq(rDagVote.weight, sDagVote.weight);
-            assertEq(rDagVote.posInOther, i);
-            // if (voter == address(16) && sDagVote.id == address(8))
-            // {
-            //     console.log("voter: ", voter, sDagVote.id);
-            //     console.log("i", i);
-            //     console.log("distances", sDagVote.dist, rDagVote.dist);
-            //     {
-            //         (,,,,,DagVote memory vote1) = anthill.findSentDagVote(address(16), address(8));
-            //         (,,,,,DagVote memory vote2) = anthill.findSentDagVote(address(32), address(16));
-            //         (,,,,,DagVote memory vote3) = anthill.findSentDagVote(address(32), address(8));
-            //         console.log(vote1.dist, anthill.readRecDagVote(address(8),0,0,vote1.posInOther).dist, anthill.readRecDagVote(address(8),0,0,vote1.posInOther).id);
-            //         console.log(vote2.dist, anthill.readRecDagVote(address(16),0,0,vote2.posInOther).dist, anthill.readRecDagVote(address(16),0,0,vote2.posInOther).id);
-            //         console.log(vote3.dist, anthill.readRecDagVote(address(8),0,0,vote3.posInOther).dist, anthill.readRecDagVote(address(8),0,0,vote3.posInOther).id);
-            //     }
-            // console.log("voter: ", voter, sDagVote.id);
-            // console.log(recordedDist, sDagVote.dist);
-            // }
-            // assertEq(recordedDist, sDagVote.dist);
+            if (!(isLocal && recordedDist != recordedRDist)) {
+                failCase = 1;
+            }
+
+            failCase = (rDagVote.id == voter) ? 0 : 2;
+            failCase = (rDagVote.weight == sDagVote.weight) ? failCase : 3;
+            failCase = (rDagVote.posInOther == i) ? failCase : 4;
+            failCase = (recordedDist == sDagVote.dist) ? failCase : 5;
+            if (failCase != 0) {
+                console.log(i);
+                console.log(recordedDist, sDagVote.dist);
+                console.log(anthill.readSentTreeVote(voter));
+                console.log(anthill.findNthParent(voter, 2));
+                revert DagConsistencyCheckFailed(failCase, voter, sDagVote.id, i);
+            }
+
         }
 
         for (uint256 i = 0; i < anthill.readRecDagVoteCount(voter, 0 - 0, 0); i++) {
@@ -108,7 +99,7 @@ contract Utils is Test {
         uint256 recDagVoteCount = anthill.readRecDagVoteCount(voter, 0, 0);
         for (uint256 i = 0; i < recDagVoteCount; i++) {
             DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
-            console.log("rec dag vote: ", voter, 0, 0);
+            console.log("rec dag vote: ", voter);
             console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
         }
     }
@@ -117,7 +108,7 @@ contract Utils is Test {
         uint256 dagVoteCount = anthill.readSentDagVoteCount(voter, 0, 0);
         for (uint256 i = 0; i < dagVoteCount; i++) {
             DagVote memory rDagVote = anthill.readSentDagVote(voter, 0, 0, i);
-            console.log("sent dag vote: ", voter, 0, 0);
+            console.log("sent dag vote: ", voter);
             console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
         }
         console.log("sent dag votes finished");

@@ -2,7 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import "../src/AnthillDev.sol";
+import {IAnthillDev} from "../src/IAnthillDev.sol";
+import {AnthillDev} from "../src/AnthillDev.sol";
+import {Anthill2Dev} from "../src/Anthill2Dev.sol";
 import {DagVote} from "../src/Anthill.sol";
 import {console} from "forge-std/console.sol";
 import {Utils} from "./Utils.t.sol";
@@ -264,7 +266,7 @@ contract AnthillTestMain is Test, Utils {
         //     console.log(vote3.dist, anthill.readRecDagVote(address(8),0,0,vote3.posInOther).dist);
         // }
         // dagConsistencyCheckFrom( anthill, address(2));
-
+        anthill.setVerbose(1);
         anthill.leaveTree(address(4));
 
         // for 2
@@ -315,6 +317,7 @@ contract AnthillTestMain is Test, Utils {
 
         recipient = anthill.readSentTreeVote(address(33));
         assertEq(recipient, address(32));
+
 
         dagConsistencyCheckFrom(anthill, address(2));
         treeConsistencyCheckFrom(anthill, address(2));

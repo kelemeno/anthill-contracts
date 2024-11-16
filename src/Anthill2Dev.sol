@@ -9,6 +9,12 @@ import {TreeVoteExtended, DagVoteExtended, IAnthillDev} from "./IAnthillDev.sol"
 import {IAnthill} from "./IAnthill.sol";
 
 contract Anthill2Dev is IAnthillDev, Anthill2 {
+    uint256 public verbose;
+
+    function setVerbose(uint256 _verbose) public {
+        verbose = _verbose;
+    }
+
     function recDagVoteAppendPublic(
         address recipient,
         uint256 recDist,

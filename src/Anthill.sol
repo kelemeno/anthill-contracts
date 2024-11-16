@@ -220,7 +220,7 @@ contract Anthill is IAnthill {
 
     /// WARNING: do not use to calculate distance!
     // to find the depth difference between two locally close voters.
-    /// isLocal, whether the recipient is local for the voter
+    /// isLocal, whether the recipient is local for the voter, equality allowed
     /// sRelRootDiff, the voters difference to its relative root (distance to recipient might be less)
     /// rRelRootDiff the recipients difference to the voters relative root (distance to recipient might be less)
     function findRelDepthInner(
@@ -250,6 +250,7 @@ contract Anthill is IAnthill {
     }
 
     /// to find the depth difference between two locally close voters.
+    // isLocal is true if the recipient is local for the voter ??
     function findRelDepth(address voter, address recipient) public view virtual returns (bool isLocal, uint256 relDepth) {
         uint256 relRootDiff;
         uint256 rDist;
@@ -283,7 +284,7 @@ contract Anthill is IAnthill {
     }
 
     // to find the distance and depth from a voter to recipient.
-    // Note, the recipient has to be higher and in the neighbourhood of the voter.
+    // Note, the recipient has to be not lower and in the neighbourhood of the voter.
     function findDistancesRecNotLower(
         address voter,
         address recipient
@@ -405,7 +406,7 @@ contract Anthill is IAnthill {
             return;
         }
 
-        repIsCalculated[voter] = false;
+        calculatedReputationForEpoch[voter] = reputationEpoch;
 
         for (uint256 count = 0; count < recTreeVoteCount[voter]; count++) {
             clearReputationCalculatedRec(recTreeVote[voter][count]);
@@ -418,7 +419,7 @@ contract Anthill is IAnthill {
             return;
         }
 
-        if (repIsCalculated[voter]) {
+        if (calculatedReputationForEpoch[voter] == reputationEpoch) {
             return;
         }
 
@@ -435,7 +436,7 @@ contract Anthill is IAnthill {
         voterReputation += 10 ** decimalPoint;
         reputation[voter] = voterReputation;
 
-        repIsCalculated[voter] = true;
+        calculatedReputationForEpoch[voter] = reputationEpoch;
     }
 
     function recalculateAllReputation() public virtual {
@@ -544,9 +545,9 @@ contract Anthill is IAnthill {
         ++(recDagVoteCount[recipient]);
     }
 
-    ///// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
-
-    // careful does not delete the opposite! Always call with opposite, or do something with the other vote
+    /// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
+    /// careful does not delete the opposite! Always call with opposite, or do something with the other vote
+    /// efficient when called on the last element, so can be used to remove all votes. 
     function unsafeReplaceSentDagVoteWithLast(address voter, uint256 sPos) internal virtual {
         // find the vote we delete
         DagVote memory sDagVote = sentDagVote[voter][sPos];
@@ -636,7 +637,7 @@ contract Anthill is IAnthill {
     //     }
     // }
 
-    /// here we are replacing the replaced, keeping our old dagVotes.
+    /// here we are moving in the place of the replaced, keeping our old dagVotes.
     /// the voter address,
     /// the recipient of the new tree Vote, ( we need this case if replaced = 0, otherwise it is the replaced treeVote)
     /// replace is if we are switching positions with a voter, in this case the dist in DagVote becomes 0 for new descendants, and stops being 0 for the old now non-descendants.
@@ -648,7 +649,7 @@ contract Anthill is IAnthill {
         uint256,
         uint256
     ) internal virtual onlyUnlocked {
-        address temp = address(99999999);
+        address temp = address(0x99999999);
 
         if (replacedPositionInTree == address(0)) {
             treeVote[temp] = address(1);
@@ -659,11 +660,11 @@ contract Anthill is IAnthill {
         uint256 count = sentDagVoteCount[voterWithChangingDagVotes];
         for (uint256 i = count; 0 < i; --i) {
             DagVote memory sDagVote = sentDagVote[voterWithChangingDagVotes][i - 1];
-            (bool isLocal, uint256 sDist, uint256 rDist) = findDistancesRecNotLower(
+            (bool isLocal, uint256 sDist, uint256 rDist) = findDistancesRecNotLower( // todo here probably equality is not allowed
                 replacedPositionInTree,
                 sDagVote.id
             );
-            if (!isLocal) {
+            if (!isLocal || (sDist == rDist)) {
                 safeRemoveSentDagVote(voterWithChangingDagVotes, i - 1);
                 continue;
             } else {
@@ -679,7 +680,7 @@ contract Anthill is IAnthill {
                 rDagVote.id,
                 replacedPositionInTree
             );
-            if (!isLocal) {
+            if (!isLocal || (sDist == rDist)) {
                 safeRemoveRecDagVote(voterWithChangingDagVotes, i - 1);
                 continue;
             } else {
@@ -710,6 +711,11 @@ contract Anthill is IAnthill {
         address secondChild = readRecTreeVote(pulledVoter, 1);
         if (firstChild != address(0)) {
             handleDagVoteReplace(firstChild, parent, pulledVoter, 2, 0);
+            (, bool voted,,, uint256 votePos, DagVote memory dagVote) = findSentDagVote(firstChild, parent);
+            if (voted) {
+                // if the first child has a dag vote for the parent, then we changed the distance incorrectly, since both will rise later.
+                sentDagVote[firstChild][votePos].dist = dagVote.dist + 1;
+            }
 
             pullUpBranch(firstChild, pulledVoter);
 

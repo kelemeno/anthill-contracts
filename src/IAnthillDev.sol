@@ -54,4 +54,6 @@ interface IAnthillDev is IAnthill {
     function setDagVote(DagVoteExtended calldata data) external;
 
     function unsafeReplaceRecDagVoteWithLastPublic(address recipient, uint256 rPos) external;
+
+    function setVerbose(uint256 _verbose) external;
 }
