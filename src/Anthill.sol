@@ -149,7 +149,7 @@ contract Anthill is IAnthill {
     //// Personal tree externals
 
     // when we first join the tree
-    function joinTree(address voter, string calldata voterName, address recipient) public onlyVoter(voter) virtual {
+    function joinTree(address voter, string calldata voterName, address recipient) public virtual onlyVoter(voter) {
         require(treeVote[voter] == address(0), "A lT 2");
         require(treeVote[recipient] != address(0), "A lT 3");
         require(recTreeVoteCount[recipient] < 2, "A lT 4");
@@ -251,7 +251,10 @@ contract Anthill is IAnthill {
 
     /// to find the depth difference between two locally close voters.
     // isLocal is true if the recipient is local for the voter ??
-    function findRelDepth(address voter, address recipient) public view virtual returns (bool isLocal, uint256 relDepth) {
+    function findRelDepth(
+        address voter,
+        address recipient
+    ) public view virtual returns (bool isLocal, uint256 relDepth) {
         uint256 relRootDiff;
         uint256 rDist;
 
@@ -261,7 +264,10 @@ contract Anthill is IAnthill {
 
     // to find the distance between voter and recipient, within maxDistance.
     // THIS IS ACTUALLY A GLOBAL FUNTION!
-    function findDistAtSameDepth(address add1, address add2) public view virtual returns (bool isSameDepth, uint256 distance) {
+    function findDistAtSameDepth(
+        address add1,
+        address add2
+    ) public view virtual returns (bool isSameDepth, uint256 distance) {
         if (add1 == add2) {
             return (true, 0);
         }
@@ -547,7 +553,7 @@ contract Anthill is IAnthill {
 
     /// we never just delete a vote, as that would leave a gap in the array. We only delete the last vote, or we remove multiple votes.
     /// careful does not delete the opposite! Always call with opposite, or do something with the other vote
-    /// efficient when called on the last element, so can be used to remove all votes. 
+    /// efficient when called on the last element, so can be used to remove all votes.
     function unsafeReplaceSentDagVoteWithLast(address voter, uint256 sPos) internal virtual {
         // find the vote we delete
         DagVote memory sDagVote = sentDagVote[voter][sPos];
@@ -711,7 +717,7 @@ contract Anthill is IAnthill {
         address secondChild = readRecTreeVote(pulledVoter, 1);
         if (firstChild != address(0)) {
             handleDagVoteReplace(firstChild, parent, pulledVoter, 2, 0);
-            (, bool voted,,, uint256 votePos, DagVote memory dagVote) = findSentDagVote(firstChild, parent);
+            (, bool voted, , , uint256 votePos, DagVote memory dagVote) = findSentDagVote(firstChild, parent);
             if (voted) {
                 // if the first child has a dag vote for the parent, then we changed the distance incorrectly, since both will rise later.
                 sentDagVote[firstChild][votePos].dist = dagVote.dist + 1;

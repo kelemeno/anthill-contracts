@@ -45,7 +45,7 @@ contract ReadFromFileAndDeployTest is Test, Utils {
 
         Anthill2Dev anthillC = new Anthill2Dev();
         anthill = anthillC;
-    
+
         for (uint256 i = 0; i < treeVotes.length; i++) {
             TreeVoteExtended memory treeVote = treeVotes[i];
             anthill.setVoterData(treeVote);
@@ -53,7 +53,7 @@ contract ReadFromFileAndDeployTest is Test, Utils {
         for (uint256 i = 0; i < dagVotes.length; i++) {
             DagVoteExtended memory dagVote = dagVotes[i];
             anthill.setDagVote(dagVote);
-        }        
+        }
     }
 
     function reexecute() public {
@@ -102,8 +102,8 @@ contract ReadFromFileAndDeployTest is Test, Utils {
         } else if (log.topics[0] == IAnthill.AddDagVoteEvent.selector) {
             console.log("AddDagVoteEvent");
             (address voter, address recipient, uint256 weight) = abi.decode(log.data, (address, address, uint256));
-            // we probaby do an additional 
-            (address id) = anthill.treeVote(voter);
+            // we probaby do an additional
+            address id = anthill.treeVote(voter);
             if (id == address(0)) {
                 console.log("wrong even order bug, skipping"); // when a person joins the tree, they send a dag vote to their parent, and after that emit a JoinTreeEvent
                 return;
@@ -115,11 +115,11 @@ contract ReadFromFileAndDeployTest is Test, Utils {
             anthill.removeDagVote(voter, recipient);
         } else if (log.topics[0] == IAnthill.LeaveTreeEvent.selector) {
             console.log("LeaveTreeEvent");
-            (address voter) = abi.decode(log.data, (address));
+            address voter = abi.decode(log.data, (address));
             anthill.leaveTree(voter);
         } else if (log.topics[0] == IAnthill.SwitchPositionWithParentEvent.selector) {
             console.log("SwitchPositionWithParentEvent");
-            (address voter) = abi.decode(log.data, (address));
+            address voter = abi.decode(log.data, (address));
             anthill.switchPositionWithParent(voter);
         } else if (log.topics[0] == IAnthill.MoveTreeVoteEvent.selector) {
             console.log("MoveTreeVoteEvent");
@@ -141,7 +141,10 @@ contract ReadFromFileAndDeployTest is Test, Utils {
         dagConsistencyCheckFrom(anthill, marcin);
         printSentDagVotes(anthill, marcin);
 
-        (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(marcin, address(0xD5A498Bbc6D21E4E1cdBB8fec58e3eCD7124FB43));
+        (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(
+            marcin,
+            address(0xD5A498Bbc6D21E4E1cdBB8fec58e3eCD7124FB43)
+        );
         console.log("isLocal", isLocal);
         console.log("recordedDist", recordedDist);
         console.log("recordedRDist", recordedRDist);

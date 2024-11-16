@@ -54,7 +54,10 @@ contract Utils is Test {
             uint256 failCase = 0;
             DagVote memory sDagVote = anthill.readSentDagVote(voter, 0, 0, i);
             DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, 0 - 0, 0, sDagVote.posInOther);
-            (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(voter, sDagVote.id);
+            (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(
+                voter,
+                sDagVote.id
+            );
 
             if (!(isLocal && recordedDist != recordedRDist)) {
                 failCase = 1;
@@ -71,14 +74,16 @@ contract Utils is Test {
                 console.log(anthill.findNthParent(voter, 2));
                 revert DagConsistencyCheckFailed(failCase, voter, sDagVote.id, i);
             }
-
         }
 
         for (uint256 i = 0; i < anthill.readRecDagVoteCount(voter, 0 - 0, 0); i++) {
             DagVote memory rDagVote = anthill.readRecDagVote(voter, 0 - 0, 0, i);
             DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, 0, 0, rDagVote.posInOther);
 
-            (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(rDagVote.id, voter);
+            (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(
+                rDagVote.id,
+                voter
+            );
             assert(isLocal && recordedDist != recordedRDist);
 
             // console.log("voter: ", voter, recordedDist, 0);

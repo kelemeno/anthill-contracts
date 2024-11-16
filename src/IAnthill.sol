@@ -44,11 +44,21 @@ interface IAnthill {
 
     function readSentDagVoteCount(address voter, uint256 dist, uint256 depth) external view returns (uint256);
 
-    function readSentDagVote(address voter, uint256 dist, uint256 depth, uint256 posInVoter) external view returns (DagVote memory);
+    function readSentDagVote(
+        address voter,
+        uint256 dist,
+        uint256 depth,
+        uint256 posInVoter
+    ) external view returns (DagVote memory);
 
     function readRecDagVoteCount(address recipient, uint256 dist, uint256 depth) external view returns (uint256);
 
-    function readRecDagVote(address recipient, uint256 dist, uint256 depth, uint256 posInVoter) external view returns (DagVote memory);
+    function readRecDagVote(
+        address recipient,
+        uint256 dist,
+        uint256 depth,
+        uint256 posInVoter
+    ) external view returns (DagVote memory);
 
     function findDistancesRecNotLower(address voter, address recipient) external view returns (bool, uint256, uint256);
 
@@ -74,9 +84,15 @@ interface IAnthill {
 
     function findDistAtSameDepth(address voter, address recipient) external view returns (bool, uint256);
 
-    function findSentDagVote(address voter, address recipient) external view returns (bool, bool, uint256, uint256, uint256, DagVote memory);
+    function findSentDagVote(
+        address voter,
+        address recipient
+    ) external view returns (bool, bool, uint256, uint256, uint256, DagVote memory);
 
-    function findRecDagVote(address voter, address recipient) external view returns (bool, bool, uint256, uint256, uint256, DagVote memory);
+    function findRecDagVote(
+        address voter,
+        address recipient
+    ) external view returns (bool, bool, uint256, uint256, uint256, DagVote memory);
 
     function calculateReputation(address voter) external returns (uint256);
 }

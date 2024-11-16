@@ -233,7 +233,10 @@ contract Anthill2 is IAnthill {
         return (false, 0, 0);
     }
 
-    function findRelDepth(address voter, address recipient) public view virtual returns (bool isLocal, uint256 relDepth) {
+    function findRelDepth(
+        address voter,
+        address recipient
+    ) public view virtual returns (bool isLocal, uint256 relDepth) {
         uint256 relRootDiff;
         uint256 rDist;
 
@@ -243,7 +246,10 @@ contract Anthill2 is IAnthill {
 
     // to find the distance between voter and recipient, within maxDistance.
     // THIS IS ACTUALLY A GLOBAL FUNTION!
-    function findDistAtSameDepth(address add1, address add2) public view virtual returns (bool isSameDepth, uint256 distance) {
+    function findDistAtSameDepth(
+        address add1,
+        address add2
+    ) public view virtual returns (bool isSameDepth, uint256 distance) {
         if (add1 == add2) {
             return (true, 0);
         }

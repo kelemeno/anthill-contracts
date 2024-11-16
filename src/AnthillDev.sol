@@ -79,8 +79,6 @@ contract AnthillDev is IAnthillDev, Anthill {
         super.unsafeReplaceRecDagVoteWithLast(recipient, rPos);
     }
 
-
-
     ///////////////////////////////////////////////////////////////////////
     /// Logging functions
 
@@ -104,7 +102,11 @@ contract AnthillDev is IAnthillDev, Anthill {
         super.switchTreeVoteWithParent(voter);
     }
 
-    function joinTree(address voter, string calldata voterName, address recipient) public virtual override(IAnthill, Anthill) {
+    function joinTree(
+        address voter,
+        string calldata voterName,
+        address recipient
+    ) public virtual override(IAnthill, Anthill) {
         if (verbose > 0) console.log("joinTree", voter, voterName, recipient);
         super.joinTree(voter, voterName, recipient);
     }
@@ -119,7 +121,10 @@ contract AnthillDev is IAnthillDev, Anthill {
         super.changeName(voter, voterName);
     }
 
-    function findNthParent(address voter, uint256 height) public view virtual override(IAnthill, Anthill) returns (address parent) {
+    function findNthParent(
+        address voter,
+        uint256 height
+    ) public view virtual override(IAnthill, Anthill) returns (address parent) {
         if (verbose > 1) console.log("findNthParent", voter, height);
         return super.findNthParent(voter, height);
     }
@@ -129,27 +134,42 @@ contract AnthillDev is IAnthillDev, Anthill {
         return super.findRelRoot(voter);
     }
 
-    function findRelDepthInner(address voter, address recipient) public view virtual override returns (bool isLocal, uint256 sRelRootDiff, uint256 rRelRootDiff) {
+    function findRelDepthInner(
+        address voter,
+        address recipient
+    ) public view virtual override returns (bool isLocal, uint256 sRelRootDiff, uint256 rRelRootDiff) {
         if (verbose > 1) console.log("findRelDepthInner", voter, recipient);
         return super.findRelDepthInner(voter, recipient);
     }
 
-    function findRelDepth(address voter, address recipient) public view virtual override(IAnthill, Anthill) returns (bool isLocal, uint256 relDepth) {
+    function findRelDepth(
+        address voter,
+        address recipient
+    ) public view virtual override(IAnthill, Anthill) returns (bool isLocal, uint256 relDepth) {
         if (verbose > 1) console.log("findRelDepth", voter, recipient);
         return super.findRelDepth(voter, recipient);
     }
 
-    function findDistAtSameDepth(address add1, address add2) public view virtual override(IAnthill, Anthill) returns (bool isSameDepth, uint256 distance) {
+    function findDistAtSameDepth(
+        address add1,
+        address add2
+    ) public view virtual override(IAnthill, Anthill) returns (bool isSameDepth, uint256 distance) {
         if (verbose > 1) console.log("findDistAtSameDepth", add1, add2);
         return super.findDistAtSameDepth(add1, add2);
     }
 
-    function findDistancesRecNotLower(address voter, address recipient) public view virtual override(IAnthill, Anthill) returns (bool isLocal, uint256 sDist, uint256 rDist) {
+    function findDistancesRecNotLower(
+        address voter,
+        address recipient
+    ) public view virtual override(IAnthill, Anthill) returns (bool isLocal, uint256 sDist, uint256 rDist) {
         if (verbose > 0) console.log("findDistancesRecNotLower", voter, recipient);
         return super.findDistancesRecNotLower(voter, recipient);
     }
 
-    function findDistances(address voter, address recipient) public view virtual override returns (bool isLocal, uint256 sDist, uint256 rDist) {
+    function findDistances(
+        address voter,
+        address recipient
+    ) public view virtual override returns (bool isLocal, uint256 sDist, uint256 rDist) {
         if (verbose > 1) console.log("findDistances", voter, recipient);
         return super.findDistances(voter, recipient);
     }
@@ -189,26 +209,50 @@ contract AnthillDev is IAnthillDev, Anthill {
         super.recalculateAllReputation();
     }
 
-    function findSentDagVote(address voter, address recipient) public view virtual override(IAnthill, Anthill) returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote) {
+    function findSentDagVote(
+        address voter,
+        address recipient
+    )
+        public
+        view
+        virtual
+        override(IAnthill, Anthill)
+        returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote)
+    {
         if (verbose > 0) console.log("findSentDagVote", voter, recipient);
         return super.findSentDagVote(voter, recipient);
     }
 
-    function findSentDagVoteNew(address voter, address recipient) public view virtual override returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
+    function findSentDagVoteNew(
+        address voter,
+        address recipient
+    ) public view virtual override returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
         if (verbose > 0) console.log("findSentDagVoteNew", voter, recipient);
         return super.findSentDagVoteNew(voter, recipient);
     }
 
-    function findRecDagVote(address voter, address recipient) public view virtual override(IAnthill, Anthill) returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote) {
+    function findRecDagVote(
+        address voter,
+        address recipient
+    )
+        public
+        view
+        virtual
+        override(IAnthill, Anthill)
+        returns (bool votable, bool voted, uint256 sDist, uint256 rDist, uint256 votePos, DagVote memory dagVote)
+    {
         if (verbose > 0) console.log("findRecDagVote", voter, recipient);
         return super.findRecDagVote(voter, recipient);
     }
 
-    function findRecDagVoteNew(address voter, address recipient) public view virtual override returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
+    function findRecDagVoteNew(
+        address voter,
+        address recipient
+    ) public view virtual override returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
         if (verbose > 0) console.log("findRecDagVoteNew", voter, recipient);
         return super.findRecDagVoteNew(voter, recipient);
     }
-    
+
     function combinedDagAppendSdist(
         address voter,
         address recipient,
@@ -258,12 +302,13 @@ contract AnthillDev is IAnthillDev, Anthill {
         uint256 sDist,
         uint256 rDist
     ) internal virtual override {
-        if (verbose > 0) console.log("handleDagVoteReplace", voterWithChangingDagVotes, recipient, replacedPositionInTree);
+        if (verbose > 0)
+            console.log("handleDagVoteReplace", voterWithChangingDagVotes, recipient, replacedPositionInTree);
         if (verbose > 0) console.log("cont.", sDist, rDist);
         super.handleDagVoteReplace(voterWithChangingDagVotes, recipient, replacedPositionInTree, sDist, rDist);
 
-        console.log("handleDagVoteReplace finished temp", sentDagVote[address(0x20)][4].id, sentDagVote[address(0x20)][4].dist);
-        if (verbose > 0) console.log("handleDagVoteReplace finished", voterWithChangingDagVotes, recipient, replacedPositionInTree);
+        if (verbose > 0)
+            console.log("handleDagVoteReplace finished", voterWithChangingDagVotes, recipient, replacedPositionInTree);
     }
 
     function pullUpBranch(address pulledVoter, address parent) internal virtual override {

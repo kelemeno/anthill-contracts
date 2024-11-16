@@ -318,7 +318,6 @@ contract AnthillTestMain is Test, Utils {
         recipient = anthill.readSentTreeVote(address(33));
         assertEq(recipient, address(32));
 
-
         dagConsistencyCheckFrom(anthill, address(2));
         treeConsistencyCheckFrom(anthill, address(2));
     }

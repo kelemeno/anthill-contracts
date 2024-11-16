@@ -279,7 +279,6 @@ contract ReadAndSave is Script {
         string memory finalJson = vm.serializeBytes(obj1, "dag_votes", abi.encode(dagVotes));
 
         vm.writeJson(finalJson, "./script-out/example.json");
-
     }
 
     function readChildrenRec(address parent, Anthill anthillOldInput, Anthill anthillNewInput) internal {
