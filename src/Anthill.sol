@@ -412,17 +412,7 @@ contract Anthill is IAnthill {
         return voterReputation;
     }
 
-    // function clearReputationCalculatedRec(address voter) public virtual {
-    //     if (readSentTreeVote(voter) == address(0)) {
-    //         return;
-    //     }
 
-    //     for (uint256 count = 0; count < recTreeVoteCount[voter]; count++) {
-    //         clearReputationCalculatedRec(recTreeVote[voter][count]);
-    //     }
-    // }
-
-    // Todo: redo: we need to rely on external ordered calls
     function calculateReputationIterative(address voter) public virtual {
         if (readSentTreeVote(voter) == address(0)) {
             return;
@@ -495,7 +485,6 @@ contract Anthill is IAnthill {
         uint256 sDist;
         uint256 rDist;
 
-        // todo (todo what?)
         (isLocal, sDist, rDist) = findDistancesRecNotLower(voter, recipient);
 
         if ((!isLocal) || (sDist == rDist)) {
@@ -663,7 +652,7 @@ contract Anthill is IAnthill {
         uint256 count = sentDagVoteCount[voterWithChangingDagVotes];
         for (uint256 i = count; 0 < i; --i) {
             DagVote memory sDagVote = sentDagVote[voterWithChangingDagVotes][i - 1];
-            (bool isLocal, uint256 sDist, uint256 rDist) = findDistancesRecNotLower( // todo here probably equality is not allowed
+            (bool isLocal, uint256 sDist, uint256 rDist) = findDistancesRecNotLower(
                 replacedPositionInTree,
                 sDagVote.id
             );
