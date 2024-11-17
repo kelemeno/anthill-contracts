@@ -194,20 +194,20 @@ contract AnthillDev is IAnthillDev, Anthill {
         return super.calculateReputation(voter);
     }
 
-    function clearReputationCalculatedRec(address voter) public virtual override {
-        if (verbose > 0) console.log("clearReputationCalculatedRec", voter);
-        super.clearReputationCalculatedRec(voter);
+    // function clearReputationCalculatedRec(address voter) public virtual override {
+    //     if (verbose > 0) console.log("clearReputationCalculatedRec", voter);
+    //     super.clearReputationCalculatedRec(voter);
+    // }
+
+    function calculateReputationIterative(address voter) public virtual override {
+        if (verbose > 0) console.log("calculateReputationIterative", voter);
+        super.calculateReputationIterative(voter);
     }
 
-    function calculateReputationRec(address voter) public virtual override {
-        if (verbose > 0) console.log("calculateReputationRec", voter);
-        super.calculateReputationRec(voter);
-    }
-
-    function recalculateAllReputation() public virtual override {
-        if (verbose > 0) console.log("recalculateAllReputation");
-        super.recalculateAllReputation();
-    }
+    // function recalculateAllReputation() public virtual override {
+    //     if (verbose > 0) console.log("recalculateAllReputation");
+    //     super.recalculateAllReputation();
+    // }
 
     function findSentDagVote(
         address voter,

@@ -391,13 +391,18 @@ contract Anthill is IAnthill {
     // to calculate the reputation of a voter, i.e. the sum of the votes of the voter and all its descendants
     // not efficient
     function calculateReputation(address voter) public virtual returns (uint256) {
+        return calculateReputationInner(voter, 0);
+    }
+
+    function calculateReputationInner(address voter, uint256 depth) internal virtual returns (uint256) {
         uint256 voterReputation = 0;
+        // require(depth <= MAX_REL_ROOT_DEPTH, "A cRI 1");
         if (voter == address(0)) return 0;
 
         for (uint256 count = 0; count < recDagVoteCount[voter]; count++) {
             DagVote memory rDagVote = recDagVote[voter][count];
             voterReputation +=
-                (calculateReputation(rDagVote.id) * (rDagVote.weight)) /
+                (calculateReputationInner(rDagVote.id, depth + 1) * (rDagVote.weight)) /
                 sentDagVoteTotalWeight[rDagVote.id];
         }
 
@@ -407,35 +412,31 @@ contract Anthill is IAnthill {
         return voterReputation;
     }
 
-    function clearReputationCalculatedRec(address voter) public virtual {
-        if (readSentTreeVote(voter) == address(0)) {
-            return;
-        }
+    // function clearReputationCalculatedRec(address voter) public virtual {
+    //     if (readSentTreeVote(voter) == address(0)) {
+    //         return;
+    //     }
 
-        calculatedReputationForEpoch[voter] = reputationEpoch;
-
-        for (uint256 count = 0; count < recTreeVoteCount[voter]; count++) {
-            clearReputationCalculatedRec(recTreeVote[voter][count]);
-        }
-    }
+    //     for (uint256 count = 0; count < recTreeVoteCount[voter]; count++) {
+    //         clearReputationCalculatedRec(recTreeVote[voter][count]);
+    //     }
+    // }
 
     // Todo: redo: we need to rely on external ordered calls
-    function calculateReputationRec(address voter) public virtual {
+    function calculateReputationIterative(address voter) public virtual {
         if (readSentTreeVote(voter) == address(0)) {
             return;
         }
 
         if (calculatedReputationForEpoch[voter] == reputationEpoch) {
+            // we already calculated the reputation for this epoch
             return;
-        }
-
-        for (uint256 count = 0; count < recTreeVoteCount[voter]; count++) {
-            calculateReputationRec(recTreeVote[voter][count]);
         }
 
         uint256 voterReputation = 0;
         for (uint256 count = 0; count < recDagVoteCount[voter]; count++) {
             DagVote memory rDagVote = recDagVote[voter][count];
+            require(calculatedReputationForEpoch[rDagVote.id] == reputationEpoch, "child rep not calculated");
             voterReputation += (reputation[rDagVote.id] * (rDagVote.weight)) / sentDagVoteTotalWeight[rDagVote.id];
         }
 
@@ -445,10 +446,6 @@ contract Anthill is IAnthill {
         calculatedReputationForEpoch[voter] = reputationEpoch;
     }
 
-    function recalculateAllReputation() public virtual {
-        clearReputationCalculatedRec(root());
-        calculateReputationRec(root());
-    }
     ////////////////////////////////////////////
     //// DAG finders
     // to check the existence and to find the position of a vote in the sentDagVote array

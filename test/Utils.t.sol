@@ -119,7 +119,7 @@ contract Utils is Test {
         console.log("sent dag votes finished");
     }
 
-    function treeConsistencyCheckFrom(IAnthillDev anthill, address voter) public {
+    function treeConsistencyCheckFromInner(IAnthillDev anthill, address voter) public {
         uint256 childCount = anthill.readRecTreeVoteCount(voter);
         if (childCount > 2) {
             revert TooManyChildren(voter, childCount);
@@ -129,7 +129,37 @@ contract Utils is Test {
             require(recipient != address(0), "child can't be zero");
             address sender = anthill.readSentTreeVote(recipient);
             assertEq(sender, voter);
-            treeConsistencyCheckFrom(anthill, recipient);
+        }
+        // for (uint256 i = 0; i < childCount; i++) {
+        //     address recipient = anthill.readRecTreeVote(voter, i);
+        //     treeConsistencyCheckFrom(anthill, recipient);
+        // }
+    }
+
+    function treeConsistencyCheckFrom(IAnthillDev anthill, address voter) public {
+        recursiveCrawlTree(anthill, voter, treeConsistencyCheckFromInner);
+    }
+
+    function crawlSentDagVotes(IAnthillDev anthill, address voter, function(IAnthillDev, address) internal callback) internal {
+        uint256 sentDagVoteCount = anthill.readSentDagVoteCount(voter, 0, 0);
+        for (uint256 i = 0; i < sentDagVoteCount; i++) {
+            DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
+            callback(anthill, rDagVote.id);
+        }
+    }
+
+    function crawlRecDagVotes(IAnthillDev anthill, address voter, function(IAnthillDev, address) internal callback) internal {
+        uint256 recDagVoteCount = anthill.readRecDagVoteCount(voter, 0, 0);
+        for (uint256 i = 0; i < recDagVoteCount; i++) {
+            DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
+            callback(anthill, rDagVote.id);
+        }
+    }
+
+    function recursiveCrawlTree(IAnthillDev anthill, address voter, function(IAnthillDev, address) internal callback) internal {
+        callback(anthill, voter);
+        for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
+            recursiveCrawlTree(anthill, anthill.readRecTreeVote(voter, i), callback);
         }
     }
 
