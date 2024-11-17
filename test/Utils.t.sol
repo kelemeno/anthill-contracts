@@ -140,7 +140,11 @@ contract Utils is Test {
         recursiveCrawlTree(anthill, voter, treeConsistencyCheckFromInner);
     }
 
-    function crawlSentDagVotes(IAnthillDev anthill, address voter, function(IAnthillDev, address) internal callback) internal {
+    function crawlSentDagVotes(
+        IAnthillDev anthill,
+        address voter,
+        function(IAnthillDev, address) internal callback
+    ) internal {
         uint256 sentDagVoteCount = anthill.readSentDagVoteCount(voter, 0, 0);
         for (uint256 i = 0; i < sentDagVoteCount; i++) {
             DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
@@ -148,7 +152,11 @@ contract Utils is Test {
         }
     }
 
-    function crawlRecDagVotes(IAnthillDev anthill, address voter, function(IAnthillDev, address) internal callback) internal {
+    function crawlRecDagVotes(
+        IAnthillDev anthill,
+        address voter,
+        function(IAnthillDev, address) internal callback
+    ) internal {
         uint256 recDagVoteCount = anthill.readRecDagVoteCount(voter, 0, 0);
         for (uint256 i = 0; i < recDagVoteCount; i++) {
             DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
@@ -156,7 +164,11 @@ contract Utils is Test {
         }
     }
 
-    function recursiveCrawlTree(IAnthillDev anthill, address voter, function(IAnthillDev, address) internal callback) internal {
+    function recursiveCrawlTree(
+        IAnthillDev anthill,
+        address voter,
+        function(IAnthillDev, address) internal callback
+    ) internal {
         callback(anthill, voter);
         for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
             recursiveCrawlTree(anthill, anthill.readRecTreeVote(voter, i), callback);

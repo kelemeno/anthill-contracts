@@ -412,7 +412,6 @@ contract Anthill is IAnthill {
         return voterReputation;
     }
 
-
     function calculateReputationIterative(address voter) public virtual {
         if (readSentTreeVote(voter) == address(0)) {
             return;
