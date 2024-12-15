@@ -37,37 +37,37 @@ contract AnthillTestSmall is Test, Utils {
     function testSetup() public {}
 
     function testSwitchPositionWithParent3() public {
-        address root = anthill.readRoot();
+        address root = anthill.root();
         assertEq(root, address(2));
 
         anthill.switchPositionWithParent(address(5));
-        root = anthill.readRoot();
+        root = anthill.root();
         assertEq(root, address(5));
 
-        assert(anthill.readSentTreeVote(address(2)) == address(5));
-        assert(anthill.readSentTreeVote(address(4)) == address(5));
+        assert(anthill.sentTreeVote(address(2)) == address(5));
+        assert(anthill.sentTreeVote(address(4)) == address(5));
 
         dagConsistencyCheckFrom(anthill, address(5));
         treeConsistencyCheckFrom(address(5));
     }
 
     function testRootLeave() public {
-        address root = anthill.readRoot();
+        address root = anthill.root();
         assertEq(root, address(2));
 
-        address rootV2 = anthill.readRecTreeVote(address(1), 0);
+        address rootV2 = anthill.recTreeVote(address(1), 0);
         assertEq(rootV2, address(2));
 
         anthill.leaveTree(address(2));
 
-        root = anthill.readRoot();
+        root = anthill.root();
         assertEq(root, address(4));
 
-        rootV2 = anthill.readRecTreeVote(address(1), 0);
+        rootV2 = anthill.recTreeVote(address(1), 0);
         assertEq(rootV2, address(4));
 
-        assert(anthill.readSentTreeVote(address(4)) == address(1));
-        assert(anthill.readSentTreeVote(address(5)) == address(4));
+        assert(anthill.sentTreeVote(address(4)) == address(1));
+        assert(anthill.sentTreeVote(address(5)) == address(4));
 
         dagConsistencyCheckFrom(anthill, address(4));
         treeConsistencyCheckFrom(address(4));
@@ -77,10 +77,10 @@ contract AnthillTestSmall is Test, Utils {
     ///////////// utils
 
     function treeConsistencyCheckFrom(address voter) public {
-        for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
-            address recipient = anthill.readRecTreeVote(voter, i);
+        for (uint256 i = 0; i < anthill.recTreeVoteCount(voter); i++) {
+            address recipient = anthill.recTreeVote(voter, i);
             if (recipient != address(0)) {
-                address sender = anthill.readSentTreeVote(recipient);
+                address sender = anthill.sentTreeVote(recipient);
                 assertEq(sender, voter);
                 treeConsistencyCheckFrom(recipient);
             }

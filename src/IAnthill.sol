@@ -32,33 +32,25 @@ interface IAnthill {
 
     event MoveTreeVoteEvent(address voter, address recipient);
 
-    function readRoot() external view returns (address);
+    function root() external view returns (address);
 
-    function treeVote(address voter) external view returns (address);
+    function sentTreeVote(address voter) external view returns (address);
 
-    function readSentTreeVote(address voter) external view returns (address);
+    function recTreeVote(address voter, uint256 posInRecipient) external view returns (address);
 
-    function readRecTreeVote(address voter, uint256 posInRecipient) external view returns (address);
+    function recTreeVoteCount(address recipient) external view returns (uint256);
 
-    function readRecTreeVoteCount(address recipient) external view returns (uint256);
+    function sentDagVoteCount(address voter) external view returns (uint256);
 
-    function readSentDagVoteCount(address voter, uint256 dist, uint256 depth) external view returns (uint256);
+    function sentDagVote(address voter, uint256 pos) external view returns (address, uint256, uint256, uint256);
 
-    function readSentDagVote(
-        address voter,
-        uint256 dist,
-        uint256 depth,
-        uint256 posInVoter
-    ) external view returns (DagVote memory);
+    function recDagVoteCount(address recipient) external view returns (uint256);
 
-    function readRecDagVoteCount(address recipient, uint256 dist, uint256 depth) external view returns (uint256);
+    function recDagVote(address recipient, uint256 pos) external view returns (address, uint256, uint256, uint256);
 
-    function readRecDagVote(
-        address recipient,
-        uint256 dist,
-        uint256 depth,
-        uint256 posInVoter
-    ) external view returns (DagVote memory);
+    function readSentDagVote(address voter, uint256 pos) external view returns (DagVote memory dagVote);
+
+    function readRecDagVote(address recipient, uint256 pos) external view returns (DagVote memory dagVote);
 
     function findDistancesRecNotLower(address voter, address recipient) external view returns (bool, uint256, uint256);
 

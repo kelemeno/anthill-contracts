@@ -51,8 +51,8 @@ contract AnthillDev is IAnthillDev, Anthill {
     }
 
     function setVoterData(TreeVoteExtended calldata data) public onlyUnlocked {
-        names[data.voter] = data.name;
-        treeVote[data.voter] = data.recipient;
+        nameOf[data.voter] = data.name;
+        sentTreeVote[data.voter] = data.recipient;
         recTreeVoteCount[data.voter] = data.recTreeVoteCount;
         recTreeVote[data.recipient][data.posInRecipient] = data.voter;
         sentDagVoteCount[data.voter] = data.sentDagVoteCount;

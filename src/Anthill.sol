@@ -39,8 +39,8 @@ contract Anthill is IAnthill {
     // note: the root is at the top of the tree.
     uint256 public MAX_REL_ROOT_DEPTH;
 
-    mapping(address => string) public names;
-    mapping(address => address) public treeVote;
+    mapping(address => string) public nameOf;
+    mapping(address => address) public sentTreeVote;
 
     mapping(address => uint256) public recTreeVoteCount;
     mapping(address => mapping(uint256 => address)) public recTreeVote;
@@ -74,14 +74,14 @@ contract Anthill is IAnthill {
     }
 
     function balanceOf(address voter) public view returns (uint256) {
-        return readReputation(voter);
+        return reputation[voter];
     }
 
     ////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Personal tree internal
     function removeTreeVote(address voter) internal virtual {
-        address recipient = treeVote[voter];
+        address recipient = sentTreeVote[voter];
         uint256 votePos = recTreeVote[recipient][0] == voter ? 0 : 1;
 
         recTreeVote[recipient][votePos] = recTreeVote[recipient][recTreeVoteCount[recipient] - 1];
@@ -89,7 +89,7 @@ contract Anthill is IAnthill {
         recTreeVoteCount[recipient] = recTreeVoteCount[recipient] - 1;
 
         // this sets it to one =1, but removeTreeVote is always temporary, there is always only a single root, and a single voter with treeVote =1 .
-        treeVote[voter] = address(1);
+        sentTreeVote[voter] = address(1);
     }
 
     function addTreeVote(address voter, address recipient) internal virtual {
@@ -98,9 +98,9 @@ contract Anthill is IAnthill {
     }
 
     function addTreeVoteWithoutCheck(address voter, address recipient) internal virtual {
-        require(treeVote[voter] == address(1), "Ai, aTVWC 1");
+        require(sentTreeVote[voter] == address(1), "Ai, aTVWC 1");
 
-        treeVote[voter] = recipient;
+        sentTreeVote[voter] = recipient;
 
         recTreeVote[recipient][recTreeVoteCount[recipient]] = voter;
         recTreeVoteCount[recipient] = recTreeVoteCount[recipient] + 1;
@@ -108,11 +108,11 @@ contract Anthill is IAnthill {
 
     // this switches the position of a voter and its parent, without considering the
     function switchTreeVoteWithParent(address voter) internal virtual {
-        address parent = treeVote[voter];
+        address parent = sentTreeVote[voter];
         require(parent != address(0), "Ai, sTVWP 1");
         require(parent != address(1), "Ai, sTVWP 2");
 
-        address gparent = treeVote[parent]; // this can be 1.
+        address gparent = sentTreeVote[parent]; // this can be 1.
 
         removeTreeVote(voter);
 
@@ -150,12 +150,12 @@ contract Anthill is IAnthill {
 
     // when we first join the tree
     function joinTree(address voter, string calldata voterName, address recipient) public virtual onlyVoter(voter) {
-        require(treeVote[voter] == address(0), "A lT 2");
-        require(treeVote[recipient] != address(0), "A lT 3");
+        require(sentTreeVote[voter] == address(0), "A lT 2");
+        require(sentTreeVote[recipient] != address(0), "A lT 3");
         require(recTreeVoteCount[recipient] < 2, "A lT 4");
 
-        treeVote[voter] = recipient;
-        names[voter] = voterName;
+        sentTreeVote[voter] = recipient;
+        nameOf[voter] = voterName;
         recTreeVote[recipient][recTreeVoteCount[recipient]] = voter;
         recTreeVoteCount[recipient] = recTreeVoteCount[recipient] + 1;
 
@@ -166,18 +166,18 @@ contract Anthill is IAnthill {
 
     // when we first join the tree without a parent
     function joinTreeAsRoot(address voter, string calldata voterName) public virtual onlyVoter(voter) {
-        require(treeVote[voter] == address(0), "A jTAR 2");
+        require(sentTreeVote[voter] == address(0), "A jTAR 2");
         require(root() == address(0), "A jTAR 3");
 
-        names[voter] = voterName;
-        treeVote[voter] = address(1);
+        nameOf[voter] = voterName;
+        sentTreeVote[voter] = address(1);
         recTreeVote[address(1)][0] = voter;
         recTreeVoteCount[address(1)] = 1;
     }
 
     function changeName(address voter, string calldata voterName) public virtual onlyVoter(voter) {
-        require(treeVote[voter] != address(0), "A jTAR 5");
-        names[voter] = voterName;
+        require(sentTreeVote[voter] != address(0), "A jTAR 5");
+        nameOf[voter] = voterName;
 
         emit ChangeNameEvent(voter, voterName);
     }
@@ -191,25 +191,25 @@ contract Anthill is IAnthill {
             return voter;
         }
 
-        if (treeVote[voter] == address(1)) {
+        if (sentTreeVote[voter] == address(1)) {
             return address(1);
         }
 
         // this should never be the case, but it is a safety check
-        require(treeVote[voter] != address(0), "Ai, fNP 1");
+        require(sentTreeVote[voter] != address(0), "Ai, fNP 1");
 
-        return findNthParent(treeVote[voter], height - 1);
+        return findNthParent(sentTreeVote[voter], height - 1);
     }
 
     // to find voters relative root, = the highest ancestor of the voter (including the voter) under MAX_REL_ROOT_DEPTH
     function findRelRoot(address voter) public view virtual returns (address relRoot, uint256 relDepth) {
-        require(treeVote[voter] != address(0), "Ai, fRR 1");
+        require(sentTreeVote[voter] != address(0), "Ai, fRR 1");
 
         relRoot = voter;
         address parent;
 
         for (relDepth = 0; relDepth < MAX_REL_ROOT_DEPTH; relDepth++) {
-            parent = treeVote[relRoot];
+            parent = sentTreeVote[relRoot];
             if (parent == address(1)) {
                 break;
             }
@@ -227,7 +227,7 @@ contract Anthill is IAnthill {
         address voter,
         address recipient
     ) public view virtual returns (bool isLocal, uint256 sRelRootDiff, uint256 rRelRootDiff) {
-        if ((treeVote[voter] == address(0)) || (treeVote[recipient] == address(0))) {
+        if ((sentTreeVote[voter] == address(0)) || (sentTreeVote[recipient] == address(0))) {
             return (false, 0, 0);
         }
 
@@ -240,7 +240,7 @@ contract Anthill is IAnthill {
                 return (true, sRelRootDiff, i);
             }
 
-            recipientAncestor = treeVote[recipientAncestor];
+            recipientAncestor = sentTreeVote[recipientAncestor];
 
             if (recipientAncestor == address(0)) {
                 return (false, 0, 0);
@@ -272,15 +272,15 @@ contract Anthill is IAnthill {
             return (true, 0);
         }
 
-        if (treeVote[add1] == address(0) || treeVote[add2] == address(0)) {
+        if (sentTreeVote[add1] == address(0) || sentTreeVote[add2] == address(0)) {
             return (false, 0);
         }
 
-        if (treeVote[add1] == address(1) || treeVote[add2] == address(1)) {
+        if (sentTreeVote[add1] == address(1) || sentTreeVote[add2] == address(1)) {
             return (false, 0);
         }
 
-        (isSameDepth, distance) = findDistAtSameDepth(treeVote[add1], treeVote[add2]);
+        (isSameDepth, distance) = findDistAtSameDepth(sentTreeVote[add1], sentTreeVote[add2]);
 
         if (isSameDepth) {
             return (true, distance + 1);
@@ -295,7 +295,7 @@ contract Anthill is IAnthill {
         address voter,
         address recipient
     ) public view virtual returns (bool isLocal, uint256 sDist, uint256 rDist) {
-        if (treeVote[voter] == address(0) || treeVote[recipient] == address(0)) {
+        if (sentTreeVote[voter] == address(0) || sentTreeVote[recipient] == address(0)) {
             return (false, 0, 0);
         }
 
@@ -319,7 +319,7 @@ contract Anthill is IAnthill {
         address voter,
         address recipient
     ) public view virtual returns (bool isLocalEitherWay, uint256 sDist, uint256 rDist) {
-        if (treeVote[voter] == address(0) || treeVote[recipient] == address(0)) {
+        if (sentTreeVote[voter] == address(0) || sentTreeVote[recipient] == address(0)) {
             return (false, 0, 0);
         }
 
@@ -378,10 +378,10 @@ contract Anthill is IAnthill {
     //// Global readers
 
     function readDepth(address voter) public view virtual returns (uint256) {
-        if (treeVote[voter] == address(0)) return 0;
-        if (treeVote[voter] == address(1)) return 0;
+        if (sentTreeVote[voter] == address(0)) return 0;
+        if (sentTreeVote[voter] == address(1)) return 0;
 
-        return readDepth(treeVote[voter]) + 1;
+        return readDepth(sentTreeVote[voter]) + 1;
     }
 
     ////////////////////////////////////////////
@@ -413,7 +413,7 @@ contract Anthill is IAnthill {
     }
 
     function calculateReputationIterative(address voter) public virtual {
-        if (readSentTreeVote(voter) == address(0)) {
+        if (sentTreeVote[voter] == address(0)) {
             return;
         }
 
@@ -643,7 +643,7 @@ contract Anthill is IAnthill {
         address temp = address(0x99999999);
 
         if (replacedPositionInTree == address(0)) {
-            treeVote[temp] = address(1);
+            sentTreeVote[temp] = address(1);
             addTreeVote(temp, recipient);
             replacedPositionInTree = temp;
         }
@@ -697,9 +697,9 @@ contract Anthill is IAnthill {
         require(unlocked, "A pUB");
         // we fist handle the dag structure, using the tree structure, then we change the tree votes.
 
-        // if (readRecTreeVoteCount(pulledVoter)==0) return;
-        address firstChild = readRecTreeVote(pulledVoter, 0);
-        address secondChild = readRecTreeVote(pulledVoter, 1);
+        // if (recTreeVoteCount(pulledVoter)==0) return;
+        address firstChild = recTreeVote[pulledVoter][0];
+        address secondChild = recTreeVote[pulledVoter][1];
         if (firstChild != address(0)) {
             handleDagVoteReplace(firstChild, parent, pulledVoter, 2, 0);
             (, bool voted, , , uint256 votePos, DagVote memory dagVote) = findSentDagVote(firstChild, parent);
@@ -722,7 +722,7 @@ contract Anthill is IAnthill {
         require(unlocked, "A hLVB");
 
         // we fist handle the dag structure, using the tree structure, then we change the tree votes.
-        address parent = treeVote[voter];
+        address parent = sentTreeVote[voter];
 
         address firstChild = recTreeVote[voter][0];
         address secondChild = recTreeVote[voter][1];
@@ -743,7 +743,7 @@ contract Anthill is IAnthill {
 
         removeTreeVote(voter);
         /// this is a temporary measure.
-        treeVote[voter] = address(1);
+        sentTreeVote[voter] = address(1);
     }
     ////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -770,16 +770,16 @@ contract Anthill is IAnthill {
         removeAllRecDagVotes(voter);
 
         handleLeavingVoterBranch(voter);
-        treeVote[voter] = address(0);
+        sentTreeVote[voter] = address(0);
 
         emit LeaveTreeEvent(voter);
     }
 
     function switchPositionWithParent(address voter) public virtual onlyVoter(voter) {
-        address parent = treeVote[voter];
+        address parent = sentTreeVote[voter];
         require(parent != address(0), "A lT 3");
         require(parent != address(1), "A lT 4");
-        address gparent = treeVote[parent];
+        address gparent = sentTreeVote[parent];
 
         uint256 voterRep = calculateReputation(voter);
         uint256 parentRep = calculateReputation(parent);
@@ -797,14 +797,14 @@ contract Anthill is IAnthill {
     /// the strategy here is we remove the mover, create the new tree strcuture, check Dag structure, and add him back.
     function moveTreeVote(address voter, address recipient) public virtual onlyVoter(voter) {
         {
-            require(treeVote[voter] != address(0), "A mTV 2");
-            require(treeVote[recipient] != address(0), "A mTV 3");
+            require(sentTreeVote[voter] != address(0), "A mTV 2");
+            require(sentTreeVote[recipient] != address(0), "A mTV 3");
             require(recTreeVoteCount[recipient] < 2, "A mTV 4");
         }
         (bool isLocal, uint256 sDist, uint256 rDist) = findDistances(voter, recipient);
         {
             // we need to leave the tree nowm so that our descendants can rise.
-            address parent = treeVote[voter];
+            address parent = sentTreeVote[voter];
             handleLeavingVoterBranch(voter);
 
             if ((sDist == 0) && (isLocal)) {
@@ -836,73 +836,12 @@ contract Anthill is IAnthill {
     //// Legacy
     //////// Variable readers
     // root/base
-    function readRoot() public view returns (address) {
-        return recTreeVote[address(1)][0];
-    }
 
-    function readMaxRelRootDepth() public view returns (uint256) {
-        return MAX_REL_ROOT_DEPTH;
-    }
-
-    // for node properties
-    function readReputation(address voter) public view returns (uint256) {
-        return reputation[voter];
-    }
-
-    function readName(address voter) public view returns (string memory) {
-        return names[voter];
-    }
-
-    // for tree votes
-    function readSentTreeVote(address voter) public view returns (address) {
-        return treeVote[voter];
-    }
-
-    function readRecTreeVoteCount(address recipient) public view returns (uint256) {
-        return recTreeVoteCount[recipient];
-    }
-
-    function readRecTreeVote(address recipient, uint256 votePos) public view returns (address) {
-        return recTreeVote[recipient][votePos];
-    }
-
-    // for sent dag
-
-    function readSentDagVoteDistDiff(address) external pure returns (uint256) {
-        return 0;
-    }
-
-    function readSentDagVoteDepthDiff(address) external pure returns (uint256) {
-        return 0;
-    }
-
-    function readSentDagVoteCount(address voter, uint256, uint256) public view returns (uint256) {
-        return sentDagVoteCount[voter];
-    }
-
-    function readSentDagVote(address voter, uint256, uint256, uint256 votePos) public view returns (DagVote memory) {
+    function readSentDagVote(address voter, uint256 votePos) public view returns (DagVote memory) {
         return sentDagVote[voter][votePos];
     }
 
-    function readSentDagVoteTotalWeight(address voter) public view returns (uint256) {
-        return sentDagVoteTotalWeight[voter];
-    }
-
-    // for rec Dag votes
-
-    function readRecDagVoteDistDiff(address) external pure returns (uint256) {
-        return 0;
-    }
-
-    function readRecDagVoteDepthDiff(address) public pure returns (uint256) {
-        return 0;
-    }
-
-    function readRecDagVoteCount(address recipient, uint256, uint256) public view returns (uint256) {
-        return recDagVoteCount[recipient];
-    }
-
-    function readRecDagVote(address recipient, uint256, uint256, uint256 votePos) public view returns (DagVote memory) {
+    function readRecDagVote(address recipient, uint256 votePos) public view returns (DagVote memory) {
         return recDagVote[recipient][votePos];
     }
 

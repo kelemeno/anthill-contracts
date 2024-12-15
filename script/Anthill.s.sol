@@ -90,8 +90,10 @@ contract SmallScript is Script {
         // vm.startBroadcast(anvilPrivateKey);
 
         // era-test node rich private key
-        uint256 eraTestNodePrivateKey = 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110;
-        vm.startBroadcast(eraTestNodePrivateKey);
+        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        vm.startBroadcast(privateKey);
+        // uint256 eraTestNodePrivateKey = 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110;
+        // vm.startBroadcast(eraTestNodePrivateKey);
 
         anthill = new Anthill();
 
@@ -208,14 +210,14 @@ contract Redeploy is Script {
 
         anthillNew = new Anthill();
 
-        address root = anthillOld.readRoot();
-        string memory rootName = anthillOld.readName(root);
+        address root = anthillOld.root();
+        string memory rootName = anthillOld.nameOf(root);
 
         anthillNew.joinTreeAsRoot(root, rootName);
 
         readAndAddChildrenRec(root, anthillOld, anthillNew);
 
-        uint256 maxRelRootDepth = anthillOld.readMaxRelRootDepth();
+        uint256 maxRelRootDepth = anthillOld.MAX_REL_ROOT_DEPTH();
         readAndAddDagVotesRec(maxRelRootDepth, root, anthillOld, anthillNew);
 
         anthillNew.lockTree();
@@ -224,10 +226,10 @@ contract Redeploy is Script {
     }
 
     function readAndAddChildrenRec(address parent, Anthill anthillOldInput, Anthill anthillNewInput) internal {
-        uint256 childCount = anthillOldInput.readRecTreeVoteCount(parent);
+        uint256 childCount = anthillOldInput.recTreeVoteCount(parent);
         for (uint256 i = 0; i < childCount; i++) {
-            address child = anthillOldInput.readRecTreeVote(parent, i);
-            string memory childName = anthillOldInput.readName(child);
+            address child = anthillOldInput.recTreeVote(parent, i);
+            string memory childName = anthillOldInput.nameOf(child);
             anthillNewInput.joinTree(child, childName, parent);
             anthillNewInput.removeDagVote(child, parent);
 
@@ -243,17 +245,17 @@ contract Redeploy is Script {
     ) internal {
         for (uint256 dist = 1; dist <= maxRelRootDepth; dist++) {
             for (uint256 height = 0; height <= dist; height++) {
-                uint256 dagVoteCount = anthillOldInput.readSentDagVoteCount(voter, dist, height);
+                uint256 dagVoteCount = anthillOldInput.sentDagVoteCount(voter);
                 for (uint256 i = 0; i < dagVoteCount; i++) {
-                    DagVote memory dagVote = anthillOldInput.readSentDagVote(voter, dist, height, i);
-                    anthillNewInput.addDagVote(voter, dagVote.id, dagVote.weight);
+                    (address id, uint256 weight, , ) = anthillOldInput.sentDagVote(voter, i);
+                    anthillNewInput.addDagVote(voter, id, weight);
                 }
             }
         }
 
-        uint256 childCount = anthillOldInput.readRecTreeVoteCount(voter);
+        uint256 childCount = anthillOldInput.recTreeVoteCount(voter);
         for (uint256 i = 0; i < childCount; i++) {
-            address child = anthillOldInput.readRecTreeVote(voter, i);
+            address child = anthillOldInput.recTreeVote(voter, i);
             readAndAddDagVotesRec(maxRelRootDepth, child, anthillOldInput, anthillNewInput);
         }
     }
@@ -271,7 +273,7 @@ contract ReadAndSave is Script {
     function run() public {
         readChildrenRec(address(1), anthillOld, anthillNew);
 
-        uint256 maxRelRootDepth = anthillOld.readMaxRelRootDepth();
+        uint256 maxRelRootDepth = anthillOld.MAX_REL_ROOT_DEPTH();
         readDagVotesRec(maxRelRootDepth, address(1), anthillOld, anthillNew);
 
         string memory obj1 = "key";
@@ -282,14 +284,14 @@ contract ReadAndSave is Script {
     }
 
     function readChildrenRec(address parent, Anthill anthillOldInput, Anthill anthillNewInput) internal {
-        uint256 childCount = anthillOldInput.readRecTreeVoteCount(parent);
+        uint256 childCount = anthillOldInput.recTreeVoteCount(parent);
         for (uint256 i = 0; i < childCount; i++) {
-            address child = anthillOldInput.readRecTreeVote(parent, i);
-            string memory childName = anthillOldInput.readName(child);
-            uint256 childRecTreeVoteCount = anthillOldInput.readRecTreeVoteCount(child);
-            uint256 sentDagVoteCount = anthillOldInput.readSentDagVoteCount(child, 0, 0);
-            uint256 sentDagVoteTotalWeight = anthillOldInput.readSentDagVoteTotalWeight(child);
-            uint256 recDagVoteCount = anthillOldInput.readRecDagVoteCount(child, 0, 0);
+            address child = anthillOldInput.recTreeVote(parent, i);
+            string memory childName = anthillOldInput.nameOf(child);
+            uint256 childRecTreeVoteCount = anthillOldInput.recTreeVoteCount(child);
+            uint256 sentDagVoteCount = anthillOldInput.sentDagVoteCount(child);
+            uint256 sentDagVoteTotalWeight = anthillOldInput.sentDagVoteTotalWeight(child);
+            uint256 recDagVoteCount = anthillOldInput.recDagVoteCount(child);
             uint256 posInRecipient = i; // Add this line to include posInRecipient
             treeVotes.push(
                 TreeVoteExtended({
@@ -316,10 +318,10 @@ contract ReadAndSave is Script {
     ) internal {
         for (uint256 dist = 1; dist <= maxRelRootDepth; dist++) {
             for (uint256 height = 0; height <= dist; height++) {
-                uint256 dagVoteCount = anthillOldInput.readSentDagVoteCount(voter, dist, height);
+                uint256 dagVoteCount = anthillOldInput.sentDagVoteCount(voter);
                 for (uint256 i = 0; i < dagVoteCount; i++) {
-                    DagVote memory sDagVote = anthillOldInput.readSentDagVote(voter, dist, height, i);
-                    DagVote memory rDagVote = anthillOldInput.readRecDagVote(sDagVote.id, 0, 0, sDagVote.posInOther);
+                    DagVote memory sDagVote = anthillOldInput.readSentDagVote(voter, i);
+                    DagVote memory rDagVote = anthillOldInput.readRecDagVote(sDagVote.id, sDagVote.posInOther);
                     dagVotes.push(
                         DagVoteExtended(
                             voter,
@@ -335,9 +337,9 @@ contract ReadAndSave is Script {
             }
         }
 
-        uint256 childCount = anthillOldInput.readRecTreeVoteCount(voter);
+        uint256 childCount = anthillOldInput.recTreeVoteCount(voter);
         for (uint256 i = 0; i < childCount; i++) {
-            address child = anthillOldInput.readRecTreeVote(voter, i);
+            address child = anthillOldInput.recTreeVote(voter, i);
             readDagVotesRec(maxRelRootDepth, child, anthillOldInput, anthillNewInput);
         }
     }

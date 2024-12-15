@@ -12,48 +12,43 @@ contract Utils is Test {
     function intermediateDagConsistencyCheckFrom(IAnthillDev anthill, address voter) public {
         for (uint256 dist = 0; dist < 7; dist++) {
             for (uint256 depth = 1; depth <= dist; depth++) {
-                for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, dist, depth); i++) {
-                    DagVote memory sDagVote = anthill.readSentDagVote(voter, dist, depth, i);
-                    DagVote memory rDagVote = anthill.readRecDagVote(
-                        sDagVote.id,
-                        dist - depth,
-                        depth,
-                        sDagVote.posInOther
-                    );
-                    (bool isLocal, , ) = anthill.findDistancesRecNotLower(voter, sDagVote.id);
+                for (uint256 i = 0; i < anthill.sentDagVoteCount(voter); i++) {
+                    (address s_id, uint256 s_weight, , uint256 s_posInOther) = anthill.sentDagVote(voter, i);
+                    (address r_id, uint256 r_weight, , uint256 r_posInOther) = anthill.recDagVote(s_id, s_posInOther);
+                    (bool isLocal, , ) = anthill.findDistancesRecNotLower(voter, s_id);
                     assert(isLocal);
                     // console.log("id", voter, rDagVote.id, sDagVote.id);
-                    assertEq(rDagVote.id, voter);
-                    assertEq(rDagVote.weight, sDagVote.weight);
-                    assertEq(rDagVote.posInOther, i);
+                    assertEq(r_id, voter);
+                    assertEq(r_weight, s_weight);
+                    assertEq(r_posInOther, i);
                 }
 
-                for (uint256 i = 0; i < anthill.readRecDagVoteCount(voter, dist - depth, depth); i++) {
-                    DagVote memory rDagVote = anthill.readRecDagVote(voter, dist - depth, depth, i);
-                    DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, dist, depth, rDagVote.posInOther);
+                for (uint256 i = 0; i < anthill.recDagVoteCount(voter); i++) {
+                    (address r_id, uint256 r_weight, , uint256 r_posInOther) = anthill.recDagVote(voter, i);
+                    (address s_id, uint256 s_weight, , uint256 s_posInOther) = anthill.sentDagVote(r_id, r_posInOther);
 
-                    (bool isLocal, , ) = anthill.findDistancesRecNotLower(rDagVote.id, voter);
+                    (bool isLocal, , ) = anthill.findDistancesRecNotLower(r_id, voter);
                     assert(isLocal);
 
                     // console.log("voter: ", voter);
                     // console.log( dist, depth, i, rDagVote.id);
-                    assertEq(sDagVote.id, voter);
-                    assertEq(sDagVote.weight, rDagVote.weight);
-                    assertEq(sDagVote.posInOther, i);
+                    assertEq(s_id, voter);
+                    assertEq(s_weight, r_weight);
+                    assertEq(s_posInOther, i);
                 }
             }
         }
-        for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
-            intermediateDagConsistencyCheckFrom(anthill, anthill.readRecTreeVote(voter, i));
+        for (uint256 i = 0; i < anthill.recTreeVoteCount(voter); i++) {
+            intermediateDagConsistencyCheckFrom(anthill, anthill.recTreeVote(voter, i));
         }
     }
 
     function dagConsistencyCheckFrom(IAnthillDev anthill, address voter) public {
         console.log("dagConsistencyCheckFrom", voter);
-        for (uint256 i = 0; i < anthill.readSentDagVoteCount(voter, 0, 0); i++) {
+        for (uint256 i = 0; i < anthill.sentDagVoteCount(voter); i++) {
             uint256 failCase = 0;
-            DagVote memory sDagVote = anthill.readSentDagVote(voter, 0, 0, i);
-            DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, 0 - 0, 0, sDagVote.posInOther);
+            DagVote memory sDagVote = anthill.readSentDagVote(voter, i);
+            DagVote memory rDagVote = anthill.readRecDagVote(sDagVote.id, sDagVote.posInOther);
             (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(
                 voter,
                 sDagVote.id
@@ -70,68 +65,68 @@ contract Utils is Test {
             if (failCase != 0) {
                 console.log(i);
                 console.log(recordedDist, sDagVote.dist);
-                console.log(anthill.readSentTreeVote(voter));
+                console.log(anthill.sentTreeVote(voter));
                 console.log(anthill.findNthParent(voter, 2));
                 revert DagConsistencyCheckFailed(failCase, voter, sDagVote.id, i);
             }
         }
 
-        for (uint256 i = 0; i < anthill.readRecDagVoteCount(voter, 0 - 0, 0); i++) {
-            DagVote memory rDagVote = anthill.readRecDagVote(voter, 0 - 0, 0, i);
-            DagVote memory sDagVote = anthill.readSentDagVote(rDagVote.id, 0, 0, rDagVote.posInOther);
-
-            (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(
-                rDagVote.id,
-                voter
+        for (uint256 i = 0; i < anthill.recDagVoteCount(voter); i++) {
+            (address r_id, uint256 r_weight, uint256 r_dist, uint256 r_posInOther) = anthill.recDagVote(voter, i);
+            (address s_id, uint256 s_weight, uint256 s_dist, uint256 s_posInOther) = anthill.sentDagVote(
+                r_id,
+                r_posInOther
             );
+
+            (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(r_id, voter);
             assert(isLocal && recordedDist != recordedRDist);
 
             // console.log("voter: ", voter, recordedDist, 0);
             // console.log( 0, 0, i, rDagVote.id);
-            assertEq(sDagVote.id, voter);
-            assertEq(sDagVote.weight, rDagVote.weight);
-            assertEq(sDagVote.posInOther, i);
+            assertEq(s_id, voter);
+            assertEq(s_weight, r_weight);
+            assertEq(s_posInOther, i);
 
-            assertEq(recordedRDist, rDagVote.dist);
+            assertEq(recordedRDist, r_dist);
         }
 
-        for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
-            dagConsistencyCheckFrom(anthill, anthill.readRecTreeVote(voter, i));
+        for (uint256 i = 0; i < anthill.recTreeVoteCount(voter); i++) {
+            dagConsistencyCheckFrom(anthill, anthill.recTreeVote(voter, i));
         }
     }
 
     function printRecDagVotes(IAnthillDev anthill, address voter) public view {
-        uint256 recDagVoteCount = anthill.readRecDagVoteCount(voter, 0, 0);
+        uint256 recDagVoteCount = anthill.recDagVoteCount(voter);
         for (uint256 i = 0; i < recDagVoteCount; i++) {
-            DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
+            (address r_id, uint256 r_weight, uint256 r_dist, uint256 r_posInOther) = anthill.recDagVote(voter, i);
             console.log("rec dag vote: ", voter);
-            console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
+            console.log(i, r_id, r_weight, r_posInOther);
         }
     }
 
     function printSentDagVotes(IAnthillDev anthill, address voter) public view {
-        uint256 dagVoteCount = anthill.readSentDagVoteCount(voter, 0, 0);
+        uint256 dagVoteCount = anthill.sentDagVoteCount(voter);
         for (uint256 i = 0; i < dagVoteCount; i++) {
-            DagVote memory rDagVote = anthill.readSentDagVote(voter, 0, 0, i);
+            (address s_id, uint256 s_weight, uint256 s_dist, uint256 s_posInOther) = anthill.sentDagVote(voter, i);
             console.log("sent dag vote: ", voter);
-            console.log(i, rDagVote.id, rDagVote.weight, rDagVote.posInOther);
+            console.log(i, s_id, s_weight, s_posInOther);
         }
         console.log("sent dag votes finished");
     }
 
     function treeConsistencyCheckFromInner(IAnthillDev anthill, address voter) public {
-        uint256 childCount = anthill.readRecTreeVoteCount(voter);
+        uint256 childCount = anthill.recTreeVoteCount(voter);
         if (childCount > 2) {
             revert TooManyChildren(voter, childCount);
         }
         for (uint256 i = 0; i < childCount; i++) {
-            address recipient = anthill.readRecTreeVote(voter, i);
+            address recipient = anthill.recTreeVote(voter, i);
             require(recipient != address(0), "child can't be zero");
-            address sender = anthill.readSentTreeVote(recipient);
+            address sender = anthill.sentTreeVote(recipient);
             assertEq(sender, voter);
         }
         // for (uint256 i = 0; i < childCount; i++) {
-        //     address recipient = anthill.readRecTreeVote(voter, i);
+        //     address recipient = anthill.recTreeVote(voter, i);
         //     treeConsistencyCheckFrom(anthill, recipient);
         // }
     }
@@ -145,10 +140,10 @@ contract Utils is Test {
         address voter,
         function(IAnthillDev, address) internal callback
     ) internal {
-        uint256 sentDagVoteCount = anthill.readSentDagVoteCount(voter, 0, 0);
+        uint256 sentDagVoteCount = anthill.sentDagVoteCount(voter);
         for (uint256 i = 0; i < sentDagVoteCount; i++) {
-            DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
-            callback(anthill, rDagVote.id);
+            (address r_id, , , ) = anthill.recDagVote(voter, i);
+            callback(anthill, r_id);
         }
     }
 
@@ -157,10 +152,10 @@ contract Utils is Test {
         address voter,
         function(IAnthillDev, address) internal callback
     ) internal {
-        uint256 recDagVoteCount = anthill.readRecDagVoteCount(voter, 0, 0);
+        uint256 recDagVoteCount = anthill.recDagVoteCount(voter);
         for (uint256 i = 0; i < recDagVoteCount; i++) {
-            DagVote memory rDagVote = anthill.readRecDagVote(voter, 0, 0, i);
-            callback(anthill, rDagVote.id);
+            (address r_id, , , ) = anthill.recDagVote(voter, i);
+            callback(anthill, r_id);
         }
     }
 
@@ -170,8 +165,8 @@ contract Utils is Test {
         function(IAnthillDev, address) internal callback
     ) internal {
         callback(anthill, voter);
-        for (uint256 i = 0; i < anthill.readRecTreeVoteCount(voter); i++) {
-            recursiveCrawlTree(anthill, anthill.readRecTreeVote(voter, i), callback);
+        for (uint256 i = 0; i < anthill.recTreeVoteCount(voter); i++) {
+            recursiveCrawlTree(anthill, anthill.recTreeVote(voter, i), callback);
         }
     }
 

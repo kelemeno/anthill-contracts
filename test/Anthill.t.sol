@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import "forge-std/Test.sol";
 import {IAnthillDev} from "../src/IAnthillDev.sol";
 import {AnthillDev} from "../src/AnthillDev.sol";
-import {Anthill2Dev} from "../src/Anthill2Dev.sol";
 import {DagVote} from "../src/Anthill.sol";
 import {console} from "forge-std/console.sol";
 import {Utils} from "./Utils.t.sol";
@@ -80,13 +79,13 @@ contract AnthillTestMain is Test, Utils {
         assert(isLocal);
     }
 
-    function testReadRoot() public {
-        address a = anthill.readRoot();
+    function testroot() public {
+        address a = anthill.root();
         assertEq(a, address(2));
     }
 
     function testParents() public {
-        address a = anthill.readSentTreeVote(anthill.readSentTreeVote(anthill.readSentTreeVote(address(23))));
+        address a = anthill.sentTreeVote(anthill.sentTreeVote(anthill.sentTreeVote(address(23))));
         assertEq(a, address(2));
     }
 
@@ -173,9 +172,9 @@ contract AnthillTestMain is Test, Utils {
 
         anthill.unsafeReplaceRecDagVoteWithLastPublic(address(4), 0);
 
-        uint256 count = anthill.readRecDagVoteCount(address(4), 0, 2);
+        uint256 count = anthill.recDagVoteCount(address(4));
         assertEq(count, 27);
-        count = anthill.readSentDagVoteCount(address(16), 3, 2);
+        count = anthill.sentDagVoteCount(address(16));
         assertEq(count, 7);
 
         anthill.recDagVoteAppendPublic(
@@ -184,12 +183,12 @@ contract AnthillTestMain is Test, Utils {
             2,
             address(16),
             rDagVote.weight,
-            anthill.readSentDagVoteCount(address(16), 3, 2)
+            anthill.sentDagVoteCount(address(16))
         );
-        count = anthill.readRecDagVoteCount(address(4), 1, 2);
+        count = anthill.recDagVoteCount(address(4));
         assertEq(count, 28);
 
-        count = anthill.readSentDagVoteCount(address(16), 3, 2);
+        count = anthill.sentDagVoteCount(address(16));
         assertEq(count, 7);
 
         // anthill.changeDistDepthSent(address(16), 2, 2, rDagVote.posInOther, 3, 2, address(4), anthill.readRecDagVoteCount(address(4), 1, 2)-1, rDagVote.weight);
@@ -224,18 +223,18 @@ contract AnthillTestMain is Test, Utils {
     }
 
     function testSwitchPositionWithParent1() public {
-        address root = anthill.readRoot();
+        address root = anthill.root();
         assertEq(root, address(2));
 
         anthill.switchPositionWithParent(address(4));
-        root = anthill.readRoot();
+        root = anthill.root();
         assertEq(root, address(4));
 
-        assert(anthill.readSentTreeVote(address(16)) == address(8));
-        assert(anthill.readSentTreeVote(address(8)) == address(2));
-        assert(anthill.readSentTreeVote(address(2)) == address(4));
-        assert(anthill.readSentTreeVote(address(10)) == address(5));
-        assert(anthill.readSentTreeVote(address(5)) == address(4));
+        assert(anthill.sentTreeVote(address(16)) == address(8));
+        assert(anthill.sentTreeVote(address(8)) == address(2));
+        assert(anthill.sentTreeVote(address(2)) == address(4));
+        assert(anthill.sentTreeVote(address(10)) == address(5));
+        assert(anthill.sentTreeVote(address(5)) == address(4));
 
         intermediateDagConsistencyCheckFrom(anthill, address(2));
         dagConsistencyCheckFrom(anthill, address(4));
@@ -250,7 +249,7 @@ contract AnthillTestMain is Test, Utils {
         anthill.moveTreeVote(address(33), address(32));
         anthill.addDagVote(address(33), address(32), 100000000);
         anthill.switchPositionWithParent(address(32));
-        address parent = anthill.readSentTreeVote(address(16));
+        address parent = anthill.sentTreeVote(address(16));
         assertEq(parent, address(32));
         dagConsistencyCheckFrom(anthill, address(2));
         treeConsistencyCheckFrom(anthill, address(2));
@@ -270,52 +269,52 @@ contract AnthillTestMain is Test, Utils {
         anthill.leaveTree(address(4));
 
         // for 2
-        address recipient = anthill.readRecTreeVote(address(2), 0);
+        address recipient = anthill.recTreeVote(address(2), 0);
         assertEq(recipient, address(8));
 
-        recipient = anthill.readRecTreeVote(address(2), 1);
+        recipient = anthill.recTreeVote(address(2), 1);
         assertEq(recipient, address(5));
 
-        recipient = anthill.readSentTreeVote(address(8));
+        recipient = anthill.sentTreeVote(address(8));
         assertEq(recipient, address(2));
 
         // for 8
 
-        recipient = anthill.readRecTreeVote(address(8), 0);
+        recipient = anthill.recTreeVote(address(8), 0);
         assertEq(recipient, address(16));
 
-        recipient = anthill.readRecTreeVote(address(8), 1);
+        recipient = anthill.recTreeVote(address(8), 1);
         assertEq(recipient, address(9));
 
-        recipient = anthill.readSentTreeVote(address(9));
+        recipient = anthill.sentTreeVote(address(9));
         assertEq(recipient, address(8));
 
-        recipient = anthill.readSentTreeVote(address(16));
+        recipient = anthill.sentTreeVote(address(16));
         assertEq(recipient, address(8));
 
         // for 16
 
-        recipient = anthill.readRecTreeVote(address(16), 0);
+        recipient = anthill.recTreeVote(address(16), 0);
         assertEq(recipient, address(32));
 
-        recipient = anthill.readRecTreeVote(address(16), 1);
+        recipient = anthill.recTreeVote(address(16), 1);
         assertEq(recipient, address(17));
 
-        recipient = anthill.readSentTreeVote(address(17));
+        recipient = anthill.sentTreeVote(address(17));
         assertEq(recipient, address(16));
 
-        recipient = anthill.readSentTreeVote(address(32));
+        recipient = anthill.sentTreeVote(address(32));
         assertEq(recipient, address(16));
 
         // // for 32
 
-        recipient = anthill.readRecTreeVote(address(32), 0);
+        recipient = anthill.recTreeVote(address(32), 0);
         assertEq(recipient, address(33));
 
-        recipient = anthill.readRecTreeVote(address(32), 1);
+        recipient = anthill.recTreeVote(address(32), 1);
         assertEq(recipient, address(0));
 
-        recipient = anthill.readSentTreeVote(address(33));
+        recipient = anthill.sentTreeVote(address(33));
         assertEq(recipient, address(32));
 
         dagConsistencyCheckFrom(anthill, address(2));
@@ -323,7 +322,7 @@ contract AnthillTestMain is Test, Utils {
     }
 
     function testMoveInTree1() public {
-        console.log("32 tree vote", anthill.readSentTreeVote(address(32)));
+        console.log("32 tree vote", anthill.sentTreeVote(address(32)));
         anthill.moveTreeVote(address(16), address(32));
         dagConsistencyCheckFrom(anthill, address(2));
         treeConsistencyCheckFrom(anthill, address(2));

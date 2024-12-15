@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/Strings.sol"; // OpenZeppelin provides thi
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import {AnthillDev} from "../src/AnthillDev.sol";
-import {Anthill2Dev} from "../src/Anthill2Dev.sol";
 import {TreeVoteExtended, DagVoteExtended} from "../src/IAnthillDev.sol";
 import {Utils} from "./Utils.t.sol";
 import {IAnthill} from "../src/IAnthill.sol";
@@ -43,7 +42,7 @@ contract ReadFromFileAndDeployTest is Test, Utils {
         treeVotes = abi.decode(treeVotesB, (TreeVoteExtended[]));
         dagVotes = abi.decode(dagVotesB, (DagVoteExtended[]));
 
-        Anthill2Dev anthillC = new Anthill2Dev();
+        AnthillDev anthillC = new AnthillDev();
         anthill = anthillC;
 
         for (uint256 i = 0; i < treeVotes.length; i++) {
@@ -82,8 +81,8 @@ contract ReadFromFileAndDeployTest is Test, Utils {
             executeLog(anthill, log);
             console.log("running consistency check");
             address root = address(1);
-            if (anthill.readRecTreeVoteCount(address(1)) == 0) {
-                root = anthill.readRoot();
+            if (anthill.recTreeVoteCount(address(1)) == 0) {
+                root = anthill.root();
             }
             treeConsistencyCheckFrom(anthill, root);
             dagConsistencyCheckFrom(anthill, root);
@@ -103,7 +102,7 @@ contract ReadFromFileAndDeployTest is Test, Utils {
             console.log("AddDagVoteEvent");
             (address voter, address recipient, uint256 weight) = abi.decode(log.data, (address, address, uint256));
             // we probaby do an additional
-            address id = anthill.treeVote(voter);
+            address id = anthill.sentTreeVote(voter);
             if (id == address(0)) {
                 console.log("wrong even order bug, skipping"); // when a person joins the tree, they send a dag vote to their parent, and after that emit a JoinTreeEvent
                 return;
@@ -132,8 +131,8 @@ contract ReadFromFileAndDeployTest is Test, Utils {
         readFromFileAndDeploy();
         reexecute();
         address root = address(1);
-        if (anthill.readRecTreeVoteCount(address(1)) == 0) {
-            root = anthill.readRoot();
+        if (anthill.recTreeVoteCount(address(1)) == 0) {
+            root = anthill.root();
         }
         treeConsistencyCheckFrom(anthill, root);
         dagConsistencyCheckFrom(anthill, root);
