@@ -22,7 +22,7 @@ To build and test use forge. For local development with backend and frontend dep
 
 anvil --chain-id 1337
 
-forge script script/Anthill.s.sol:SmallScript --broadcast --verify --rpc-url http://localhost:8545
+forge script script/Anthill.s.sol:SmallScript --broadcast --rpc-url http://localhost:8545
 
 After this the backend can be launched with:
 
