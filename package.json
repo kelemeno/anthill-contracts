@@ -10,9 +10,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "verify": "hardhat run hardhat/verify.ts",
-    "lint": "solhint \"**/*.sol\" --fix && prettier --write \"**/*.{js,json,md,sol,ts,yaml}\"",
+    "lint": "solhint \"**/*.sol\" --fix --noPrompt && prettier --write \"**/*.{js,json,md,sol,ts,yaml}\"",
     "fix": "prettier --write \"**/*.{js,json,md,sol,ts,yaml}\"",
-    "encodeLogs": "ts-node hardhat/logs.ts"
+    "encodeLogs": "ts-node hardhat/logs.ts",
+    "test-node": "hardhat node-zksync --tag 0.4.0"
   },
   "keywords": [],
   "author": "",

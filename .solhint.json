@@ -33,6 +33,7 @@
     "state-visibility": "error",
     "use-forbidden-name": "error",
     "var-name-mixedcase": "off",
-    "visibility-modifier-order": "error"
+    "visibility-modifier-order": "error",
+    "no-console": "off"
   }
 }

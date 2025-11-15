@@ -833,10 +833,10 @@ contract Anthill is IAnthill {
 
     ////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Legacy
     //////// Variable readers
     // root/base
 
+    // needed so it can be overrwritten in the tests.
     function readSentDagVote(address voter, uint256 votePos) public view returns (DagVote memory) {
         return sentDagVote[voter][votePos];
     }

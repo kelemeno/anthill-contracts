@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
-import {stdToml} from "forge-std/StdToml.sol";
 
 import {Anthill, IAnthill} from "../src/Anthill.sol";
 import {DagVote} from "../src/Anthill.sol";
