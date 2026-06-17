@@ -12,11 +12,8 @@ contract AnthillScript3 is Script {
     Anthill public anthill;
 
     function run() public {
-        // hardhat rich private key
-        // uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-        // era-test node rich private key
-        uint256 eraTestNodePrivateKey = 0x3d3cbc973389cb26f657686445bcc75662b415b656078503592ac8c1abb8810e;
-        vm.startBroadcast(eraTestNodePrivateKey);
+        uint256 privateKey = 0x3d3cbc973389cb26f657686445bcc75662b415b656078503592ac8c1abb8810e;
+        vm.startBroadcast(privateKey);
 
         anthill = new Anthill();
 
@@ -44,7 +41,7 @@ contract AnthillScript3 is Script {
 
         // we don't want votes between 4, 5 and 2.
         anthill.removeDagVote(address(4), address(2));
-        anthill.removeDagVote(address(5), address(2)); // todo line this might have to be deleted.
+        anthill.removeDagVote(address(5), address(2));
 
         for (uint256 depth = 1; depth <= 3; depth++) {
             for (uint256 verticalNum = 0; verticalNum < 2 ** (depth - 1); verticalNum++) {
@@ -84,15 +81,8 @@ contract SmallScript is Script {
     Anthill public anthill;
 
     function run() public {
-        // hardhat rich private key
-        // uint256 anvilPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-        // vm.startBroadcast(anvilPrivateKey);
-
-        // era-test node rich private key
         uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         vm.startBroadcast(privateKey);
-        // uint256 eraTestNodePrivateKey = 0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110;
-        // vm.startBroadcast(eraTestNodePrivateKey);
 
         anthill = new Anthill();
 
@@ -160,7 +150,6 @@ contract TutorialScript is Script {
     Anthill public anthill;
 
     function run() public {
-        // hardhat rich private key
         uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         vm.startBroadcast(privateKey);
 
@@ -246,7 +235,7 @@ contract Redeploy is Script {
             for (uint256 height = 0; height <= dist; height++) {
                 uint256 dagVoteCount = anthillOldInput.sentDagVoteCount(voter);
                 for (uint256 i = 0; i < dagVoteCount; i++) {
-                    (address id, uint256 weight, , ) = anthillOldInput.sentDagVote(voter, i);
+                    (address id, uint256 weight,,) = anthillOldInput.sentDagVote(voter, i);
                     anthillNewInput.addDagVote(voter, id, weight);
                 }
             }
@@ -291,13 +280,13 @@ contract ReadAndSave is Script {
             uint256 sentDagVoteCount = anthillOldInput.sentDagVoteCount(child);
             uint256 sentDagVoteTotalWeight = anthillOldInput.sentDagVoteTotalWeight(child);
             uint256 recDagVoteCount = anthillOldInput.recDagVoteCount(child);
-            uint256 posInRecipient = i; // Add this line to include posInRecipient
+            uint256 posInRecipient = i;
             treeVotes.push(
                 TreeVoteExtended({
                     voter: child,
                     name: childName,
                     recipient: parent,
-                    posInRecipient: posInRecipient, // Add posInRecipient here
+                    posInRecipient: posInRecipient,
                     recTreeVoteCount: childRecTreeVoteCount,
                     sentDagVoteCount: sentDagVoteCount,
                     sentDagVoteTotalWeight: sentDagVoteTotalWeight,
@@ -309,12 +298,9 @@ contract ReadAndSave is Script {
         }
     }
 
-    function readDagVotesRec(
-        uint256 maxRelRootDepth,
-        address voter,
-        Anthill anthillOldInput,
-        Anthill anthillNewInput
-    ) internal {
+    function readDagVotesRec(uint256 maxRelRootDepth, address voter, Anthill anthillOldInput, Anthill anthillNewInput)
+        internal
+    {
         for (uint256 dist = 1; dist <= maxRelRootDepth; dist++) {
             for (uint256 height = 0; height <= dist; height++) {
                 uint256 dagVoteCount = anthillOldInput.sentDagVoteCount(voter);
@@ -323,13 +309,7 @@ contract ReadAndSave is Script {
                     DagVote memory rDagVote = anthillOldInput.readRecDagVote(sDagVote.id, sDagVote.posInOther);
                     dagVotes.push(
                         DagVoteExtended(
-                            voter,
-                            sDagVote.id,
-                            sDagVote.weight,
-                            dist,
-                            rDagVote.dist,
-                            i,
-                            sDagVote.posInOther
+                            voter, sDagVote.id, sDagVote.weight, dist, rDagVote.dist, i, sDagVote.posInOther
                         )
                     );
                 }

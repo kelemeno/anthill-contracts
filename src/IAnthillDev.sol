@@ -24,14 +24,8 @@ struct DagVoteExtended {
 }
 
 interface IAnthillDev is IAnthill {
-    function recDagVoteAppendPublic(
-        address recipient,
-        uint256 recDist,
-        uint256,
-        address voter,
-        uint256 weight,
-        uint256
-    ) external;
+    function recDagVoteAppendPublic(address recipient, uint256 recDist, uint256, address voter, uint256 weight, uint256)
+        external;
 
     function handleDagVoteMoveRise(
         address voter,

@@ -9,27 +9,13 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "verify": "hardhat run hardhat/verify.ts",
-    "lint": "solhint \"**/*.sol\" --fix --noPrompt && prettier --write \"**/*.{js,json,md,sol,ts,yaml}\"",
-    "fix": "prettier --write \"**/*.{js,json,md,sol,ts,yaml}\"",
-    "encodeLogs": "ts-node hardhat/logs.ts",
-    "test-node": "hardhat node-zksync --tag 0.4.0"
+    "lint": "solhint 'src/**/*.sol' 'script/**/*.sol' 'test/**/*.sol'",
+    "fix": "forge fmt"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "@matterlabs/hardhat-zksync": "^1.0.0",
-    "@nomicfoundation/hardhat-foundry": "^1.1.2",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.5",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
-  },
   "dependencies": {
-    "@matterlabs/prettier-config": "^1.0.3",
-    "prettier": "^3.3.2",
-    "prettier-plugin-solidity": "^1.3.1",
-    "solhint": "^5.0.1"
+    "solhint": "^6.2.2"
   }
 }

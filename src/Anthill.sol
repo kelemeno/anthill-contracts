@@ -181,6 +181,7 @@ contract Anthill is IAnthill {
 
         emit ChangeNameEvent(voter, voterName);
     }
+
     ////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Local tree finders
@@ -223,10 +224,12 @@ contract Anthill is IAnthill {
     /// isLocal, whether the recipient is local for the voter, equality allowed
     /// sRelRootDiff, the voters difference to its relative root (distance to recipient might be less)
     /// rRelRootDiff the recipients difference to the voters relative root (distance to recipient might be less)
-    function findRelDepthInner(
-        address voter,
-        address recipient
-    ) public view virtual returns (bool isLocal, uint256 sRelRootDiff, uint256 rRelRootDiff) {
+    function findRelDepthInner(address voter, address recipient)
+        public
+        view
+        virtual
+        returns (bool isLocal, uint256 sRelRootDiff, uint256 rRelRootDiff)
+    {
         if ((sentTreeVote[voter] == address(0)) || (sentTreeVote[recipient] == address(0))) {
             return (false, 0, 0);
         }
@@ -251,10 +254,12 @@ contract Anthill is IAnthill {
 
     /// to find the depth difference between two locally close voters.
     // isLocal is true if the recipient is local for the voter ??
-    function findRelDepth(
-        address voter,
-        address recipient
-    ) public view virtual returns (bool isLocal, uint256 relDepth) {
+    function findRelDepth(address voter, address recipient)
+        public
+        view
+        virtual
+        returns (bool isLocal, uint256 relDepth)
+    {
         uint256 relRootDiff;
         uint256 rDist;
 
@@ -264,10 +269,12 @@ contract Anthill is IAnthill {
 
     // to find the distance between voter and recipient, within maxDistance.
     // THIS IS ACTUALLY A GLOBAL FUNTION!
-    function findDistAtSameDepth(
-        address add1,
-        address add2
-    ) public view virtual returns (bool isSameDepth, uint256 distance) {
+    function findDistAtSameDepth(address add1, address add2)
+        public
+        view
+        virtual
+        returns (bool isSameDepth, uint256 distance)
+    {
         if (add1 == add2) {
             return (true, 0);
         }
@@ -291,10 +298,12 @@ contract Anthill is IAnthill {
 
     // to find the distance and depth from a voter to recipient.
     // Note, the recipient has to be not lower and in the neighbourhood of the voter.
-    function findDistancesRecNotLower(
-        address voter,
-        address recipient
-    ) public view virtual returns (bool isLocal, uint256 sDist, uint256 rDist) {
+    function findDistancesRecNotLower(address voter, address recipient)
+        public
+        view
+        virtual
+        returns (bool isLocal, uint256 sDist, uint256 rDist)
+    {
         if (sentTreeVote[voter] == address(0) || sentTreeVote[recipient] == address(0)) {
             return (false, 0, 0);
         }
@@ -315,10 +324,12 @@ contract Anthill is IAnthill {
     // to find the distance between two voters,
     // one has to be local to the other.
     // sDist is always the voters distance, who might be higher.
-    function findDistances(
-        address voter,
-        address recipient
-    ) public view virtual returns (bool isLocalEitherWay, uint256 sDist, uint256 rDist) {
+    function findDistances(address voter, address recipient)
+        public
+        view
+        virtual
+        returns (bool isLocalEitherWay, uint256 sDist, uint256 rDist)
+    {
         if (sentTreeVote[voter] == address(0) || sentTreeVote[recipient] == address(0)) {
             return (false, 0, 0);
         }
@@ -355,7 +366,7 @@ contract Anthill is IAnthill {
     //// Dag personal externals
     // to add a vote to the sentDagVote array, and also to the corresponding recDagVote array
     function addDagVote(address voter, address recipient, uint256 weight) public virtual onlyVoter(voter) {
-        (bool votable, bool voted, uint256 sDist, uint256 rDist, , ) = findSentDagVote(voter, recipient);
+        (bool votable, bool voted, uint256 sDist, uint256 rDist,,) = findSentDagVote(voter, recipient);
         require((votable) && (!voted), "A aDV 2");
         combinedDagAppendSdist(voter, recipient, sDist, rDist, weight);
 
@@ -365,7 +376,7 @@ contract Anthill is IAnthill {
     // to remove a vote from the sentDagVote array, and also from the  corresponding recDagVote arrays
     function removeDagVote(address voter, address recipient) public virtual onlyVoter(voter) {
         // find the votes we delete
-        (, bool voted, uint256 sPos, ) = findSentDagVoteNew(voter, recipient);
+        (, bool voted, uint256 sPos,) = findSentDagVoteNew(voter, recipient);
         require(voted, "A rDV 2");
 
         safeRemoveSentDagVote(voter, sPos);
@@ -401,9 +412,8 @@ contract Anthill is IAnthill {
 
         for (uint256 count = 0; count < recDagVoteCount[voter]; count++) {
             DagVote memory rDagVote = recDagVote[voter][count];
-            voterReputation +=
-                (calculateReputationInner(rDagVote.id, depth + 1) * (rDagVote.weight)) /
-                sentDagVoteTotalWeight[rDagVote.id];
+            voterReputation += (calculateReputationInner(rDagVote.id, depth + 1) * (rDagVote.weight))
+                / sentDagVoteTotalWeight[rDagVote.id];
         }
 
         // for the voter themselves
@@ -439,10 +449,7 @@ contract Anthill is IAnthill {
     //// DAG finders
     // to check the existence and to find the position of a vote in the sentDagVote array
 
-    function findSentDagVote(
-        address voter,
-        address recipient
-    )
+    function findSentDagVote(address voter, address recipient)
         public
         view
         virtual
@@ -464,17 +471,16 @@ contract Anthill is IAnthill {
         return (true, false, sDist, rDist, 0, DagVote(address(0), 0, 0, 0));
     }
 
-    function findSentDagVoteNew(
-        address voter,
-        address recipient
-    ) public view virtual returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
-        (votable, voted, , , votePos, dagVote) = findSentDagVote(voter, recipient);
+    function findSentDagVoteNew(address voter, address recipient)
+        public
+        view
+        virtual
+        returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote)
+    {
+        (votable, voted,,, votePos, dagVote) = findSentDagVote(voter, recipient);
     }
 
-    function findRecDagVote(
-        address voter,
-        address recipient
-    )
+    function findRecDagVote(address voter, address recipient)
         public
         view
         virtual
@@ -501,38 +507,29 @@ contract Anthill is IAnthill {
     }
 
     // to check the existence and to find the position of a vote the recDagVote array
-    function findRecDagVoteNew(
-        address voter,
-        address recipient
-    ) public view virtual returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote) {
-        (votable, voted, , , votePos, dagVote) = findRecDagVote(voter, recipient);
+    function findRecDagVoteNew(address voter, address recipient)
+        public
+        view
+        virtual
+        returns (bool votable, bool voted, uint256 votePos, DagVote memory dagVote)
+    {
+        (votable, voted,,, votePos, dagVote) = findRecDagVote(voter, recipient);
     }
 
     ////////////////////////////////////////////
     //// Dag internals.
     ///////////// Single vote changes
 
-    function combinedDagAppendSdist(
-        address voter,
-        address recipient,
-        uint256 sentDist,
-        uint256 recDist,
-        uint256 weight
-    ) internal virtual {
-        sentDagVote[voter][sentDagVoteCount[voter]] = DagVote({
-            id: recipient,
-            weight: weight,
-            dist: sentDist,
-            posInOther: recDagVoteCount[recipient]
-        });
+    function combinedDagAppendSdist(address voter, address recipient, uint256 sentDist, uint256 recDist, uint256 weight)
+        internal
+        virtual
+    {
+        sentDagVote[voter][sentDagVoteCount[voter]] =
+            DagVote({id: recipient, weight: weight, dist: sentDist, posInOther: recDagVoteCount[recipient]});
         ++(sentDagVoteCount[voter]);
         sentDagVoteTotalWeight[voter] += weight;
-        recDagVote[recipient][recDagVoteCount[recipient]] = DagVote({
-            id: voter,
-            weight: weight,
-            dist: recDist,
-            posInOther: sentDagVoteCount[voter] - 1
-        });
+        recDagVote[recipient][recDagVoteCount[recipient]] =
+            DagVote({id: voter, weight: weight, dist: recDist, posInOther: sentDagVoteCount[voter] - 1});
         ++(recDagVoteCount[recipient]);
     }
 
@@ -651,10 +648,7 @@ contract Anthill is IAnthill {
         uint256 count = sentDagVoteCount[voterWithChangingDagVotes];
         for (uint256 i = count; 0 < i; --i) {
             DagVote memory sDagVote = sentDagVote[voterWithChangingDagVotes][i - 1];
-            (bool isLocal, uint256 sDist, uint256 rDist) = findDistancesRecNotLower(
-                replacedPositionInTree,
-                sDagVote.id
-            );
+            (bool isLocal, uint256 sDist, uint256 rDist) = findDistancesRecNotLower(replacedPositionInTree, sDagVote.id);
             if (!isLocal || (sDist == rDist)) {
                 safeRemoveSentDagVote(voterWithChangingDagVotes, i - 1);
                 continue;
@@ -667,10 +661,7 @@ contract Anthill is IAnthill {
         count = recDagVoteCount[voterWithChangingDagVotes];
         for (uint256 i = count; 0 < i; --i) {
             DagVote memory rDagVote = recDagVote[voterWithChangingDagVotes][i - 1];
-            (bool isLocal, uint256 sDist, uint256 rDist) = findDistancesRecNotLower(
-                rDagVote.id,
-                replacedPositionInTree
-            );
+            (bool isLocal, uint256 sDist, uint256 rDist) = findDistancesRecNotLower(rDagVote.id, replacedPositionInTree);
             if (!isLocal || (sDist == rDist)) {
                 safeRemoveRecDagVote(voterWithChangingDagVotes, i - 1);
                 continue;
@@ -702,7 +693,7 @@ contract Anthill is IAnthill {
         address secondChild = recTreeVote[pulledVoter][1];
         if (firstChild != address(0)) {
             handleDagVoteReplace(firstChild, parent, pulledVoter, 2, 0);
-            (, bool voted, , , uint256 votePos, DagVote memory dagVote) = findSentDagVote(firstChild, parent);
+            (, bool voted,,, uint256 votePos, DagVote memory dagVote) = findSentDagVote(firstChild, parent);
             if (voted) {
                 // if the first child has a dag vote for the parent, then we changed the distance incorrectly, since both will rise later.
                 sentDagVote[firstChild][votePos].dist = dagVote.dist + 1;

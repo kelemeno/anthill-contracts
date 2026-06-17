@@ -108,7 +108,7 @@ contract AnthillTestMain is Test, Utils {
     /////////////////////////////////////////////
     /////////// basic dag tests
     function testFindSentDagVote2() public {
-        (, bool voted, , , uint256 votePos, ) = anthill.findSentDagVote(address(8), address(5));
+        (, bool voted,,, uint256 votePos,) = anthill.findSentDagVote(address(8), address(5));
         assertEq(votePos, 2);
         // assertEq(dist, 2);
         // assertEq(depth, 1);
@@ -118,41 +118,41 @@ contract AnthillTestMain is Test, Utils {
     function testAddAndRemoveDagVote1() public {
         anthill.removeDagVote(address(8), address(5));
         anthill.addDagVote(address(8), address(5), 1);
-        (, bool voted, uint256 dist, uint256 depth, , ) = anthill.findSentDagVote(address(8), address(5));
+        (, bool voted, uint256 dist, uint256 depth,,) = anthill.findSentDagVote(address(8), address(5));
         assertEq(voted, true);
         // assertEq(dist, 2);
         // assertEq(depth, 1);
 
-        (, voted, dist, depth, , ) = anthill.findRecDagVote(address(8), address(5));
+        (, voted, dist, depth,,) = anthill.findRecDagVote(address(8), address(5));
         assertEq(voted, true);
         // assertEq(dist, 1);
         // assertEq(depth, 1);
 
         anthill.removeDagVote(address(8), address(5));
-        (, voted, dist, depth, , ) = anthill.findSentDagVote(address(8), address(5));
+        (, voted, dist, depth,,) = anthill.findSentDagVote(address(8), address(5));
         assertEq(voted, false);
 
-        (, voted, dist, depth, , ) = anthill.findRecDagVote(address(8), address(5));
+        (, voted, dist, depth,,) = anthill.findRecDagVote(address(8), address(5));
         assertEq(voted, false);
     }
 
     function testAddAndRemoveDagVote2() public {
         // anthill.addDagVote(address(34),address(9), 1);
-        (, bool voted, uint256 dist, uint256 depth, , ) = anthill.findSentDagVote(address(34), address(9));
+        (, bool voted, uint256 dist, uint256 depth,,) = anthill.findSentDagVote(address(34), address(9));
         assertEq(voted, true);
         assertEq(dist, 3);
         // assertEq(depth, 2);
 
-        (, voted, , dist, , ) = anthill.findRecDagVote(address(34), address(9));
+        (, voted,, dist,,) = anthill.findRecDagVote(address(34), address(9));
         assertEq(voted, true);
         assertEq(dist, 1);
         // assertEq(depth, 2);
 
         anthill.removeDagVote(address(34), address(9));
-        (, voted, dist, depth, , ) = anthill.findSentDagVote(address(34), address(9));
+        (, voted, dist, depth,,) = anthill.findSentDagVote(address(34), address(9));
         assertEq(voted, false);
 
-        (, voted, dist, depth, , ) = anthill.findRecDagVote(address(34), address(9));
+        (, voted, dist, depth,,) = anthill.findRecDagVote(address(34), address(9));
         assertEq(voted, false);
     }
 
@@ -161,10 +161,8 @@ contract AnthillTestMain is Test, Utils {
     /////////////////////////////////////////
     /////////// single votes
     function testChangeDistDepthRec() public {
-        (, bool voted, uint256 rdist, uint256 depth, uint256 votePos, DagVote memory rDagVote) = anthill.findRecDagVote(
-            address(16),
-            address(4)
-        );
+        (, bool voted, uint256 rdist, uint256 depth, uint256 votePos, DagVote memory rDagVote) =
+            anthill.findRecDagVote(address(16), address(4));
         assertEq(voted, true);
         // assertEq(rdist, 0);
         // assertEq(depth, 2);
@@ -178,12 +176,7 @@ contract AnthillTestMain is Test, Utils {
         assertEq(count, 7);
 
         anthill.recDagVoteAppendPublic(
-            address(4),
-            1,
-            2,
-            address(16),
-            rDagVote.weight,
-            anthill.sentDagVoteCount(address(16))
+            address(4), 1, 2, address(16), rDagVote.weight, anthill.sentDagVoteCount(address(16))
         );
         count = anthill.recDagVoteCount(address(4));
         assertEq(count, 28);

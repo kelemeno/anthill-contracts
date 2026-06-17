@@ -140,10 +140,8 @@ contract ReadFromFileAndDeployTest is Test, Utils {
         dagConsistencyCheckFrom(anthill, marcin);
         printSentDagVotes(anthill, marcin);
 
-        (bool isLocal, uint256 recordedDist, uint256 recordedRDist) = anthill.findDistancesRecNotLower(
-            marcin,
-            address(0xD5A498Bbc6D21E4E1cdBB8fec58e3eCD7124FB43)
-        );
+        (bool isLocal, uint256 recordedDist, uint256 recordedRDist) =
+            anthill.findDistancesRecNotLower(marcin, address(0xD5A498Bbc6D21E4E1cdBB8fec58e3eCD7124FB43));
         console.log("isLocal", isLocal);
         console.log("recordedDist", recordedDist);
         console.log("recordedRDist", recordedRDist);

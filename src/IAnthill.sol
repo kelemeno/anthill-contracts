@@ -76,15 +76,15 @@ interface IAnthill {
 
     function findDistAtSameDepth(address voter, address recipient) external view returns (bool, uint256);
 
-    function findSentDagVote(
-        address voter,
-        address recipient
-    ) external view returns (bool, bool, uint256, uint256, uint256, DagVote memory);
+    function findSentDagVote(address voter, address recipient)
+        external
+        view
+        returns (bool, bool, uint256, uint256, uint256, DagVote memory);
 
-    function findRecDagVote(
-        address voter,
-        address recipient
-    ) external view returns (bool, bool, uint256, uint256, uint256, DagVote memory);
+    function findRecDagVote(address voter, address recipient)
+        external
+        view
+        returns (bool, bool, uint256, uint256, uint256, DagVote memory);
 
     function calculateReputation(address voter) external returns (uint256);
 }
