@@ -208,6 +208,65 @@ contract BigScript is Script {
     function test() public {}
 }
 
+// Like BigScript but with MANY more reputation (dag) votes — every node votes
+// for valid recipients across all shallower levels (within proximity) — to test
+// how a dense DAG renders. Smaller tree (depth 4 => 31 nodes) so the dense web
+// of cross-edges is actually legible.
+contract DenseScript is Script {
+    Anthill public anthill;
+
+    function run() public {
+        uint256 privateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        vm.startBroadcast(privateKey);
+
+        anthill = new Anthill();
+        anthill.joinTreeAsRoot(address(2), string("Root2"));
+
+        // Full binary tree to depth 4 (31 nodes).
+        for (uint256 depth = 1; depth < 5; depth++) {
+            for (uint256 verticalNum = 0; verticalNum < 2 ** (depth - 1); verticalNum++) {
+                anthill.joinTree(
+                    address(uint160(2 * (2 ** depth + verticalNum))),
+                    string("Name"),
+                    address(uint160(2 ** depth + verticalNum))
+                );
+                anthill.joinTree(
+                    address(uint160(2 * (2 ** depth + verticalNum) + 1)),
+                    string("Name"),
+                    address(uint160(2 ** depth + verticalNum))
+                );
+            }
+        }
+
+        anthill.removeDagVote(address(4), address(2));
+        anthill.removeDagVote(address(5), address(2));
+
+        // Dense reputation votes: from every node (depth 1..4) to valid
+        // recipients at every shallower level within proximity.
+        for (uint256 depth = 1; depth <= 4; depth++) {
+            for (uint256 verticalNum = 0; verticalNum < 2 ** (depth - 1); verticalNum++) {
+                for (uint256 recDepth = 1; recDepth < depth; recDepth++) {
+                    for (uint256 recVerticalNum = 0; recVerticalNum < 2 ** (recDepth - 1); recVerticalNum++) {
+                        if (2 ** depth + verticalNum >= 2 * (2 ** recDepth + recVerticalNum)) {
+                            if (2 ** depth + verticalNum - 2 * (2 ** recDepth + recVerticalNum) == 0) continue;
+                            if (2 ** depth + verticalNum - 2 * (2 ** recDepth + recVerticalNum) == 1) continue;
+                        }
+                        anthill.addDagVote(
+                            address(uint160(2 ** depth + verticalNum)),
+                            address(uint160(2 ** recDepth + recVerticalNum)),
+                            1000
+                        );
+                    }
+                }
+            }
+        }
+
+        vm.stopBroadcast();
+    }
+
+    function test() public {}
+}
+
 contract TutorialScript is Script {
     Anthill public anthill;
 
