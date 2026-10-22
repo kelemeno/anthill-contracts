@@ -800,6 +800,8 @@ contract Anthill is IAnthill {
             require(sentTreeVote[voter] != address(0), "A mTV 2");
             require(sentTreeVote[recipient] != address(0), "A mTV 3");
             require(recTreeVoteCount[recipient] < 2, "A mTV 4");
+            // moving under yourself would detach you into a loop.
+            require(voter != recipient, "A mTV 5");
         }
         (bool isLocal, uint256 sDist, uint256 rDist) = findDistances(voter, recipient);
         {

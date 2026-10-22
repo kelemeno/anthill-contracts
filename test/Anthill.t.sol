@@ -341,6 +341,11 @@ contract AnthillTestMain is Test, Utils {
         treeConsistencyCheckFrom(anthill, address(2));
     }
 
+    function testMoveUnderSelfReverts() public {
+        vm.expectRevert("A mTV 5");
+        anthill.moveTreeVote(address(32), address(32));
+    }
+
     function testConsistency() public {
         treeConsistencyCheckFrom(anthill, address(1));
         dagConsistencyCheckFrom(anthill, address(1));
